@@ -1,0 +1,4 @@
+test-types/**/*
+dist
+lib
+README.md

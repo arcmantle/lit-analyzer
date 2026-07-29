@@ -1,0 +1,10 @@
+.DS_Store
+.idea
+node_modules
+.vscode
+*.txt
+dist
+lib
+.nyc_output
+coverage
+playground/**/*
