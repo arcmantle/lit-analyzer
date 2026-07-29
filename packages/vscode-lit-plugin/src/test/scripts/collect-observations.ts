@@ -116,11 +116,35 @@ async function observeCompletions(): Promise<Observations['completions']> {
 		throw new Error(`No completion '${ expected }' found`);
 	}
 
-	const tagPosition = new vscode.Position(27, 8);
+	// Locate the two probe points by content rather than by hardcoded line and
+	// character offsets. The offsets used to be hardcoded, and a reformat that
+	// added two blank lines to the fixture silently shifted them onto the wrong
+	// constructs, which made this observer poll for completions that could never
+	// appear there.
+	const lines = doc.getText().split('\n');
+
+	const endOfLine = (line: number) => new vscode.Position(line, lines[line]!.length);
+
+	const findLine = (predicate: (line: string) => boolean, what: string): number => {
+		const index = lines.findIndex(predicate);
+		if (index === -1)
+			throw new Error(`Could not find ${ what } in completions.ts`);
+
+
+		return index;
+	};
+
+	// The partial tag `<com`, where the tag name is still being typed. The patterns
+	// are anchored to the start of the line so that prose mentioning these tags in a
+	// comment cannot match instead.
+	const tagPosition = endOfLine(findLine(line => /^\s*<com$/.test(line), 'the partial tag `<com`'));
 	editor.selection = new vscode.Selection(tagPosition, tagPosition);
 	const tagLabels = await completionLabelsContaining('complete-me');
 
-	const propertyPosition = new vscode.Position(25, 6);
+	// The blank continuation line inside the open `<complete-me ...>` tag, where
+	// typing `.` asks for property completions.
+	const openTagLine = findLine(line => /^\s*<complete-me$/.test(line), 'the open `<complete-me>` tag');
+	const propertyPosition = endOfLine(openTagLine + 1);
 	editor.selection = new vscode.Selection(propertyPosition, propertyPosition);
 	await editor.edit(builder => builder.insert(editor.selection.active, '.'));
 	const propertyLabels = await completionLabelsContaining('.prop1');

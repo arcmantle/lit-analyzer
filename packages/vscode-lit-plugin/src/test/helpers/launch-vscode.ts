@@ -58,6 +58,7 @@ export async function collectObservations(target: ExtensionUnderTest = extension
 
 	try {
 		await runTests({
+			version:           '1.130.0',
 			extensionDevelopmentPath,
 			extensionTestsPath,
 			launchArgs:        [ path.join(packageRoot, 'src', 'test', 'fixtures'), `--user-data-dir=${ userDataDir }` ],

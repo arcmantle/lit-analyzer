@@ -20,12 +20,13 @@ declare global {
 	}
 }
 
-// These lines are used as a basis for testing completions, with hardcoded
-// line and character offsets in the test file. So if you change this file,
-// you'll likely need to update those offsets in ../simple-test.ts
+// The lines below are the basis for the completion tests. `collect-observations.ts`
+// finds them by content -- the partial tag `<com`, and the blank line inside the
+// open `<complete-me>` tag -- so adding or removing lines here is safe. Keep both
+// of those constructs intact.
 html`
 	<complete-me
-	  
+
 	></complete-me>
 	<com
 `;
