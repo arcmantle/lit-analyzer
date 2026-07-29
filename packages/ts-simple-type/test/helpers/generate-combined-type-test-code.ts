@@ -1,4 +1,4 @@
-import { TypescriptType, TypeTest } from "./type-test";
+import { TypescriptType, TypeTest } from "./type-test.js";
 
 let randomId = 100;
 

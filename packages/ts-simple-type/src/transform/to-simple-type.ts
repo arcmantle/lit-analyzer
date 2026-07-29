@@ -1,7 +1,8 @@
-import * as tsModule from "typescript";
-import { Declaration, Node, Signature, SignatureDeclaration, Symbol as ESSymbol, Type, TypeChecker } from "typescript";
-import { inspect } from "util";
-import { DEFAULT_TYPE_CACHE } from "../constants";
+import * as tsModule from 'typescript';
+import { Declaration, Node, Signature, SignatureDeclaration, Symbol as ESSymbol, Type, TypeChecker } from 'typescript';
+import { inspect } from 'util';
+
+import { DEFAULT_TYPE_CACHE } from '../constants.js';
 import {
 	isSimpleType,
 	SimpleType,
@@ -14,10 +15,10 @@ import {
 	SimpleTypeLiteral,
 	SimpleTypeMemberNamed,
 	SimpleTypeMethod,
-	SimpleTypeObject
-} from "../simple-type";
-import { getTypescriptModule } from "../ts-module";
-import { simplifySimpleTypes } from "../utils/simple-type-util";
+	SimpleTypeObject,
+} from '../simple-type.js';
+import { getTypescriptModule } from '../ts-module.js';
+import { simplifySimpleTypes } from '../utils/simple-type-util.js';
 import {
 	getDeclaration,
 	getModifiersFromDeclaration,
@@ -50,8 +51,8 @@ import {
 	isUndefined,
 	isUniqueESSymbol,
 	isUnknown,
-	isVoid
-} from "../utils/ts-util";
+	isVoid,
+} from '../utils/ts-util.js';
 
 export interface ToSimpleTypeOptions {
 	eager?: boolean;
@@ -59,10 +60,10 @@ export interface ToSimpleTypeOptions {
 }
 
 interface ToSimpleTypeInternalOptions {
-	cache: WeakMap<Type, SimpleType>;
+	cache:   WeakMap<Type, SimpleType>;
 	checker: TypeChecker;
-	ts: typeof tsModule;
-	eager?: boolean;
+	ts:      typeof tsModule;
+	eager?:  boolean;
 }
 
 /**
@@ -72,13 +73,11 @@ interface ToSimpleTypeInternalOptions {
  * @param options
  */
 export function toSimpleType(type: SimpleType, checker?: TypeChecker, options?: ToSimpleTypeOptions): SimpleType;
-export function toSimpleType(type: Node, checker: TypeChecker, options?: ToSimpleTypeOptions): SimpleType;
-export function toSimpleType(type: Type, checker: TypeChecker, options?: ToSimpleTypeOptions): SimpleType;
 export function toSimpleType(type: Type | Node | SimpleType, checker: TypeChecker, options?: ToSimpleTypeOptions): SimpleType;
 export function toSimpleType(type: Type | Node | SimpleType, checker?: TypeChecker, options: ToSimpleTypeOptions = {}): SimpleType {
-	if (isSimpleType(type)) {
+	if (isSimpleType(type))
 		return type;
-	}
+
 
 	checker = checker!;
 
@@ -91,14 +90,14 @@ export function toSimpleType(type: Type | Node | SimpleType, checker?: TypeCheck
 		checker,
 		eager: options.eager,
 		cache: options.cache || DEFAULT_TYPE_CACHE,
-		ts: getTypescriptModule()
+		ts:    getTypescriptModule(),
 	});
 }
 
 function toSimpleTypeCached(type: Type, options: ToSimpleTypeInternalOptions): SimpleType {
-	if (options.cache.has(type)) {
+	if (options.cache.has(type))
 		return options.cache.get(type)!;
-	}
+
 
 	// This function will resolve the type and assign the content to "target".
 	// This way we can cache "target" before calling "toSimpleTypeInternal" recursively
@@ -108,8 +107,9 @@ function toSimpleTypeCached(type: Type, options: ToSimpleTypeInternalOptions): S
 		const simpleTypeOverwrite = toSimpleTypeInternal(type, options);
 
 		// Strip undefined keys to make the output cleaner
-		Object.entries(simpleTypeOverwrite).forEach(([k, v]) => {
-			if (v == null) delete simpleTypeOverwrite[k as keyof typeof simpleTypeOverwrite];
+		Object.entries(simpleTypeOverwrite).forEach(([ k, v ]) => {
+			if (v == null)
+				delete simpleTypeOverwrite[k as keyof typeof simpleTypeOverwrite];
 		});
 
 		// Transfer properties on the simpleType to the placeholder
@@ -126,8 +126,10 @@ function toSimpleTypeCached(type: Type, options: ToSimpleTypeInternalOptions): S
 		resolveType(placeholder);
 
 		Object.freeze(placeholder);
+
 		return placeholder;
-	} else {
+	}
+	else {
 		const placeholder = {} as SimpleType;
 
 		// A function that only resolves the type once
@@ -144,38 +146,43 @@ function toSimpleTypeCached(type: Type, options: ToSimpleTypeInternalOptions): S
 		Object.defineProperty(placeholder, Symbol.toStringTag, {
 			get(): string {
 				resolveType(placeholder);
+
 				// Don't return any tag. Only use this function as a hook for calling "resolveType"
 				return undefined as never;
-			}
+			},
 		});
 
 		// Return a proxy with the purpose of resolving the type lazy
 		const proxy = new Proxy(placeholder, {
 			ownKeys(target: SimpleType) {
 				ensureResolved();
-				return [...Object.getOwnPropertyNames(target), ...Object.getOwnPropertySymbols(target)];
+
+				return [ ...Object.getOwnPropertyNames(target), ...Object.getOwnPropertySymbols(target) ];
 			},
 			has(target: SimpleType, p: PropertyKey) {
 				// Always return true if we test for "kind", but don't resolve the type
 				// This way "isSimpleType" (which checks for "kind") will succeed without resolving the type
-				if (p === "kind") {
+				if (p === 'kind')
 					return true;
-				}
+
 
 				ensureResolved();
+
 				return p in target;
 			},
 			getOwnPropertyDescriptor(target: SimpleType, p: keyof SimpleType) {
 				ensureResolved();
+
 				return Object.getOwnPropertyDescriptor(target, p);
 			},
 			get: (target: SimpleType, p: keyof SimpleType) => {
 				ensureResolved();
+
 				return target[p];
 			},
 			set: (target: SimpleType, p: keyof SimpleType) => {
-				throw new TypeError(`Cannot assign to read only property '${p}'`);
-			}
+				throw new TypeError(`Cannot assign to read only property '${ p }'`);
+			},
 		});
 
 		options.cache.set(type, proxy);
@@ -191,21 +198,21 @@ function toSimpleTypeCached(type: Type, options: ToSimpleTypeInternalOptions): S
  * @param type
  * @param options
  */
-function liftGenericType(type: Type, options: ToSimpleTypeInternalOptions): { generic: (target: SimpleType) => SimpleType; target: Type } | undefined {
+function liftGenericType(type: Type, options: ToSimpleTypeInternalOptions): { generic: (target: SimpleType) => SimpleType; target: Type; } | undefined {
 	// Check for alias reference
 	if (type.aliasSymbol != null) {
 		const aliasDeclaration = getDeclaration(type.aliasSymbol, options.ts);
 		const typeParameters = getTypeParameters(aliasDeclaration, options);
 
 		return {
-			target: type,
+			target:  type,
 			generic: target => {
 				// Lift the simple type to an ALIAS type.
 				const aliasType: SimpleTypeAlias = {
-					kind: "ALIAS",
-					name: type.aliasSymbol!.getName() || "",
+					kind: 'ALIAS',
+					name: type.aliasSymbol!.getName() || '',
 					target,
-					typeParameters
+					typeParameters,
 				};
 
 				// Lift the alias type if it uses generic arguments.
@@ -213,35 +220,35 @@ function liftGenericType(type: Type, options: ToSimpleTypeInternalOptions): { ge
 					const typeArguments = Array.from(type.aliasTypeArguments || []).map(t => toSimpleTypeCached(t, options));
 
 					return {
-						kind: "GENERIC_ARGUMENTS",
+						kind:   'GENERIC_ARGUMENTS',
 						target: aliasType,
-						typeArguments
+						typeArguments,
 					};
 				}
 
 				return target;
-			}
+			},
 		};
 	}
 
 	// Check if the type is a generic interface/class reference and lift it.
 	else if (isObject(type, options.ts) && isObjectTypeReference(type, options.ts) && type.typeArguments != null && type.typeArguments.length > 0) {
 		// Special case for array, tuple and promise, they are generic in themselves
-		if (isImplicitGeneric(type, options.checker, options.ts)) {
+		if (isImplicitGeneric(type, options.checker, options.ts))
 			return undefined;
-		}
+
 
 		return {
-			target: type.target,
+			target:  type.target,
 			generic: target => {
 				const typeArguments = Array.from(type.typeArguments || []).map(t => toSimpleTypeCached(t, options));
 
 				return {
-					kind: "GENERIC_ARGUMENTS",
+					kind: 'GENERIC_ARGUMENTS',
 					target,
-					typeArguments
+					typeArguments,
 				};
-			}
+			},
 		};
 	}
 
@@ -257,23 +264,23 @@ function toSimpleTypeInternal(type: Type, options: ToSimpleTypeInternalOptions):
 	let simpleType: SimpleType | undefined;
 
 	const generic = liftGenericType(type, options);
-	if (generic != null) {
+	if (generic != null)
 		type = generic.target;
-	}
+
 
 	if (isLiteral(type, ts)) {
 		const literalSimpleType = primitiveLiteralToSimpleType(type, checker, ts);
 		if (literalSimpleType != null) {
 			// Enum members
 			if (symbol != null && symbol.flags & ts.SymbolFlags.EnumMember) {
-				const parentSymbol = (symbol as ESSymbol & { parent: ESSymbol | undefined }).parent;
+				const parentSymbol = (symbol as ESSymbol & { parent: ESSymbol | undefined; }).parent;
 
 				if (parentSymbol != null) {
 					return {
-						name: name || "",
-						fullName: `${parentSymbol.name}.${name}`,
-						kind: "ENUM_MEMBER",
-						type: literalSimpleType
+						name:     name || '',
+						fullName: `${ parentSymbol.name }.${ name }`,
+						kind:     'ENUM_MEMBER',
+						type:     literalSimpleType,
 					};
 				}
 			}
@@ -285,90 +292,101 @@ function toSimpleTypeInternal(type: Type, options: ToSimpleTypeInternalOptions):
 
 	// Primitive types
 	else if (isString(type, ts)) {
-		simpleType = { kind: "STRING", name };
-	} else if (isNumber(type, ts)) {
-		simpleType = { kind: "NUMBER", name };
-	} else if (isBoolean(type, ts)) {
-		simpleType = { kind: "BOOLEAN", name };
-	} else if (isBigInt(type, ts)) {
-		simpleType = { kind: "BIG_INT", name };
-	} else if (isESSymbolLike(type, ts)) {
-		simpleType = { kind: "ES_SYMBOL", name };
-	} else if (isUndefined(type, ts)) {
-		simpleType = { kind: "UNDEFINED", name };
-	} else if (isNull(type, ts)) {
-		simpleType = { kind: "NULL", name };
-	} else if (isUnknown(type, ts)) {
-		simpleType = { kind: "UNKNOWN", name };
-	} else if (isVoid(type, ts)) {
-		simpleType = { kind: "VOID", name };
-	} else if (isNever(type, ts)) {
-		simpleType = { kind: "NEVER", name };
+		simpleType = { kind: 'STRING', name };
+	}
+	else if (isNumber(type, ts)) {
+		simpleType = { kind: 'NUMBER', name };
+	}
+	else if (isBoolean(type, ts)) {
+		simpleType = { kind: 'BOOLEAN', name };
+	}
+	else if (isBigInt(type, ts)) {
+		simpleType = { kind: 'BIG_INT', name };
+	}
+	else if (isESSymbolLike(type, ts)) {
+		simpleType = { kind: 'ES_SYMBOL', name };
+	}
+	else if (isUndefined(type, ts)) {
+		simpleType = { kind: 'UNDEFINED', name };
+	}
+	else if (isNull(type, ts)) {
+		simpleType = { kind: 'NULL', name };
+	}
+	else if (isUnknown(type, ts)) {
+		simpleType = { kind: 'UNKNOWN', name };
+	}
+	else if (isVoid(type, ts)) {
+		simpleType = { kind: 'VOID', name };
+	}
+	else if (isNever(type, ts)) {
+		simpleType = { kind: 'NEVER', name };
 	}
 
 	// Enum
 	else if (isEnum(type, ts) && type.isUnion()) {
 		simpleType = {
-			name: name || "",
-			kind: "ENUM",
-			types: type.types.map(t => toSimpleTypeCached(t, options) as SimpleTypeEnumMember)
+			name:  name || '',
+			kind:  'ENUM',
+			types: type.types.map(t => toSimpleTypeCached(t, options) as SimpleTypeEnumMember),
 		};
 	}
 
 	// Promise
 	else if (isPromise(type, checker, ts)) {
 		simpleType = {
-			kind: "PROMISE",
+			kind: 'PROMISE',
 			name,
-			type: toSimpleTypeCached(getTypeArguments(type, checker, ts)[0], options)
+			type: toSimpleTypeCached(getTypeArguments(type, checker, ts)[0], options),
 		};
 	}
 
 	// Unions and intersections
 	else if (type.isUnion()) {
 		simpleType = {
-			kind: "UNION",
+			kind:  'UNION',
 			types: simplifySimpleTypes(type.types.map(t => toSimpleTypeCached(t, options))),
-			name
+			name,
 		};
-	} else if (type.isIntersection()) {
+	}
+	else if (type.isIntersection()) {
 		simpleType = {
-			kind: "INTERSECTION",
+			kind:  'INTERSECTION',
 			types: simplifySimpleTypes(type.types.map(t => toSimpleTypeCached(t, options))),
-			name
+			name,
 		};
 	}
 
 	// Date
 	else if (isDate(type, ts)) {
 		simpleType = {
-			kind: "DATE",
-			name
+			kind: 'DATE',
+			name,
 		};
 	}
 
 	// Array
 	else if (isArray(type, checker, ts)) {
 		simpleType = {
-			kind: "ARRAY",
+			kind: 'ARRAY',
 			type: toSimpleTypeCached(getTypeArguments(type, checker, ts)[0], options),
-			name
+			name,
 		};
-	} else if (isTupleTypeReference(type, ts)) {
+	}
+	else if (isTupleTypeReference(type, ts)) {
 		const types = getTypeArguments(type, checker, ts);
 
 		const minLength = type.target.minLength;
 
 		simpleType = {
-			kind: "TUPLE",
-			rest: type.target.hasRestElement || false,
+			kind:    'TUPLE',
+			rest:    type.target.hasRestElement || false,
 			members: types.map((childType, i) => {
 				return {
 					optional: i >= minLength,
-					type: toSimpleTypeCached(childType, options)
+					type:     toSimpleTypeCached(childType, options),
 				};
 			}),
-			name
+			name,
 		};
 	}
 
@@ -384,13 +402,12 @@ function toSimpleTypeInternal(type: Type, options: ToSimpleTypeInternalOptions):
 
 		if (classDecl != null && ts.isClassDeclaration(classDecl)) {
 			const ctor = (() => {
-				const ctorSymbol = symbol != null && symbol.members != null ? symbol.members.get("__constructor" as never) : undefined;
+				const ctorSymbol = symbol != null && symbol.members != null ? symbol.members.get('__constructor' as never) : undefined;
 				if (ctorSymbol != null && symbol != null) {
 					const ctorDecl = ctorSymbol.declarations !== undefined && ctorSymbol.declarations?.length > 0 ? ctorSymbol.declarations[0] : ctorSymbol.valueDeclaration;
 
-					if (ctorDecl != null && ts.isConstructorDeclaration(ctorDecl)) {
+					if (ctorDecl != null && ts.isConstructorDeclaration(ctorDecl))
 						return getSimpleFunctionFromSignatureDeclaration(ctorDecl, options) as SimpleTypeFunction;
-					}
 				}
 			})();
 
@@ -407,13 +424,14 @@ function toSimpleTypeInternal(type: Type, options: ToSimpleTypeInternalOptions):
 					//
 					// See https://github.com/runem/web-component-analyzer/issues/60 for
 					// more info.
-					if (declaration == null) return null;
+					if (declaration == null)
+						return null;
 
 					return {
-						name: symbol.name,
-						optional: (symbol.flags & ts.SymbolFlags.Optional) !== 0,
+						name:      symbol.name,
+						optional:  (symbol.flags & ts.SymbolFlags.Optional) !== 0,
 						modifiers: getModifiersFromDeclaration(declaration, ts),
-						type: toSimpleTypeCached(checker.getTypeAtLocation(declaration), options)
+						type:      toSimpleTypeCached(checker.getTypeAtLocation(declaration), options),
 					} as SimpleTypeMemberNamed;
 				})
 				.filter((member): member is NonNullable<typeof member> => member != null);
@@ -421,22 +439,22 @@ function toSimpleTypeInternal(type: Type, options: ToSimpleTypeInternalOptions):
 			const typeParameters = getTypeParameters(getDeclaration(symbol, ts), options);
 
 			simpleType = {
-				kind: "CLASS",
+				kind: 'CLASS',
 				name,
 				call,
 				ctor,
 				typeParameters,
-				members
+				members,
 			};
 		}
 	}
 
 	// Interface
-	else if ((type.isClassOrInterface() || isObject(type, ts)) && !(symbol?.name === "Function")) {
+	else if ((type.isClassOrInterface() || isObject(type, ts)) && !(symbol?.name === 'Function')) {
 		// Handle the empty object
-		if (isObject(type, ts) && symbol?.name === "Object") {
+		if (isObject(type, ts) && symbol?.name === 'Object') {
 			return {
-				kind: "OBJECT"
+				kind: 'OBJECT',
 			};
 		}
 
@@ -444,10 +462,10 @@ function toSimpleTypeInternal(type: Type, options: ToSimpleTypeInternalOptions):
 			const declaration = getDeclaration(symbol, ts);
 
 			return {
-				name: symbol.name,
-				optional: (symbol.flags & ts.SymbolFlags.Optional) !== 0,
+				name:      symbol.name,
+				optional:  (symbol.flags & ts.SymbolFlags.Optional) !== 0,
 				modifiers: declaration != null ? getModifiersFromDeclaration(declaration, ts) : [],
-				type: toSimpleTypeCached(checker.getTypeAtLocation(symbol.valueDeclaration!), options)
+				type:      toSimpleTypeCached(checker.getTypeAtLocation(symbol.valueDeclaration!), options),
 			};
 		});
 
@@ -459,16 +477,16 @@ function toSimpleTypeInternal(type: Type, options: ToSimpleTypeInternalOptions):
 			(type.isClassOrInterface() && type.typeParameters != null ? type.typeParameters.map(t => toSimpleTypeCached(t, options) as SimpleTypeGenericParameter) : undefined) ||
 			(symbol != null ? getTypeParameters(getDeclaration(symbol, ts), options) : undefined);
 
-		let indexType: SimpleTypeInterface["indexType"] = {};
-		if (type.getStringIndexType()) {
-			indexType["STRING"] = toSimpleTypeCached(type.getStringIndexType()!, options);
-		}
-		if (type.getNumberIndexType()) {
-			indexType["NUMBER"] = toSimpleTypeCached(type.getNumberIndexType()!, options);
-		}
-		if (Object.keys(indexType).length === 0) {
+		let indexType: SimpleTypeInterface['indexType'] = {};
+		if (type.getStringIndexType())
+			indexType['STRING'] = toSimpleTypeCached(type.getStringIndexType()!, options);
+
+		if (type.getNumberIndexType())
+			indexType['NUMBER'] = toSimpleTypeCached(type.getNumberIndexType()!, options);
+
+		if (Object.keys(indexType).length === 0)
 			indexType = undefined;
-		}
+
 
 		// Simplify: if there is only a single "call" signature and nothing else, just return the call signature
 		/*if (call != null && members.length === 0 && ctor == null && indexType == null) {
@@ -476,20 +494,20 @@ function toSimpleTypeInternal(type: Type, options: ToSimpleTypeInternalOptions):
 		}*/
 
 		simpleType = {
-			kind: type.isClassOrInterface() ? "INTERFACE" : "OBJECT",
+			kind: type.isClassOrInterface() ? 'INTERFACE' : 'OBJECT',
 			typeParameters,
 			ctor,
 			members,
 			name,
 			indexType,
-			call
+			call,
 		} as SimpleTypeInterface | SimpleTypeObject;
 	}
 
 	// Handle "object" type
 	else if (isNonPrimitive(type, ts)) {
 		return {
-			kind: "NON_PRIMITIVE"
+			kind: 'NON_PRIMITIVE',
 		};
 	}
 
@@ -499,8 +517,8 @@ function toSimpleTypeInternal(type: Type, options: ToSimpleTypeInternalOptions):
 
 		if (simpleType == null) {
 			simpleType = {
-				kind: "FUNCTION",
-				name
+				kind: 'FUNCTION',
+				name,
 			};
 		}
 	}
@@ -508,32 +526,32 @@ function toSimpleTypeInternal(type: Type, options: ToSimpleTypeInternalOptions):
 	// Type Parameter
 	else if (type.isTypeParameter() && symbol != null) {
 		// This type
-		if (isThisType(type, ts) && symbol.valueDeclaration != null) {
+		if (isThisType(type, ts) && symbol.valueDeclaration != null)
 			return toSimpleTypeCached(checker.getTypeAtLocation(symbol.valueDeclaration), options);
-		}
+
 
 		const defaultType = type.getDefault();
 		const defaultSimpleType = defaultType != null ? toSimpleTypeCached(defaultType, options) : undefined;
 
 		simpleType = {
-			kind: "GENERIC_PARAMETER",
-			name: symbol.getName(),
-			default: defaultSimpleType
+			kind:    'GENERIC_PARAMETER',
+			name:    symbol.getName(),
+			default: defaultSimpleType,
 		} as SimpleTypeGenericParameter;
 	}
 
 	// If no type was found, return "ANY"
 	if (simpleType == null) {
 		simpleType = {
-			kind: "ANY",
-			name
+			kind: 'ANY',
+			name,
 		};
 	}
 
 	// Lift generic types and aliases if possible
-	if (generic != null) {
+	if (generic != null)
 		return generic.generic(simpleType);
-	}
+
 
 	return simpleType;
 }
@@ -541,42 +559,53 @@ function toSimpleTypeInternal(type: Type, options: ToSimpleTypeInternalOptions):
 function primitiveLiteralToSimpleType(type: Type, checker: TypeChecker, ts: typeof tsModule): SimpleTypeLiteral | undefined {
 	if (type.isNumberLiteral()) {
 		return {
-			kind: "NUMBER_LITERAL",
-			value: type.value
+			kind:  'NUMBER_LITERAL',
+			value: type.value,
 		};
-	} else if (type.isStringLiteral()) {
+	}
+	else if (type.isStringLiteral()) {
 		return {
-			kind: "STRING_LITERAL",
-			value: type.value
+			kind:  'STRING_LITERAL',
+			value: type.value,
 		};
-	} else if (isBooleanLiteral(type, ts)) {
+	}
+	else if (isBooleanLiteral(type, ts)) {
 		// See https://github.com/Microsoft/TypeScript/issues/22269 for more information
 		return {
-			kind: "BOOLEAN_LITERAL",
-			value: checker.typeToString(type) === "true"
+			kind:  'BOOLEAN_LITERAL',
+			value: checker.typeToString(type) === 'true',
 		};
-	} else if (isBigIntLiteral(type, ts)) {
+	}
+	else if (isBigIntLiteral(type, ts)) {
 		return {
-			kind: "BIG_INT_LITERAL",
+			kind:  'BIG_INT_LITERAL',
 			/* global BigInt */
-			value: BigInt(`${type.value.negative ? "-" : ""}${type.value.base10Value}`)
+			value: BigInt(`${ type.value.negative ? '-' : '' }${ type.value.base10Value }`),
 		};
-	} else if (isUniqueESSymbol(type, ts)) {
+	}
+	else if (isUniqueESSymbol(type, ts)) {
 		return {
-			kind: "ES_SYMBOL_UNIQUE",
-			value: String(type.escapedName) || Math.floor(Math.random() * 100000000).toString()
+			kind:  'ES_SYMBOL_UNIQUE',
+			value: String(type.escapedName) || Math.floor(Math.random() * 100000000).toString(),
 		};
 	}
 }
 
 function getSimpleFunctionFromCallSignatures(signatures: readonly Signature[], options: ToSimpleTypeInternalOptions, fallbackName?: string): SimpleTypeFunction | SimpleTypeMethod | undefined {
-	if (signatures.length === 0) {
+	if (signatures.length === 0)
 		return undefined;
-	}
+
 
 	const signature = signatures[signatures.length - 1];
 
 	const signatureDeclaration = signature.getDeclaration();
+
+	// A signature the checker synthesizes has no declaration behind it, which
+	// `getDeclaration()` reports as undefined despite its non-optional return
+	// type. Treat that as "not convertible" rather than trusting the typing.
+	if (signatureDeclaration == null)
+		return undefined;
+
 
 	return getSimpleFunctionFromSignatureDeclaration(signatureDeclaration, options, fallbackName);
 }
@@ -584,7 +613,7 @@ function getSimpleFunctionFromCallSignatures(signatures: readonly Signature[], o
 function getSimpleFunctionFromSignatureDeclaration(
 	signatureDeclaration: SignatureDeclaration,
 	options: ToSimpleTypeInternalOptions,
-	fallbackName?: string
+	fallbackName?: string,
 ): SimpleTypeFunction | SimpleTypeMethod | undefined {
 	const { checker } = options;
 
@@ -594,11 +623,11 @@ function getSimpleFunctionFromSignatureDeclaration(
 		const argType = checker.getTypeAtLocation(parameterDecl);
 
 		return {
-			name: parameterDecl.name.getText() || fallbackName,
-			optional: parameterDecl.questionToken != null,
-			type: toSimpleTypeCached(argType, options),
-			rest: parameterDecl.dotDotDotToken != null,
-			initializer: parameterDecl.initializer != null
+			name:        parameterDecl.name.getText() || fallbackName,
+			optional:    parameterDecl.questionToken != null,
+			type:        toSimpleTypeCached(argType, options),
+			rest:        parameterDecl.dotDotDotToken != null,
+			initializer: parameterDecl.initializer != null,
 		} as SimpleTypeFunctionParameter;
 	});
 
@@ -606,7 +635,7 @@ function getSimpleFunctionFromSignatureDeclaration(
 
 	const type = checker.getTypeAtLocation(signatureDeclaration);
 
-	const kind = isMethod(type, options.ts) ? "METHOD" : "FUNCTION";
+	const kind = isMethod(type, options.ts) ? 'METHOD' : 'FUNCTION';
 
 	const signature = checker.getSignatureFromDeclaration(signatureDeclaration);
 
@@ -619,18 +648,20 @@ function getSimpleFunctionFromSignatureDeclaration(
 
 function getRealSymbolName(symbol: ESSymbol, ts: typeof tsModule): string | undefined {
 	const name = symbol.getName();
-	if (name != null && [ts.InternalSymbolName.Type, ts.InternalSymbolName.Object, ts.InternalSymbolName.Function].includes(name as never)) {
+	if (name != null && [ ts.InternalSymbolName.Type, ts.InternalSymbolName.Object, ts.InternalSymbolName.Function ].includes(name as never))
 		return undefined;
-	}
+
 
 	return name;
 }
 
 function getTypeParameters(obj: ESSymbol | Declaration | undefined, options: ToSimpleTypeInternalOptions): SimpleTypeGenericParameter[] | undefined {
-	if (obj == null) return undefined;
+	if (obj == null)
+		return undefined;
 
 	if (isSymbol(obj)) {
 		const decl = getDeclaration(obj, options.ts);
+
 		return getTypeParameters(decl, options);
 	}
 
@@ -645,8 +676,8 @@ function getTypeParameters(obj: ESSymbol | Declaration | undefined, options: ToS
 		return obj.typeParameters == null
 			? undefined
 			: Array.from(obj.typeParameters)
-					.map(td => options.checker.getTypeAtLocation(td))
-					.map(t => toSimpleTypeCached(t, options) as SimpleTypeGenericParameter);
+				.map(td => options.checker.getTypeAtLocation(td))
+				.map(t => toSimpleTypeCached(t, options) as SimpleTypeGenericParameter);
 	}
 
 	return undefined;
@@ -658,5 +689,5 @@ function log(input: unknown, d = 3) {
 	const str = inspect(input, { depth: d, colors: true });
 
 	// eslint-disable-next-line no-console
-	console.log(str.replace(/checker: {[\s\S]*?}/g, ""));
+	console.log(str.replace(/checker: {[\s\S]*?}/g, ''));
 }

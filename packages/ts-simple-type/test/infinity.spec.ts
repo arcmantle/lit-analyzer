@@ -1,12 +1,13 @@
-import test from "ava";
+import { expect, test } from "vitest";
 import * as ts from "typescript";
 import { Program } from "typescript";
-import { deserializeSimpleType, serializeSimpleType, SimpleType } from "../src";
-import { isAssignableToSimpleType } from "../src/is-assignable/is-assignable-to-simple-type";
-import { toSimpleType } from "../src/transform/to-simple-type";
-import { programWithVirtualFiles } from "./helpers/analyze-text";
+import { deserializeSimpleType, serializeSimpleType, SimpleType } from "../src/index.js";
+import { isAssignableToSimpleType } from "../src/is-assignable/is-assignable-to-simple-type.js";
+import { toSimpleType } from "../src/transform/to-simple-type.js";
+import { programWithVirtualFiles } from "./helpers/analyze-text.js";
 
-test("Large, recursive types that match on structure but not reference should not continue forever", t => {
+
+test("Large, recursive types that match on structure but not reference should not continue forever", () => {
 	const program = programWithVirtualFiles("", { includeLib: true });
 
 	const typeA = getLibTypeWithName("MouseEvent", program)!;
@@ -16,7 +17,7 @@ test("Large, recursive types that match on structure but not reference should no
 
 	const result = isAssignableToSimpleType(typeA, typeB);
 
-	t.truthy(result);
+	expect(result).toBeTruthy();
 });
 
 export function getLibTypeWithName(name: string, program: Program): SimpleType | undefined {

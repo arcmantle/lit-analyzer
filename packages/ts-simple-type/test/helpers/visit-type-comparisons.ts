@@ -1,7 +1,7 @@
 import { CompilerOptions, isBinaryExpression, isVariableDeclaration, Node, Program, SyntaxKind, Type, TypeChecker } from "typescript";
-import { programWithVirtualFiles } from "./analyze-text";
-import { generateCombinedTypeTestCode } from "./generate-combined-type-test-code";
-import { TypescriptType } from "./type-test";
+import { programWithVirtualFiles } from "./analyze-text.js";
+import { generateCombinedTypeTestCode } from "./generate-combined-type-test-code.js";
+import { TypescriptType } from "./type-test.js";
 
 /**
  * Visits all type comparisons by traversing the AST recursively
@@ -53,7 +53,7 @@ export function visitComparisonsInTestCode(testCode: string, compilerOptions: Co
 		const typeAString = checker.typeToString(typeA);
 		const typeBString = checker.typeToString(typeB);
 
-		const assignable = (checker as any).isTypeAssignableTo(typeB, typeA);
+		const assignable = checker.isTypeAssignableTo(typeB, typeA);
 
 		callback({ line, typeA, typeB, typeAString, typeBString, program, checker, assignable, nodeA, nodeB });
 	});

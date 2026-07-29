@@ -1,5 +1,5 @@
-import { testAssignments } from "./helpers/test-assignment";
-import { TypescriptType } from "./helpers/type-test";
+import { testAssignments } from "./helpers/test-assignment.js";
+import { TypescriptType } from "./helpers/type-test.js";
 
 export const BOOLEAN_TYPES: TypescriptType[] = [`Boolean`, `true`, `false`, `boolean`];
 

@@ -1,11 +1,11 @@
 import { writeFileSync } from "fs";
 import { join } from "path";
-import { generateCombinedTypeTestCode } from "./generate-combined-type-test-code";
-import { markdownTable } from "./markdown-util";
-import { TypescriptType } from "./type-test";
-import { visitComparisonsInTestCode } from "./visit-type-comparisons";
+import { generateCombinedTypeTestCode } from "./generate-combined-type-test-code.js";
+import { markdownTable } from "./markdown-util.js";
+import { TypescriptType } from "./type-test.js";
+import { visitComparisonsInTestCode } from "./visit-type-comparisons.js";
 import { CompilerOptions } from "typescript";
-import { PRIMITIVE_TYPES, SPECIAL_TYPES } from "../type-combinations.spec";
+import { PRIMITIVE_TYPES, SPECIAL_TYPES } from "../type-combinations.spec.js";
 
 /**
  * Generates a markdown table that shows assignability between types.

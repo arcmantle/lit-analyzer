@@ -1,7 +1,7 @@
-import { DEFAULT_GENERIC_PARAMETER_TYPE } from "../constants";
-import { SimpleType } from "../simple-type";
-import { and, or } from "./list-util";
-import { extendTypeParameterMap } from "./simple-type-util";
+import { DEFAULT_GENERIC_PARAMETER_TYPE } from '../constants.js';
+import { SimpleType } from '../simple-type.js';
+import { and, or } from './list-util.js';
+import { extendTypeParameterMap } from './simple-type-util.js';
 
 export function validateType(type: SimpleType, callback: (simpleType: SimpleType) => boolean | undefined | void): boolean {
 	return validateTypeInternal(type, callback, new Map());
@@ -10,33 +10,35 @@ export function validateType(type: SimpleType, callback: (simpleType: SimpleType
 function validateTypeInternal(type: SimpleType, callback: (simpleType: SimpleType) => boolean | undefined | void, parameterMap: Map<string, SimpleType>): boolean {
 	const res = callback(type);
 
-	if (res != null) {
+	if (res != null)
 		return res;
-	}
+
 
 	switch (type.kind) {
-		case "ENUM":
-		case "UNION": {
-			return or(type.types, childType => validateTypeInternal(childType, callback, parameterMap));
-		}
+	case 'ENUM':
+	case 'UNION': {
+		return or(type.types, childType => validateTypeInternal(childType, callback, parameterMap));
+	}
 
-		case "ALIAS": {
-			return validateTypeInternal(type.target, callback, parameterMap);
-		}
+	case 'ALIAS': {
+		return validateTypeInternal(type.target, callback, parameterMap);
+	}
 
-		case "INTERSECTION": {
-			return and(type.types, childType => validateTypeInternal(childType, callback, parameterMap));
-		}
+	case 'INTERSECTION': {
+		return and(type.types, childType => validateTypeInternal(childType, callback, parameterMap));
+	}
 
-		case "GENERIC_PARAMETER": {
-			const resolvedArgument = parameterMap?.get(type.name);
-			return validateTypeInternal(resolvedArgument || DEFAULT_GENERIC_PARAMETER_TYPE, callback, parameterMap);
-		}
+	case 'GENERIC_PARAMETER': {
+		const resolvedArgument = parameterMap?.get(type.name);
 
-		case "GENERIC_ARGUMENTS": {
-			const updatedGenericParameterMap = extendTypeParameterMap(type, parameterMap);
-			return validateTypeInternal(type.target, callback, updatedGenericParameterMap);
-		}
+		return validateTypeInternal(resolvedArgument || DEFAULT_GENERIC_PARAMETER_TYPE, callback, parameterMap);
+	}
+
+	case 'GENERIC_ARGUMENTS': {
+		const updatedGenericParameterMap = extendTypeParameterMap(type, parameterMap);
+
+		return validateTypeInternal(type.target, callback, updatedGenericParameterMap);
+	}
 	}
 
 	return false;

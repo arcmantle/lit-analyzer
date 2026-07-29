@@ -23,9 +23,6 @@ export default [
 			'packages/*/index.*',
 			'packages/vscode-lit-plugin/built/**',
 			'**/.vscode-test/**',
-			// Subtreed upstream source (git subtree add), kept verbatim so its
-			// history stays inspectable. Follows its own repo's style, not ours.
-			'packages/ts-simple-type/**',
 		],
 	},
 ];

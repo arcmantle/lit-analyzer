@@ -1,6 +1,12 @@
 import { existsSync, readFileSync } from "fs";
+import { createRequire } from "module";
 import { dirname, join } from "path";
 import { CompilerOptions, createProgram, createSourceFile, getDefaultLibFileName, ModuleKind, Program, ScriptKind, ScriptTarget, SourceFile, sys } from "typescript";
+
+// This package is ESM, so there is no ambient `require`. `createRequire` gives
+// the one thing the old `require.resolve` was used for: locating the installed
+// TypeScript so its bundled `lib.*.d.ts` files can be read.
+const requireFrom = createRequire(import.meta.url);
 
 export interface ITestFile {
 	fileName: string;
@@ -58,7 +64,7 @@ export function programWithVirtualFiles(inputFiles: TestFile[] | TestFile, { opt
 				}
 
 				if (includeLib) {
-					fileName = fileName.match(/[/\\]/) ? fileName : join(dirname(require.resolve("typescript")), fileName);
+					fileName = fileName.match(/[/\\]/) ? fileName : join(dirname(requireFrom.resolve("typescript")), fileName);
 				}
 
 				if (existsSync(fileName)) {

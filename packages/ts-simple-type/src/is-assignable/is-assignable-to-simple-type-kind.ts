@@ -1,10 +1,11 @@
-import { Type, TypeChecker } from "typescript";
-import { isSimpleType, SimpleType, SimpleTypeKind } from "../simple-type";
-import { toSimpleType } from "../transform/to-simple-type";
-import { or } from "../utils/list-util";
-import { isTypeChecker } from "../utils/ts-util";
-import { validateType } from "../utils/validate-type";
-import { SimpleTypeKindComparisonOptions } from "./simple-type-comparison-options";
+import { Type, TypeChecker } from 'typescript';
+
+import { isSimpleType, SimpleType, SimpleTypeKind } from '../simple-type.js';
+import { toSimpleType } from '../transform/to-simple-type.js';
+import { or } from '../utils/list-util.js';
+import { isTypeChecker } from '../utils/ts-util.js';
+import { validateType } from '../utils/validate-type.js';
+import { SimpleTypeKindComparisonOptions } from './simple-type-comparison-options.js';
 
 /**
  * Checks if a simple type kind is assignable to a type.
@@ -20,40 +21,40 @@ export function isAssignableToSimpleTypeKind(
 	type: Type | SimpleType,
 	kind: SimpleTypeKind | SimpleTypeKind[],
 	optionsOrChecker?: TypeChecker | SimpleTypeKindComparisonOptions,
-	options: SimpleTypeKindComparisonOptions = {}
+	options: SimpleTypeKindComparisonOptions = {},
 ): boolean {
 	const checker = isTypeChecker(optionsOrChecker) ? optionsOrChecker : undefined;
 	options = (isTypeChecker(optionsOrChecker) || optionsOrChecker == null ? options : optionsOrChecker) || {};
 
-	if (!isSimpleType(type)) {
+	if (!isSimpleType(type))
 		return isAssignableToSimpleTypeKind(toSimpleType(type, checker!), kind, options);
-	}
+
 
 	return validateType(type, simpleType => {
-		if (Array.isArray(kind) && or(kind, itemKind => simpleType.kind === itemKind)) {
+		if (Array.isArray(kind) && or(kind, itemKind => simpleType.kind === itemKind))
 			return true;
-		}
 
-		if (simpleType.kind === kind) {
+
+		if (simpleType.kind === kind)
 			return true;
-		}
+
 
 		switch (simpleType.kind) {
-			// Make sure that an object without members are treated as ANY
-			case "OBJECT": {
-				if (simpleType.members == null || simpleType.members.length === 0) {
-					return isAssignableToSimpleTypeKind({ kind: "ANY" }, kind, options);
-				}
-				break;
-			}
+		// Make sure that an object without members are treated as ANY
+		case 'OBJECT': {
+			if (simpleType.members == null || simpleType.members.length === 0)
+				return isAssignableToSimpleTypeKind({ kind: 'ANY' }, kind, options);
 
-			case "ANY": {
-				return options.matchAny || false;
-			}
+			break;
+		}
 
-			case "ENUM_MEMBER": {
-				return isAssignableToSimpleTypeKind(simpleType.type, kind, options);
-			}
+		case 'ANY': {
+			return options.matchAny || false;
+		}
+
+		case 'ENUM_MEMBER': {
+			return isAssignableToSimpleTypeKind(simpleType.type, kind, options);
+		}
 		}
 	});
 }

@@ -1,17 +1,33 @@
 {
-	"include": ["src", "test"],
+	"extends": "../../tsconfig.json",
+	"include": [
+		"./src"
+	],
+	"exclude": [
+		"node_modules"
+	],
 	"compilerOptions": {
-		"incremental": true,
-		"target": "ES2018",
-		"module": "commonjs",
-		"lib": ["esnext"],
-		"outDir": "./dist",
-		"downlevelIteration": true,
-		"strict": true,
-		"noImplicitAny": true,
+		"module": "node16",
+		"moduleResolution": "node16",
+		"target": "es2022",
+		"outDir": "./lib",
+		"lib": [
+			"es2022"
+		],
+		"types": [
+			"node"
+		],
+		"sourceMap": true,
+		"rootDir": "./src",
 		"allowUnusedLabels": false,
 		"allowUnreachableCode": false,
-		"noUnusedLocals": true,
-		"pretty": true
+		// Vendored upstream source. Its visitor callbacks use an implicit
+		// `return undefined` as the "no result, keep traversing" signal, and
+		// `simple-type-to-string.ts` has one documented intentional switch
+		// fallthrough. Both are deliberate upstream, so these two checks are
+		// relaxed for this package only rather than rewriting its logic.
+		"noImplicitReturns": false,
+		"noFallthroughCasesInSwitch": false,
+		"tsBuildInfoFile": "./.tsbuildinfo"
 	}
 }
