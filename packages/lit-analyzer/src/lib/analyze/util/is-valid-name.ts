@@ -31,9 +31,9 @@ export function isValidAttributeName(input: string): boolean {
  * @return {boolean}
  */
 export function isValidCustomElementName(input: string): boolean {
-	return input.includes("-") && input.toLowerCase() === input && hasOnlyValidCharacters(input);
+	return input.includes('-') && input.toLowerCase() === input && hasOnlyValidCharacters(input);
 }
 
 export function isCustomElementTagName(tagName: string): boolean {
-	return tagName.includes("-");
+	return tagName.includes('-');
 }

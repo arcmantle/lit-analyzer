@@ -1,6 +1,6 @@
-import { SimpleType, SimpleTypeUnion } from "ts-simple-type";
+import { SimpleType, SimpleTypeUnion } from 'ts-simple-type';
 
-const PRIMITIVE_STRING_ARRAY_TYPE_BRAND = Symbol("PRIMITIVE_STRING_ARRAY_TYPE");
+const PRIMITIVE_STRING_ARRAY_TYPE_BRAND = Symbol('PRIMITIVE_STRING_ARRAY_TYPE');
 
 /**
  * Brands a union as a primitive array type
@@ -9,7 +9,7 @@ const PRIMITIVE_STRING_ARRAY_TYPE_BRAND = Symbol("PRIMITIVE_STRING_ARRAY_TYPE");
  */
 export function makePrimitiveArrayType(union: SimpleTypeUnion): SimpleTypeUnion {
 	const extendedUnion: SimpleTypeUnion = {
-		...union
+		...union,
 	};
 
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -24,5 +24,5 @@ export function makePrimitiveArrayType(union: SimpleTypeUnion): SimpleTypeUnion 
  */
 export function isPrimitiveArrayType(simpleType: SimpleType): simpleType is SimpleTypeUnion {
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	return simpleType.kind === "UNION" && (simpleType as any)[PRIMITIVE_STRING_ARRAY_TYPE_BRAND] === true;
+	return simpleType.kind === 'UNION' && (simpleType as any)[PRIMITIVE_STRING_ARRAY_TYPE_BRAND] === true;
 }

@@ -5,11 +5,24 @@
 				"name": "ts-lit-plugin",
 				"logging": "verbose",
 				"strict": true,
-				"cssTemplateTags": ["css", "scss", "sass"],
-				"htmlTemplateTags": ["html", "md"],
-				"globalTags": ["my-external-tag"],
-				"globalAttributes": ["my-attribute"],
-				"globalEvents": ["my-event"],
+				"cssTemplateTags": [
+					"css",
+					"scss",
+					"sass"
+				],
+				"htmlTemplateTags": [
+					"html",
+					"md"
+				],
+				"globalTags": [
+					"my-external-tag"
+				],
+				"globalAttributes": [
+					"my-attribute"
+				],
+				"globalEvents": [
+					"my-event"
+				],
 				"customHtmlData": {
 					"version": 1,
 					"tags": [
@@ -45,10 +58,13 @@
 			}
 		],
 		"experimentalDecorators": true,
-		"target": "es5",
+		"target": "es2019",
 		"module": "commonjs",
 		"allowJs": true,
-		"lib": ["esnext", "dom"],
+		"lib": [
+			"esnext",
+			"dom"
+		],
 		"strict": true,
 		"esModuleInterop": true,
 		"noEmit": true

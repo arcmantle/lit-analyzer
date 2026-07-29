@@ -1,27 +1,28 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-import { LanguageService } from "typescript";
-import { logger } from "./logger.js";
-import { TsLitPlugin } from "./ts-lit-plugin/ts-lit-plugin.js";
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-function-type, prefer-rest-params */
+import { LanguageService } from 'typescript';
+
+import { logger } from './logger.js';
+import { TsLitPlugin } from './ts-lit-plugin/ts-lit-plugin.js';
 
 export function decorateLanguageService(languageService: LanguageService, plugin: TsLitPlugin): LanguageService {
 	const languageServiceExtension: Partial<LanguageService> = {
-		getCompletionsAtPosition: plugin.getCompletionsAtPosition.bind(plugin),
-		getCompletionEntryDetails: plugin.getCompletionEntryDetails.bind(plugin),
-		getSemanticDiagnostics: plugin.getSemanticDiagnostics.bind(plugin),
-		getDefinitionAndBoundSpan: plugin.getDefinitionAndBoundSpan.bind(plugin),
-		getCodeFixesAtPosition: plugin.getCodeFixesAtPosition.bind(plugin),
-		getQuickInfoAtPosition: plugin.getQuickInfoAtPosition.bind(plugin),
+		getCompletionsAtPosition:   plugin.getCompletionsAtPosition.bind(plugin),
+		getCompletionEntryDetails:  plugin.getCompletionEntryDetails.bind(plugin),
+		getSemanticDiagnostics:     plugin.getSemanticDiagnostics.bind(plugin),
+		getDefinitionAndBoundSpan:  plugin.getDefinitionAndBoundSpan.bind(plugin),
+		getCodeFixesAtPosition:     plugin.getCodeFixesAtPosition.bind(plugin),
+		getQuickInfoAtPosition:     plugin.getQuickInfoAtPosition.bind(plugin),
 		getJsxClosingTagAtPosition: plugin.getJsxClosingTagAtPosition.bind(plugin),
-		getRenameInfo: plugin.getRenameInfo.bind(plugin),
-		findRenameLocations: plugin.findRenameLocations.bind(plugin),
-		getSignatureHelpItems: plugin.getSignatureHelpItems.bind(plugin)
+		getRenameInfo:              plugin.getRenameInfo.bind(plugin),
+		findRenameLocations:        plugin.findRenameLocations.bind(plugin),
+		getSignatureHelpItems:      plugin.getSignatureHelpItems.bind(plugin),
 		//getOutliningSpans: plugin.getOutliningSpans.bind(plugin)
 		//getFormattingEditsForRange: plugin.getFormattingEditsForRange.bind(plugin)
 	};
 
 	const decoratedLanguageService: LanguageService = {
 		...languageService,
-		...languageServiceExtension
+		...languageServiceExtension,
 	};
 
 	// Make sure to call the old service if config.disable === true
@@ -29,10 +30,10 @@ export function decorateLanguageService(languageService: LanguageService, plugin
 		const newMethod: Function | undefined = decoratedLanguageService[methodName]!;
 		const oldMethod: Function | undefined = languageService[methodName];
 
-		decoratedLanguageService[methodName] = function (): any {
-			if (plugin.context.config.disable && oldMethod != null) {
+		decoratedLanguageService[methodName] = function(): any {
+			if (plugin.context.config.disable && oldMethod != null)
 				return oldMethod(...arguments);
-			}
+
 
 			return wrapTryCatch(newMethod, oldMethod, methodName)(...arguments);
 		};
@@ -48,6 +49,7 @@ export function decorateLanguageService(languageService: LanguageService, plugin
 			(decoratedLanguageService as any)[methodName] = wrapLog(methodName, method, plugin);
 		}
 	}
+
 	return decoratedLanguageService;
 }
 
@@ -62,15 +64,16 @@ function wrapTryCatch<T extends Function>(newMethod: T, oldMethod: T | undefined
 	return ((...args: unknown[]) => {
 		try {
 			return newMethod(...args);
-		} catch (e) {
+		}
+		catch (e) {
 			let details: string;
 
-			if (e instanceof Error) {
-				details = `${e.message}\n${e.stack}`;
-			} else {
+			if (e instanceof Error)
+				details = `${ e.message }\n${ e.stack }`;
+			else
 				details = String(e);
-			}
-			logger.error(`Error [${methodName}]: ${details}`, e);
+
+			logger.error(`Error [${ methodName }]: ${ details }`, e);
 
 			// Always return the old method if anything fails
 			// Don't crash everything :-)
@@ -87,21 +90,22 @@ function wrapTryCatch<T extends Function>(newMethod: T, oldMethod: T | undefined
  */
 function wrapLog<T extends Function>(name: string, proxy: T, plugin: TsLitPlugin): T {
 	return ((...args: unknown[]) => {
-		if (plugin.context.config.logging === "verbose") {
+		if (plugin.context.config.logging === 'verbose') {
 			/**/
 			const startTime = Date.now();
-			logger.verbose(`[${name}] Called`);
+			logger.verbose(`[${ name }] Called`);
 			const result = proxy(...args);
 			const time = Math.round(Date.now() - startTime);
 			logger.verbose(
-				`[${name}] Finished (${time}ms): Result: `,
-				result == null ? "undefined" : Array.isArray(result) ? `Array: ${result.length} length` : "defined"
+				`[${ name }] Finished (${ time }ms): Result: `,
+				result == null ? 'undefined' : Array.isArray(result) ? `Array: ${ result.length } length` : 'defined',
 			);
-			if (time > 100) {
-				logger.warn(`[${name}] took long time to complete! (${time}ms)`);
-			}
+			if (time > 100)
+				logger.warn(`[${ name }] took long time to complete! (${ time }ms)`);
+
 			return result;
-		} else {
+		}
+		else {
 			return proxy(...args);
 		}
 	}) as unknown as T;

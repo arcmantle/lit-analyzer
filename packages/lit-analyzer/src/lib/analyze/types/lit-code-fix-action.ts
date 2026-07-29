@@ -1,6 +1,6 @@
-import { SourceFileRange } from "./range.js";
+import { SourceFileRange } from './range.js';
 
 export interface LitCodeFixAction {
-	range: SourceFileRange;
+	range:   SourceFileRange;
 	newText: string;
 }

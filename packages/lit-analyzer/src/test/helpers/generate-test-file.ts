@@ -1,16 +1,16 @@
-import { TestFile } from "./compile-files.js";
+import { TestFile } from './compile-files.js';
 
-export function makeElement({ properties, slots }: { properties?: string[]; slots?: string[] }): TestFile {
+export function makeElement({ properties, slots }: { properties?: string[]; slots?: string[]; }): TestFile {
 	return {
-		fileName: "my-element.ts",
-		text: `
+		fileName: 'my-element.ts',
+		text:     `
 		/**
-${(slots || []).map(slot => `        * @slot ${slot}`)}
+${ (slots || []).map(slot => `        * @slot ${ slot }`) }
 		 */
 		class MyElement extends HTMLElement {
-			${(properties || []).map(prop => `@property() ${prop}`).join("\n")}
+			${ (properties || []).map(prop => `@property() ${ prop }`).join('\n') }
 		};
 		customElements.define("my-element", MyElement);	
-		`
+		`,
 	};
 }

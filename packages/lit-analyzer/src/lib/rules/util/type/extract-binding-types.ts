@@ -5,20 +5,24 @@ import {
 	SimpleTypeEnumMember,
 	SimpleTypeString,
 	SimpleTypeStringLiteral,
-	toSimpleType
-} from "ts-simple-type";
-import { Expression, Type, TypeChecker } from "typescript";
-import { HtmlNodeAttrAssignment, HtmlNodeAttrAssignmentKind } from "../../../analyze/types/html-node/html-node-attr-assignment-types.js";
-import { HtmlNodeAttrKind } from "../../../analyze/types/html-node/html-node-attr-types.js";
-import { RuleModuleContext } from "../../../analyze/types/rule/rule-module-context.js";
-import { getDirective } from "../directive/get-directive.js";
+	toSimpleType,
+} from 'ts-simple-type';
+import { Expression, Type, TypeChecker } from 'typescript';
 
-const cache = new WeakMap<HtmlNodeAttrAssignment, { typeA: SimpleType; typeB: SimpleType }>();
+import { HtmlNodeAttrAssignment, HtmlNodeAttrAssignmentKind } from '../../../analyze/types/html-node/html-node-attr-assignment-types.js';
+import { HtmlNodeAttrKind } from '../../../analyze/types/html-node/html-node-attr-types.js';
+import { RuleModuleContext } from '../../../analyze/types/rule/rule-module-context.js';
+import { getDirective } from '../directive/get-directive.js';
 
-export function extractBindingTypes(assignment: HtmlNodeAttrAssignment, context: RuleModuleContext): { typeA: SimpleType; typeB: SimpleType } {
-	if (cache.has(assignment)) {
+const cache: WeakMap<HtmlNodeAttrAssignment, { typeA: SimpleType; typeB: SimpleType; }> = new WeakMap();
+
+export function extractBindingTypes(
+	assignment: HtmlNodeAttrAssignment,
+	context: RuleModuleContext,
+): { typeA: SimpleType; typeB: SimpleType; } {
+	if (cache.has(assignment))
 		return cache.get(assignment)!;
-	}
+
 
 	const checker = context.program.getTypeChecker();
 
@@ -34,6 +38,7 @@ export function extractBindingTypes(assignment: HtmlNodeAttrAssignment, context:
 	// Convert typeB to SimpleType
 	let typeB = (() => {
 		const type = isSimpleType(typeBInferred) ? typeBInferred : toSimpleType(typeBInferred, checker);
+
 		return shouldRelaxTypeB ? relaxType(type) : type;
 	})();
 
@@ -41,14 +46,14 @@ export function extractBindingTypes(assignment: HtmlNodeAttrAssignment, context:
 	const htmlAttrTarget = context.htmlStore.getHtmlAttrTarget(assignment.htmlAttr);
 	//if (htmlAttrTarget == null) return [];
 
-	const typeA = htmlAttrTarget == null ? ({ kind: "ANY" } as SimpleType) : htmlAttrTarget.getType();
+	const typeA = htmlAttrTarget == null ? ({ kind: 'ANY' } as SimpleType) : htmlAttrTarget.getType();
 
 	// Handle directives
 	const directive = getDirective(assignment, context);
 	const directiveType = directive?.actualType?.();
-	if (directiveType != null) {
+	if (directiveType != null)
 		typeB = directiveType;
-	}
+
 
 	// Cache the result
 	const result = { typeA, typeB };
@@ -59,26 +64,25 @@ export function extractBindingTypes(assignment: HtmlNodeAttrAssignment, context:
 
 export function inferTypeFromAssignment(assignment: HtmlNodeAttrAssignment, checker: TypeChecker): SimpleType | Type {
 	switch (assignment.kind) {
-		case HtmlNodeAttrAssignmentKind.STRING:
-			return { kind: "STRING_LITERAL", value: assignment.value } as SimpleTypeStringLiteral;
-		case HtmlNodeAttrAssignmentKind.BOOLEAN:
-			return { kind: "BOOLEAN_LITERAL", value: true } as SimpleTypeBooleanLiteral;
-		case HtmlNodeAttrAssignmentKind.ELEMENT_EXPRESSION:
-			return checker.getTypeAtLocation(assignment.expression);
-		case HtmlNodeAttrAssignmentKind.EXPRESSION:
-			return checker.getTypeAtLocation(assignment.expression);
-		case HtmlNodeAttrAssignmentKind.MIXED:
-			// Event bindings always looks at the first expression
-			// Therefore, return the type of the first expression
-			if (assignment.htmlAttr.kind === HtmlNodeAttrKind.EVENT_LISTENER) {
-				const expression = assignment.values.find((val): val is Expression => typeof val !== "string");
+	case HtmlNodeAttrAssignmentKind.STRING:
+		return { kind: 'STRING_LITERAL', value: assignment.value } as SimpleTypeStringLiteral;
+	case HtmlNodeAttrAssignmentKind.BOOLEAN:
+		return { kind: 'BOOLEAN_LITERAL', value: true } as SimpleTypeBooleanLiteral;
+	case HtmlNodeAttrAssignmentKind.ELEMENT_EXPRESSION:
+		return checker.getTypeAtLocation(assignment.expression);
+	case HtmlNodeAttrAssignmentKind.EXPRESSION:
+		return checker.getTypeAtLocation(assignment.expression);
+	case HtmlNodeAttrAssignmentKind.MIXED:
+		// Event bindings always looks at the first expression
+		// Therefore, return the type of the first expression
+		if (assignment.htmlAttr.kind === HtmlNodeAttrKind.EVENT_LISTENER) {
+			const expression = assignment.values.find((val): val is Expression => typeof val !== 'string');
 
-				if (expression != null) {
-					return checker.getTypeAtLocation(expression);
-				}
-			}
+			if (expression != null)
+				return checker.getTypeAtLocation(expression);
+		}
 
-			return { kind: "STRING" } as SimpleTypeString;
+		return { kind: 'STRING' } as SimpleTypeString;
 	}
 }
 
@@ -89,61 +93,61 @@ export function inferTypeFromAssignment(assignment: HtmlNodeAttrAssignment, chec
  */
 export function relaxType(type: SimpleType): SimpleType {
 	switch (type.kind) {
-		case "INTERSECTION":
-		case "UNION":
-			return {
-				...type,
-				types: type.types.map(t => relaxType(t))
-			};
+	case 'INTERSECTION':
+	case 'UNION':
+		return {
+			...type,
+			types: type.types.map(t => relaxType(t)),
+		};
 
-		case "ENUM":
-			return {
-				...type,
-				types: type.types.map(t => relaxType(t) as SimpleTypeEnumMember)
-			};
+	case 'ENUM':
+		return {
+			...type,
+			types: type.types.map(t => relaxType(t) as SimpleTypeEnumMember),
+		};
 
-		case "ARRAY":
-			return {
-				...type,
-				type: relaxType(type.type)
-			};
+	case 'ARRAY':
+		return {
+			...type,
+			type: relaxType(type.type),
+		};
 
-		case "PROMISE":
-			return {
-				...type,
-				type: relaxType(type.type)
-			};
+	case 'PROMISE':
+		return {
+			...type,
+			type: relaxType(type.type),
+		};
 
-		case "INTERFACE":
-		case "OBJECT":
-		case "FUNCTION":
-		case "CLASS":
-			return {
-				kind: "ANY"
-			};
+	case 'INTERFACE':
+	case 'OBJECT':
+	case 'FUNCTION':
+	case 'CLASS':
+		return {
+			kind: 'ANY',
+		};
 
-		case "NUMBER_LITERAL":
-			return { kind: "NUMBER" };
-		case "STRING_LITERAL":
-			return { kind: "STRING" };
-		case "BOOLEAN_LITERAL":
-			return { kind: "BOOLEAN" };
-		case "BIG_INT_LITERAL":
-			return { kind: "BIG_INT" };
+	case 'NUMBER_LITERAL':
+		return { kind: 'NUMBER' };
+	case 'STRING_LITERAL':
+		return { kind: 'STRING' };
+	case 'BOOLEAN_LITERAL':
+		return { kind: 'BOOLEAN' };
+	case 'BIG_INT_LITERAL':
+		return { kind: 'BIG_INT' };
 
-		case "ENUM_MEMBER":
-			return {
-				...type,
-				type: relaxType(type.type)
-			} as SimpleTypeEnumMember;
+	case 'ENUM_MEMBER':
+		return {
+			...type,
+			type: relaxType(type.type),
+		} as SimpleTypeEnumMember;
 
-		case "ALIAS":
-			return {
-				...type,
-				target: relaxType(type.target)
-			};
+	case 'ALIAS':
+		return {
+			...type,
+			target: relaxType(type.target),
+		};
 
-		default:
-			return type;
+	default:
+		return type;
 	}
 }

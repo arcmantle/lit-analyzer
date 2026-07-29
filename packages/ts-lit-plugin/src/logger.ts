@@ -1,17 +1,18 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { appendFileSync, writeFileSync } from "fs";
-import { DefaultLitAnalyzerLogger, LitAnalyzerLoggerLevel } from "lit-analyzer";
-import { join } from "path";
-import { inspect } from "util";
-import * as tsServer from "typescript/lib/tsserverlibrary.js";
+import { appendFileSync, writeFileSync } from 'fs';
+import { DefaultLitAnalyzerLogger, LitAnalyzerLoggerLevel } from 'lit-analyzer';
+import { join } from 'path';
+import * as tsServer from 'typescript/lib/tsserverlibrary.js';
+import { inspect } from 'util';
 
-const LOG_FILE_NAME = "lit-plugin.log";
+const LOG_FILE_NAME = 'lit-plugin.log';
 
 /**
  * This class takes care of logging while fixing issues regarding the type script service logger.
  * It logs to a file called "log.txt" in the root of this project.
  */
 export class Logger extends DefaultLitAnalyzerLogger {
+
 	level = LitAnalyzerLoggerLevel.OFF;
 
 	private tsLogger: tsServer.server.Logger | undefined = undefined;
@@ -67,9 +68,8 @@ export class Logger extends DefaultLitAnalyzerLogger {
 	 * Resets the log file.
 	 */
 	resetLogs(): void {
-		if (this.level > LitAnalyzerLoggerLevel.OFF) {
-			writeFileSync(this.logPath, "");
-		}
+		if (this.level > LitAnalyzerLoggerLevel.OFF)
+			writeFileSync(this.logPath, '');
 	}
 
 	/**
@@ -81,23 +81,28 @@ export class Logger extends DefaultLitAnalyzerLogger {
 		if (this.level >= level) {
 			const prefix = this.getLogLevelPrefix(level);
 			const message = inspect(args, {
-				colors: true,
-				depth: 6,
-				breakLength: 50,
-				maxArrayLength: 10
+				colors:         true,
+				depth:          6,
+				breakLength:    50,
+				maxArrayLength: 10,
 			});
 			try {
-				appendFileSync(this.logPath, `${prefix}${message}\n`);
-			} catch {
+				appendFileSync(this.logPath, `${ prefix }${ message }\n`);
+			}
+			catch {
 				// ignore
 			}
-			this.tsLogger?.msg(`[ts-lit-plugin] ${message}`, level === LitAnalyzerLoggerLevel.ERROR ? tsServer.server.Msg.Err : tsServer.server.Msg.Info);
+			this.tsLogger?.msg(
+				`[ts-lit-plugin] ${ message }`,
+				level === LitAnalyzerLoggerLevel.ERROR ? tsServer.server.Msg.Err : tsServer.server.Msg.Info,
+			);
 		}
 	}
 
 	private getLogLevelPrefix(level: LitAnalyzerLoggerLevel) {
-		return `[${new Date().toLocaleString()}] [${this.severityPrefix(level)}] `;
+		return `[${ new Date().toLocaleString() }] [${ this.severityPrefix(level) }] `;
 	}
+
 }
 
 export const logger = new Logger();

@@ -7,41 +7,42 @@ import {
 	HtmlProp,
 	HtmlSlot,
 	HtmlTag,
-	NamedHtmlDataCollection
-} from "../../parse/parse-html-data/html-tag.js";
+	NamedHtmlDataCollection,
+} from '../../parse/parse-html-data/html-tag.js';
 
 export class HtmlDataSource {
-	private _globalTags = new Map<string, HtmlTag>();
+
+	private _globalTags: Map<string, HtmlTag> = new Map();
 	get globalTags(): ReadonlyMap<string, HtmlTag> {
 		return this._globalTags;
 	}
 
-	private _globalAttributes = new Map<string, HtmlAttr>();
+	private _globalAttributes: Map<string, HtmlAttr> = new Map();
 	get globalAttributes(): ReadonlyMap<string, HtmlAttr> {
 		return this._globalAttributes;
 	}
 
-	private _globalEvents = new Map<string, HtmlEvent>();
+	private _globalEvents: Map<string, HtmlEvent> = new Map();
 	get globalEvents(): ReadonlyMap<string, HtmlEvent> {
 		return this._globalEvents;
 	}
 
-	private _globalProperties = new Map<string, HtmlProp>();
+	private _globalProperties: Map<string, HtmlProp> = new Map();
 	get globalProperties(): ReadonlyMap<string, HtmlProp> {
 		return this._globalProperties;
 	}
 
-	private _globalSlots = new Map<string, HtmlSlot>();
+	private _globalSlots: Map<string, HtmlSlot> = new Map();
 	get globalSlots(): ReadonlyMap<string, HtmlSlot> {
 		return this._globalSlots;
 	}
 
-	private _globalCssParts = new Map<string, HtmlCssPart>();
+	private _globalCssParts: Map<string, HtmlCssPart> = new Map();
 	get globalCssParts(): ReadonlyMap<string, HtmlCssPart> {
 		return this._globalCssParts;
 	}
 
-	private _globalCssProperties = new Map<string, HtmlCssProperty>();
+	private _globalCssProperties: Map<string, HtmlCssProperty> = new Map();
 	get globalCssProperties(): ReadonlyMap<string, HtmlCssProperty> {
 		return this._globalCssProperties;
 	}
@@ -79,18 +80,29 @@ export class HtmlDataSource {
 
 		if (collection.global?.cssProperties != null) {
 			// For now, lowercase all names because "parse5" doesn't distinguish when parsing
-			collection.global.cssProperties.forEach(cssProperty => this._globalCssProperties.set(cssProperty.name.toLowerCase(), cssProperty));
+			collection.global.cssProperties.forEach(cssProperty =>
+				this._globalCssProperties.set(cssProperty.name.toLowerCase(), cssProperty));
 		}
 	}
 
-	forgetCollection({ tags, global: { events, attributes, slots, properties, cssParts, cssProperties } }: NamedHtmlDataCollection): void {
-		if (tags != null) tags.forEach(tagName => this._globalTags.delete(tagName.toLowerCase()));
-		if (events != null) events.forEach(eventName => this._globalEvents.delete(eventName.toLowerCase()));
-		if (attributes != null) attributes.forEach(attrName => this._globalAttributes.delete(attrName.toLowerCase()));
-		if (properties != null) properties.forEach(propName => this._globalProperties.delete(propName.toLowerCase()));
-		if (slots != null) slots.forEach(slotName => this._globalSlots.delete(slotName.toLowerCase()));
-		if (cssParts != null) cssParts.forEach(partName => this._globalCssParts.delete(partName.toLowerCase()));
-		if (cssProperties != null) cssProperties.forEach(cssPropName => this._globalCssProperties.delete(cssPropName.toLowerCase()));
+	forgetCollection({
+		tags,
+		global: { events, attributes, slots, properties, cssParts, cssProperties },
+	}: NamedHtmlDataCollection): void {
+		if (tags != null)
+			tags.forEach(tagName => this._globalTags.delete(tagName.toLowerCase()));
+		if (events != null)
+			events.forEach(eventName => this._globalEvents.delete(eventName.toLowerCase()));
+		if (attributes != null)
+			attributes.forEach(attrName => this._globalAttributes.delete(attrName.toLowerCase()));
+		if (properties != null)
+			properties.forEach(propName => this._globalProperties.delete(propName.toLowerCase()));
+		if (slots != null)
+			slots.forEach(slotName => this._globalSlots.delete(slotName.toLowerCase()));
+		if (cssParts != null)
+			cssParts.forEach(partName => this._globalCssParts.delete(partName.toLowerCase()));
+		if (cssProperties != null)
+			cssProperties.forEach(cssPropName => this._globalCssProperties.delete(cssPropName.toLowerCase()));
 	}
 
 	getGlobalTag(tagName: string): HtmlTag | undefined {
@@ -120,4 +132,5 @@ export class HtmlDataSource {
 	getGlobalCssProperty(propName: string): HtmlCssProperty | undefined {
 		return this._globalCssProperties.get(propName.toLowerCase());
 	}
+
 }

@@ -1,36 +1,33 @@
 export function* iterableFlatten<T>(...iterables: Iterable<T>[]): Iterable<T> {
 	for (const iterable of iterables) {
-		for (const item of iterable) {
+		for (const item of iterable)
 			yield item;
-		}
 	}
 }
 
 export function* iterableMap<T, U>(iterable: Iterable<T>, map: (item: T) => U): Iterable<U> {
-	for (const item of iterable) {
+	for (const item of iterable)
 		yield map(item);
-	}
 }
 
 export function* iterableFilter<T>(iterable: Iterable<T>, filter: (item: T) => boolean): Iterable<T> {
 	for (const item of iterable) {
-		if (filter(item)) {
+		if (filter(item))
 			yield item;
-		}
 	}
 }
 
 export function iterableFind<T>(iterable: Iterable<T>, match: (item: T) => boolean): T | undefined {
 	for (const item of iterable) {
-		if (match(item)) {
+		if (match(item))
 			return item;
-		}
 	}
+
 	return;
 }
 
 export function* iterableUnique<T, U>(iterable: Iterable<T>, on: (item: T) => U): Iterable<T> {
-	const unique = new Set<U>();
+	const unique: Set<U> = new Set();
 	for (const item of iterable) {
 		const u = on(item);
 		if (!unique.has(u)) {
@@ -45,13 +42,13 @@ export function iterableDefined<T>(iterable: (T | undefined | null)[]): T[] {
 }
 
 export function iterableFirst<T>(iterable: Iterator<T> | Set<T> | Map<unknown, T> | undefined): T | undefined {
-	if (iterable == null) {
+	if (iterable == null)
 		return iterable;
-	}
 
-	if (iterable instanceof Map || iterable instanceof Set) {
+
+	if (iterable instanceof Map || iterable instanceof Set)
 		return iterableFirst(iterable.values());
-	}
+
 
 	return iterable.next().value;
 }

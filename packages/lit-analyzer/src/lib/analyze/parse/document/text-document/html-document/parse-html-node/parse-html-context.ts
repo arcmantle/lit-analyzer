@@ -1,9 +1,10 @@
-import { Expression } from "typescript";
-import { Range } from "../../../../../types/range.js";
-import { HtmlDocument } from "../html-document.js";
+import { Expression } from 'typescript';
+
+import { Range } from '../../../../../types/range.js';
+import { HtmlDocument } from '../html-document.js';
 
 export interface ParseHtmlContext {
-	html: string;
+	html:     string;
 	document: HtmlDocument;
 	getPartsAtOffsetRange(range: Range): (string | Expression)[];
 }

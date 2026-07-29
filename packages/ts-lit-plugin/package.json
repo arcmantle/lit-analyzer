@@ -4,6 +4,9 @@
 	"description": "Typescript plugin that adds type checking and code completion to lit-html",
 	"author": "runem",
 	"license": "MIT",
+	"engines": {
+		"node": ">=24"
+	},
 	"repository": {
 		"type": "git",
 		"url": "https://github.com/runem/lit-analyzer.git"
@@ -22,31 +25,11 @@
 	],
 	"scripts": {
 		"watch": "tsc --watch",
-		"build": "wireit",
-		"test": "wireit",
+		"build": "tsc --build --pretty",
+		"rebuild": "tsc --build --force --pretty",
+		"prepack": "pnpm run rebuild",
+		"test": "pnpm run build",
 		"readme": "readme generate -i readme.blueprint.md -c readme.config.json"
-	},
-	"wireit": {
-		"build": {
-			"dependencies": [
-				"../lit-analyzer:build"
-			],
-			"command": "tsc --build --pretty",
-			"files": [
-				"src/**/*",
-				"tsconfig.json"
-			],
-			"output": [
-				"lib",
-				"./tsbuildinfo"
-			],
-			"clean": "if-file-deleted"
-		},
-		"test": {
-			"dependencies": [
-				"build"
-			]
-		}
 	},
 	"main": "index.js",
 	"files": [
@@ -54,15 +37,13 @@
 		"/html-documentation/"
 	],
 	"dependencies": {
-		"lit-analyzer": "^2.0.1",
+		"lit-analyzer": "workspace:*",
 		"web-component-analyzer": "^2.0.0"
 	},
 	"devDependencies": {
-		"@types/node": "^14.0.13",
-		"esbuild": "^0.14.34",
+		"@types/node": "^24.0.0",
 		"rimraf": "^3.0.2",
-		"typescript": "~5.2.2",
-		"wireit": "^0.1.1"
+		"typescript": "catalog:"
 	},
 	"contributors": [
 		{
@@ -80,5 +61,6 @@
 			"img": "https://joeschmoe.io/api/v1/random",
 			"url": "https://github.com/runem/lit-analyzer/blob/master/CONTRIBUTING.md"
 		}
-	]
+	],
+	"type": "commonjs"
 }

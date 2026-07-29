@@ -1,6 +1,7 @@
-import { DefaultLitAnalyzerContext, LitAnalyzer, LitAnalyzerConfig, LitAnalyzerContext, makeConfig } from "lit-analyzer";
-import ts, { Diagnostic } from "typescript";
-import { translateDiagnostics } from "./ts-lit-plugin/translate/translate-diagnostics.js";
+import { DefaultLitAnalyzerContext, LitAnalyzer, LitAnalyzerConfig, LitAnalyzerContext, makeConfig } from 'lit-analyzer';
+import ts, { Diagnostic } from 'typescript';
+
+import { translateDiagnostics } from './ts-lit-plugin/translate/translate-diagnostics.js';
 
 // See https://github.com/bazelbuild/rules_typescript/blob/master/internal/tsc_wrapped/plugin_api.ts
 interface DiagnosticPlugin {
@@ -13,17 +14,18 @@ interface DiagnosticPlugin {
  * the ts-lit-plugin checks as part of bazel compilation.
  */
 export class Plugin implements DiagnosticPlugin {
-	public readonly name = "lit";
 
-	private readonly context: LitAnalyzerContext;
+	readonly name = 'lit';
+
+	private readonly context:  LitAnalyzerContext;
 	private readonly analyzer: LitAnalyzer;
 
 	constructor(program: ts.Program, config: LitAnalyzerConfig) {
-		this.name = "lit";
+		this.name = 'lit';
 		const context = new DefaultLitAnalyzerContext({
 			getProgram() {
 				return program;
-			}
+			},
 		});
 		context.updateConfig(makeConfig(config));
 		this.context = context;
@@ -41,6 +43,8 @@ export class Plugin implements DiagnosticPlugin {
 				diagnostic.category = ts.DiagnosticCategory.Error;
 			}
 		}
+
 		return diagnostics;
 	}
+
 }

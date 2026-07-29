@@ -1,21 +1,21 @@
-import { RuleModule } from "../analyze/types/rule/rule-module.js";
-import { findParent, getNodeIdentifier } from "../analyze/util/ast-util.js";
-import { iterableFind } from "../analyze/util/iterable-util.js";
-import { rangeFromNode } from "../analyze/util/range-util.js";
+import { RuleModule } from '../analyze/types/rule/rule-module.js';
+import { findParent, getNodeIdentifier } from '../analyze/util/ast-util.js';
+import { iterableFind } from '../analyze/util/iterable-util.js';
+import { rangeFromNode } from '../analyze/util/range-util.js';
 
 /**
  * This rule validates that legacy Polymer attribute bindings are not used.
  */
 const rule: RuleModule = {
-	id: "no-missing-element-type-definition",
+	id:   'no-missing-element-type-definition',
 	meta: {
-		priority: "low"
+		priority: 'low',
 	},
 	visitComponentDefinition(definition, context) {
 		// Don't run this rule on non-typescript files and declaration files
-		if (context.file.isDeclarationFile || !context.file.fileName.endsWith(".ts")) {
+		if (context.file.isDeclarationFile || !context.file.fileName.endsWith('.ts'))
 			return;
-		}
+
 
 		// Try to find the tag name node on "interface HTMLElementTagNameMap"
 		const htmlElementTagNameMapTagNameNode = iterableFind(
@@ -23,20 +23,24 @@ const rule: RuleModule = {
 			node =>
 				findParent(
 					node,
-					node => context.ts.isInterfaceDeclaration(node) && context.ts.isModuleBlock(node.parent) && node.name.getText() === "HTMLElementTagNameMap"
-				) != null
+					node => context.ts.isInterfaceDeclaration(node)
+						&& context.ts.isModuleBlock(node.parent)
+						&& node.name.getText() === 'HTMLElementTagNameMap',
+				) != null,
 		);
 
 		// Don't continue if the node was found
-		if (htmlElementTagNameMapTagNameNode != null) {
+		if (htmlElementTagNameMapTagNameNode != null)
 			return;
-		}
+
 
 		// Find the identifier node
-		const declarationIdentifier = definition.declaration != null ? getNodeIdentifier(definition.declaration.node, context.ts) : undefined;
-		if (declarationIdentifier == null) {
+		const declarationIdentifier = definition.declaration != null
+			? getNodeIdentifier(definition.declaration.node, context.ts)
+			: undefined;
+		if (declarationIdentifier == null)
 			return;
-		}
+
 
 		// Only report diagnostic if the tag is not built in,
 		const tag = context.htmlStore.getHtmlTag(definition.tagName);
@@ -44,23 +48,23 @@ const rule: RuleModule = {
 		if (!tag?.builtIn) {
 			context.report({
 				location: rangeFromNode(declarationIdentifier),
-				message: `'${definition.tagName}' has not been registered on HTMLElementTagNameMap`,
-				fix: () => {
+				message:  `'${ definition.tagName }' has not been registered on HTMLElementTagNameMap`,
+				fix:      () => {
 					return {
-						message: `Register '${definition.tagName}' on HTMLElementTagNameMap`,
+						message: `Register '${ definition.tagName }' on HTMLElementTagNameMap`,
 						actions: [
 							{
-								kind: "extendGlobalDeclaration",
-								file: context.file,
-								name: "HTMLElementTagNameMap",
-								newMembers: [`"${definition.tagName}": ${declarationIdentifier.text}`]
-							}
-						]
+								kind:       'extendGlobalDeclaration',
+								file:       context.file,
+								name:       'HTMLElementTagNameMap',
+								newMembers: [ `"${ definition.tagName }": ${ declarationIdentifier.text }` ],
+							},
+						],
 					};
-				}
+				},
 			});
 		}
-	}
+	},
 };
 
 export default rule;

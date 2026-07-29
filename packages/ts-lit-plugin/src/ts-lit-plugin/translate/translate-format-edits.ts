@@ -1,6 +1,7 @@
-import { LitFormatEdit } from "lit-analyzer";
-import * as ts from "typescript";
-import { translateRange } from "./translate-range.js";
+import { LitFormatEdit } from 'lit-analyzer';
+import * as ts from 'typescript';
+
+import { translateRange } from './translate-range.js';
 
 export function translateFormatEdits(formatEdits: LitFormatEdit[]): ts.TextChange[] {
 	return formatEdits.map(formatEdit => translateFormatEdit(formatEdit));
@@ -9,6 +10,6 @@ export function translateFormatEdits(formatEdits: LitFormatEdit[]): ts.TextChang
 function translateFormatEdit(formatEdit: LitFormatEdit): ts.TextChange {
 	return {
 		newText: formatEdit.newText,
-		span: translateRange(formatEdit.range)
+		span:    translateRange(formatEdit.range),
 	};
 }

@@ -1,8 +1,16 @@
-import { Expression } from "typescript";
-import { VirtualAstDocument } from "./virtual-ast-document.js";
+import { Expression } from 'typescript';
+
+import { VirtualAstDocument } from './virtual-ast-document.js';
 
 export class VirtualAstCssDocument extends VirtualAstDocument {
-	protected substituteExpression(length: number, expression: Expression, prev: string, next: string | undefined, _index: number): string {
+
+	protected substituteExpression(
+		length: number,
+		expression: Expression,
+		prev: string,
+		next: string | undefined,
+		_index: number,
+	): string {
 		const hasLeftColon = prev.match(/:[^;{]*\${$/) != null;
 		const hasRightColon = next != null && next.match(/^}\s*:\s+/) != null;
 		const hasRightSemicolon = next != null && next.match(/^}\s*;/) != null;
@@ -15,8 +23,9 @@ export class VirtualAstCssDocument extends VirtualAstDocument {
 		//       ${unsafeCSS("color: red)};
 		//     }
 		if (hasRightSemicolon && !hasLeftColon) {
-			const prefix = "$_:_";
-			return `${prefix}${"_".repeat(Math.max(0, length - prefix.length))}`.slice(0, length);
+			const prefix = '$_:_';
+
+			return `${ prefix }${ '_'.repeat(Math.max(0, length - prefix.length)) }`.slice(0, length);
 		}
 
 		// If there is "%" to the right of this substitution, replace with a number, because the parser expects a number unit
@@ -25,7 +34,7 @@ export class VirtualAstCssDocument extends VirtualAstDocument {
 		//        transform-origin: ${x}% ${y}%;
 		//      }
 		else if (hasRightPercentage) {
-			return "0".repeat(length);
+			return '0'.repeat(length);
 		}
 
 		// If there is a ": " to the right of this substitution, replace it with an identifier
@@ -34,10 +43,11 @@ export class VirtualAstCssDocument extends VirtualAstDocument {
 		//         ${unsafeCSS("color")}: red
 		//       }
 		else if (hasRightColon) {
-			return `$${"_".repeat(length - 1)}`;
+			return `$${ '_'.repeat(length - 1) }`;
 		}
 
 		// Else replace with an identifier "_"
-		return "_".repeat(length);
+		return '_'.repeat(length);
 	}
+
 }

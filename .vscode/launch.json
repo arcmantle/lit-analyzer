@@ -1,16 +1,22 @@
 {
-    "version": "0.2.0",
-    "configurations": [
-      {
-        "name": "Extension Tests",
-        "type": "extensionHost",
-        "request": "launch",
-        "runtimeExecutable": "${execPath}",
-        "args": [
-          "--extensionDevelopmentPath=${workspaceFolder}/packages/vscode-lit-plugin",
-          "--extensionTestsPath=${workspaceFolder}/packages/vscode-lit-plugin/out/test/scripts/mocha-driver.js"
-        ],
-        "outFiles": ["${workspaceFolder}/packages/vscode-lit-plugin/out/test/**/*.js"]
-      }
-    ]
-  }
+	"version": "0.2.0",
+	"configurations": [
+		{
+			"name": "Extension Tests",
+			"type": "extensionHost",
+			"request": "launch",
+			"runtimeExecutable": "${execPath}",
+			"args": [
+				"${workspaceFolder}/packages/vscode-lit-plugin/src/test/fixtures",
+				"--extensionDevelopmentPath=${workspaceFolder}/packages/vscode-lit-plugin/built",
+				"--extensionTestsPath=${workspaceFolder}/packages/vscode-lit-plugin/out/test/scripts/collect-observations.js"
+			],
+			"outFiles": [
+				"${workspaceFolder}/packages/vscode-lit-plugin/out/test/**/*.js"
+			],
+			"env": {
+				"LIT_PLUGIN_OBSERVATIONS": "${workspaceFolder}/packages/vscode-lit-plugin/out/observations.json"
+			}
+		}
+	]
+}

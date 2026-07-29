@@ -1,13 +1,14 @@
-import { IP5CommentNode, IP5DocumentFragmentNode, IP5NodeBase, IP5TagNode, IP5TextNode, P5Node } from "./parse-html-types.js";
+import { IP5CommentNode, IP5DocumentFragmentNode, IP5NodeBase, IP5TagNode, IP5TextNode, P5Node } from './parse-html-types.js';
 
-const { parseFragment } = require("parse5");
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const { parseFragment } = require('parse5');
 
 /**
  * Returns if a p5Node is a tag node.
  * @param node
  */
 export function isTagNode(node: P5Node): node is IP5TagNode {
-	return !node.nodeName.includes("#");
+	return !node.nodeName.includes('#');
 }
 
 /**
@@ -15,7 +16,7 @@ export function isTagNode(node: P5Node): node is IP5TagNode {
  * @param node
  */
 export function isDocumentFragmentNode(node: IP5NodeBase): node is IP5DocumentFragmentNode {
-	return node.nodeName === "#document-fragment";
+	return node.nodeName === '#document-fragment';
 }
 
 /**
@@ -23,7 +24,7 @@ export function isDocumentFragmentNode(node: IP5NodeBase): node is IP5DocumentFr
  * @param node
  */
 export function isTextNode(node: P5Node): node is IP5TextNode {
-	return node.nodeName === "#text";
+	return node.nodeName === '#text';
 }
 
 /**
@@ -31,7 +32,7 @@ export function isTextNode(node: P5Node): node is IP5TextNode {
  * @param node
  */
 export function isCommentNode(node: P5Node): node is IP5CommentNode {
-	return node.nodeName === "#comment";
+	return node.nodeName === '#comment';
 }
 
 /**

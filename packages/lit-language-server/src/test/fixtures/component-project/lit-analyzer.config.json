@@ -1,0 +1,6 @@
+{
+	"rules": {
+		"no-unknown-property": "on",
+		"no-unknown-tag-name": "on"
+	}
+}

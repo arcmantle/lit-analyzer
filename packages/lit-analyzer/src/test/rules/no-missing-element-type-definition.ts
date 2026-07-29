@@ -1,6 +1,6 @@
-import { getDiagnostics } from "../helpers/analyze.js";
-import { hasDiagnostic, hasNoDiagnostics } from "../helpers/assert.js";
-import { tsTest } from "../helpers/ts-test.js";
+import { getDiagnostics } from '../helpers/analyze.js';
+import { hasDiagnostic, hasNoDiagnostics } from '../helpers/assert.js';
+import { tsTest } from '../helpers/ts-test.js';
 
 tsTest("'no-missing-element-type-definition' reports diagnostic when element is not in HTMLElementTagNameMap", t => {
 	const { diagnostics } = getDiagnostics(
@@ -9,11 +9,11 @@ tsTest("'no-missing-element-type-definition' reports diagnostic when element is 
 		customElements.define("my-element", MyElement)
 	`,
 		{
-			rules: { "no-missing-element-type-definition": true }
-		}
+			rules: { 'no-missing-element-type-definition': true },
+		},
 	);
 
-	hasDiagnostic(t, diagnostics, "no-missing-element-type-definition");
+	hasDiagnostic(t, diagnostics, 'no-missing-element-type-definition');
 });
 
 tsTest("'no-missing-element-type-definition' reports no diagnostic when element is not in HTMLElementTagNameMap", t => {
@@ -28,8 +28,8 @@ tsTest("'no-missing-element-type-definition' reports no diagnostic when element 
 		}
 	`,
 		{
-			rules: { "no-missing-element-type-definition": true }
-		}
+			rules: { 'no-missing-element-type-definition': true },
+		},
 	);
 
 	hasNoDiagnostics(t, diagnostics);

@@ -1,14 +1,14 @@
-import { TextDocument } from "../parse/document/text-document/text-document.js";
-import { DocumentOffset } from "../types/range.js";
+import { TextDocument } from '../parse/document/text-document/text-document.js';
+import { DocumentOffset } from '../types/range.js';
 
 export interface DocumentPositionContext {
-	text: string;
-	offset: DocumentOffset;
-	word: string;
-	leftWord: string;
-	rightWord: string;
+	text:       string;
+	offset:     DocumentOffset;
+	word:       string;
+	leftWord:   string;
+	rightWord:  string;
 	beforeWord: string;
-	afterWord: string;
+	afterWord:  string;
 }
 
 /**
@@ -22,17 +22,17 @@ export function getPositionContextInDocument(document: TextDocument, offset: Doc
 	const stopChar = /[/=<>\s"${}():]/;
 
 	const leftWord = grabWordInDirection({
-		direction: "left",
+		direction:   'left',
 		startOffset: offset,
 		stopChar,
-		text
+		text,
 	});
 
 	const rightWord = grabWordInDirection({
-		direction: "right",
+		direction:   'right',
 		startOffset: offset,
 		stopChar,
-		text
+		text,
 	});
 
 	const word = leftWord + rightWord;
@@ -47,7 +47,7 @@ export function getPositionContextInDocument(document: TextDocument, offset: Doc
 		leftWord,
 		rightWord,
 		beforeWord,
-		afterWord
+		afterWord,
 	};
 }
 
@@ -63,22 +63,26 @@ export function grabWordInDirection({
 	startOffset,
 	stopChar,
 	direction,
-	text
+	text,
 }: {
-	stopChar: RegExp;
-	direction: "left" | "right";
-	text: string;
+	stopChar:    RegExp;
+	direction:   'left' | 'right';
+	text:        string;
 	startOffset: DocumentOffset;
 }): string {
-	const dir = direction === "left" ? -1 : 1;
+	const dir = direction === 'left' ? -1 : 1;
 	let curPosition = startOffset - (dir < 0 ? 1 : 0);
 	while (curPosition > 0 && curPosition < text.length) {
-		if (text[curPosition].match(stopChar)) break;
+		if (text[curPosition].match(stopChar))
+			break;
+
 		curPosition += dir;
-		if (curPosition > text.length || curPosition < 0) return "";
+		if (curPosition > text.length || curPosition < 0)
+			return '';
 	}
 
 	const a = curPosition;
 	const b = startOffset;
+
 	return text.substring(Math.min(a, b) + (dir < 0 ? 1 : 0), Math.max(a, b));
 }

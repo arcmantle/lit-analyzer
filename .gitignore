@@ -9,13 +9,10 @@ todo.md
 dist
 out
 *.vsix
-.wireit/
 .tsbuildinfo
 
+/packages/*/dist
 /packages/*/lib
 /packages/*/out
-/packages/*/scripts
-/packages/*/test
-/packages/*/index.*
 
 /packages/vscode-lit-plugin/built

@@ -1,0 +1,16 @@
+import { defineConfig } from 'vitest/config';
+
+export default defineConfig({
+	test: {
+		include: [ 'src/test/**/*.test.ts' ],
+
+		// Every test file here launches a real VS Code instance, so they must not
+		// run concurrently and they need a long timeout: the first run downloads
+		// VS Code, and the TypeScript language server takes a while to produce
+		// diagnostics.
+		fileParallelism: false,
+		maxWorkers:      1,
+		testTimeout:     300_000,
+		hookTimeout:     300_000,
+	},
+});

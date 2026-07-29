@@ -5,18 +5,18 @@
  */
 export function arrayFlat<T>(items: (T[] | T)[]): T[] {
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	if ("flat" in (items as any)) {
+	if ('flat' in (items as any))
 		return items.flat() as T[];
-	}
+
 
 	const flattenArray: T[] = [];
 	for (const item of items) {
-		if (Array.isArray(item)) {
+		if (Array.isArray(item))
 			flattenArray.push(...item);
-		} else {
+		else
 			flattenArray.push(item);
-		}
 	}
+
 	return flattenArray;
 }
 
@@ -34,6 +34,6 @@ export function arrayDefined<T>(array: (T | undefined)[]): T[] {
  * @param splitter
  * @param finalSplitter
  */
-export function joinArray(items: string[], splitter = ", ", finalSplitter = "or"): string {
-	return items.join(splitter).replace(/, ([^,]*)$/, ` ${finalSplitter} $1`);
+export function joinArray(items: string[], splitter = ', ', finalSplitter = 'or'): string {
+	return items.join(splitter).replace(/, ([^,]*)$/, ` ${ finalSplitter } $1`);
 }

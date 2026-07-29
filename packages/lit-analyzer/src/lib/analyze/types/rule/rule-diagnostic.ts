@@ -1,10 +1,10 @@
-import { SourceFileRange } from "../range.js";
-import { RuleFix } from "./rule-fix.js";
+import { SourceFileRange } from '../range.js';
+import { RuleFix } from './rule-fix.js';
 
 export interface RuleDiagnostic {
-	location: SourceFileRange;
-	message: string;
+	location:    SourceFileRange;
+	message:     string;
 	fixMessage?: string;
 	suggestion?: string;
-	fix?: () => RuleFix[] | RuleFix;
+	fix?:        () => RuleFix[] | RuleFix;
 }

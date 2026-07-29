@@ -1,0 +1,13 @@
+{
+	"name": "@lit-analyzer/scripts",
+	"version": "0.0.0",
+	"private": true,
+	"type": "module",
+	"description": "Internal repository scripts. Not published.",
+	"engines": {
+		"node": ">=24"
+	},
+	"scripts": {
+		"verify": "node src/verify.ts"
+	}
+}

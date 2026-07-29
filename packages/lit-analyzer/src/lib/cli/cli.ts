@@ -1,21 +1,21 @@
-import { ALL_RULE_IDS, LitAnalyzerRuleId, LitAnalyzerRules } from "../analyze/lit-analyzer-config.js";
-import { analyzeCommand } from "./analyze-command.js";
-import { LitAnalyzerCliConfig } from "./lit-analyzer-cli-config.js";
-import { parseCliArguments } from "./parse-cli-arguments.js";
-import { camelToDashCase } from "./util.js";
+import { ALL_RULE_IDS, LitAnalyzerRuleId, LitAnalyzerRules } from '../analyze/lit-analyzer-config.js';
+import { analyzeCommand } from './analyze-command.js';
+import { LitAnalyzerCliConfig } from './lit-analyzer-cli-config.js';
+import { parseCliArguments } from './parse-cli-arguments.js';
+import { camelToDashCase } from './util.js';
 
-const DEFAULT_GLOB = "src/**/*.{js,jsx,ts,tsx}";
+const DEFAULT_GLOB = 'src/**/*.{js,jsx,ts,tsx}';
 
 const DEFAULT_CONFIG: LitAnalyzerCliConfig = {
-	noColor: false,
-	quiet: false,
+	noColor:     false,
+	quiet:       false,
 	maxWarnings: -1,
 	//debug: false,
-	help: false,
-	failFast: false,
-	format: "code",
+	help:        false,
+	failFast:    false,
+	format:      'code',
 	//strict: false,
-	rules: {}
+	rules:       {},
 };
 
 /**
@@ -23,18 +23,19 @@ const DEFAULT_CONFIG: LitAnalyzerCliConfig = {
  */
 export async function cli(): Promise<void> {
 	const { _: args, ...rest } = parseCliArguments(process.argv.slice(2));
-	const globs = args.length > 0 ? args : [DEFAULT_GLOB];
+	const globs = args.length > 0 ? args : [ DEFAULT_GLOB ];
 
 	const config: LitAnalyzerCliConfig = { ...DEFAULT_CONFIG, ...rest };
 
 	if (config.debug) {
 		// eslint-disable-next-line no-console
-		console.log("CLI Config", config);
+		console.log('CLI Config', config);
 	}
 
 	// Always convert "rules" to "dash case" because "rules" expects it.
-	config.rules = Object.entries(config.rules || {}).reduce((acc, [k, v]) => {
+	config.rules = Object.entries(config.rules || {}).reduce((acc, [ k, v ]) => {
 		acc[camelToDashCase(k) as LitAnalyzerRuleId] = v;
+
 		return acc;
 	}, {} as LitAnalyzerRules);
 
@@ -59,13 +60,14 @@ export async function cli(): Promise<void> {
     --strict              Enable strict mode. This change the default ruleset.
     --rules.___ SEVERITY  Enable or disable a rule (example: --rules.no-unknown-tag-name off). 
                           Severity can be: "off" | "warn" | "error". The possible rules are:
-                          ${ALL_RULE_IDS.map(ruleName => `o  ${ruleName}`).join("\n                          ")}
+                          ${ ALL_RULE_IDS.map(ruleName => `o  ${ ruleName }`).join('\n                          ') }
     
   Examples
     lit-analyzer src
     lit-analyzer "src/**/*.{js,ts}"
     lit-analyzer my-element.js
 		`);
+
 		return;
 	}
 

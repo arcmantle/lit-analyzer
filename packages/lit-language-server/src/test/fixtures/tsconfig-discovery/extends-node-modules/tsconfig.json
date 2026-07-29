@@ -1,0 +1,6 @@
+{
+	"extends": "@acme/tsconfig-base/tsconfig.json",
+	"compilerOptions": {
+		"module": "commonjs"
+	}
+}

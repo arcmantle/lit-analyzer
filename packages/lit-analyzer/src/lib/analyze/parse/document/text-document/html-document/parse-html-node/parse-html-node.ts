@@ -1,9 +1,9 @@
-import { TS_IGNORE_FLAG } from "../../../../../constants.js";
-import { HtmlNode, HtmlNodeKind, IHtmlNodeBase, IHtmlNodeSourceCodeLocation } from "../../../../../types/html-node/html-node-types.js";
-import { isCommentNode, isTagNode } from "../parse-html-p5/parse-html.js";
-import { getSourceLocation, IP5TagNode, P5Node } from "../parse-html-p5/parse-html-types.js";
-import { parseHtmlNodeAttrs } from "./parse-html-attribute.js";
-import { ParseHtmlContext } from "./parse-html-context.js";
+import { TS_IGNORE_FLAG } from '../../../../../constants.js';
+import { HtmlNode, HtmlNodeKind, IHtmlNodeBase, IHtmlNodeSourceCodeLocation } from '../../../../../types/html-node/html-node-types.js';
+import { isCommentNode, isTagNode } from '../parse-html-p5/parse-html.js';
+import { getSourceLocation, IP5TagNode, P5Node } from '../parse-html-p5/parse-html-types.js';
+import { parseHtmlNodeAttrs } from './parse-html-attribute.js';
+import { ParseHtmlContext } from './parse-html-context.js';
 
 /**
  * Parses multiple p5Nodes into multiple html nodes.
@@ -17,23 +17,23 @@ export function parseHtmlNodes(p5Nodes: P5Node[], parent: HtmlNode | undefined, 
 	for (const p5Node of p5Nodes) {
 		// Check ts-ignore comments and indicate that we wan't to ignore the next node
 		if (isCommentNode(p5Node)) {
-			if (p5Node.data != null && p5Node.data.includes(TS_IGNORE_FLAG)) {
+			if (p5Node.data != null && p5Node.data.includes(TS_IGNORE_FLAG))
 				ignoreNextNode = true;
-			}
 		}
 
 		if (isTagNode(p5Node)) {
 			if (!ignoreNextNode) {
 				const htmlNode = parseHtmlNode(p5Node, parent, context);
 
-				if (htmlNode != null) {
+				if (htmlNode != null)
 					htmlNodes.push(htmlNode);
-				}
-			} else {
+			}
+			else {
 				ignoreNextNode = false;
 			}
 		}
 	}
+
 	return htmlNodes;
 }
 
@@ -45,24 +45,25 @@ export function parseHtmlNodes(p5Nodes: P5Node[], parent: HtmlNode | undefined, 
  */
 export function parseHtmlNode(p5Node: IP5TagNode, parent: HtmlNode | undefined, context: ParseHtmlContext): HtmlNode | undefined {
 	// `sourceCodeLocation` will be undefined if the element was implicitly created by the parser.
-	if (getSourceLocation(p5Node) == null) return undefined;
+	if (getSourceLocation(p5Node) == null)
+		return undefined;
 
 	const htmlNodeBase: IHtmlNodeBase = {
-		tagName: p5Node.tagName.toLowerCase(),
+		tagName:    p5Node.tagName.toLowerCase(),
 		selfClosed: isSelfClosed(p5Node, context),
 		attributes: [],
-		location: makeHtmlNodeLocation(p5Node, context),
-		children: [],
-		document: context.document,
-		parent
+		location:   makeHtmlNodeLocation(p5Node, context),
+		children:   [],
+		document:   context.document,
+		parent,
 	};
 
 	const htmlNode = parseHtmlNodeBase(htmlNodeBase);
 
 	// Don't parse children of <style> and <svg> as of now
-	if (htmlNode.kind === HtmlNodeKind.NODE) {
+	if (htmlNode.kind === HtmlNodeKind.NODE)
 		htmlNode.children = parseHtmlNodes(p5Node.childNodes || [], htmlNode, context);
-	}
+
 
 	htmlNode.attributes = parseHtmlNodeAttrs(p5Node, { ...context, htmlNode });
 
@@ -77,6 +78,7 @@ export function parseHtmlNode(p5Node: IP5TagNode, parent: HtmlNode | undefined, 
 function isSelfClosed(p5Node: IP5TagNode, context: ParseHtmlContext) {
 	const isEmpty = p5Node.childNodes == null || p5Node.childNodes.length === 0;
 	const isSelfClosed = getSourceLocation(p5Node)!.startTag.endOffset === getSourceLocation(p5Node)!.endOffset;
+
 	return isEmpty && isSelfClosed;
 }
 
@@ -90,44 +92,45 @@ function makeHtmlNodeLocation(p5Node: IP5TagNode, context: ParseHtmlContext): IH
 
 	return {
 		start: loc.startOffset,
-		end: loc.endOffset,
-		name: {
+		end:   loc.endOffset,
+		name:  {
 			start: loc.startTag.startOffset + 1, // take '<' into account
-			end: loc.startTag.startOffset + 1 + p5Node.tagName.length
+			end:   loc.startTag.startOffset + 1 + p5Node.tagName.length,
 		},
 		startTag: {
 			start: loc.startTag.startOffset,
-			end: loc.startTag.endOffset
+			end:   loc.startTag.endOffset,
 		},
 		endTag:
 			loc.endTag == null
 				? undefined
 				: {
-						start: loc.endTag.startOffset,
-						end: loc.endTag.endOffset
-				  }
+					start: loc.endTag.startOffset,
+					end:   loc.endTag.endOffset,
+				},
 	};
 }
 
 function parseHtmlNodeBase(htmlNodeBase: IHtmlNodeBase): HtmlNode {
-	if (htmlNodeBase.tagName === "style") {
+	if (htmlNodeBase.tagName === 'style') {
 		return {
-			kind: HtmlNodeKind.STYLE,
+			kind:     HtmlNodeKind.STYLE,
 			...htmlNodeBase,
-			children: []
+			children: [],
 		};
-	} else if (htmlNodeBase.tagName === "svg") {
+	}
+	else if (htmlNodeBase.tagName === 'svg') {
 		// Ignore children of "svg" for now
 		return {
-			kind: HtmlNodeKind.SVG,
+			kind:     HtmlNodeKind.SVG,
 			...htmlNodeBase,
-			children: []
+			children: [],
 		};
 	}
 
 	return {
 		kind: HtmlNodeKind.NODE,
-		...htmlNodeBase
+		...htmlNodeBase,
 	};
 
 	/*if (component != null) {

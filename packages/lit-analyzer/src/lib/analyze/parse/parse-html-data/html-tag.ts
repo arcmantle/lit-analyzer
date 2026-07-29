@@ -1,115 +1,116 @@
-import { isAssignableToSimpleTypeKind, SimpleType, typeToString } from "ts-simple-type";
-import { ComponentCssPart, ComponentCssProperty, ComponentDeclaration, ComponentEvent, ComponentMember, ComponentSlot } from "web-component-analyzer";
+import { isAssignableToSimpleTypeKind, SimpleType, typeToString } from 'ts-simple-type';
+import { ComponentCssPart, ComponentCssProperty, ComponentDeclaration, ComponentEvent, ComponentMember, ComponentSlot } from 'web-component-analyzer';
+
 import {
 	LIT_HTML_BOOLEAN_ATTRIBUTE_MODIFIER,
 	LIT_HTML_EVENT_LISTENER_ATTRIBUTE_MODIFIER,
-	LIT_HTML_PROP_ATTRIBUTE_MODIFIER
-} from "../../constants.js";
-import { iterableDefined } from "../../util/iterable-util.js";
+	LIT_HTML_PROP_ATTRIBUTE_MODIFIER,
+} from '../../constants.js';
+import { iterableDefined } from '../../util/iterable-util.js';
 
 export interface HtmlDataFeatures {
-	attributes: HtmlAttr[];
-	properties: HtmlProp[];
-	events: HtmlEvent[];
-	slots: HtmlSlot[];
-	cssParts: HtmlCssPart[];
+	attributes:    HtmlAttr[];
+	properties:    HtmlProp[];
+	events:        HtmlEvent[];
+	slots:         HtmlSlot[];
+	cssParts:      HtmlCssPart[];
 	cssProperties: HtmlCssProperty[];
 }
 
 export interface HtmlDataCollection {
-	tags: HtmlTag[];
+	tags:   HtmlTag[];
 	global: Partial<HtmlDataFeatures>;
 }
 
 export interface NamedHtmlDataCollection {
-	tags: string[];
+	tags:   string[];
 	global: Partial<Record<keyof HtmlDataFeatures, string[]>>;
 }
 
 export interface HtmlTag extends HtmlDataFeatures {
-	tagName: string;
+	tagName:      string;
 	description?: string;
-	builtIn?: boolean;
-	global?: boolean;
+	builtIn?:     boolean;
+	global?:      boolean;
 	declaration?: ComponentDeclaration;
 }
 
-export type HtmlTagMemberKind = "attribute" | "property";
+export type HtmlTagMemberKind = 'attribute' | 'property';
 
 export interface HtmlMemberBase {
-	kind: HtmlTagMemberKind;
-	builtIn?: boolean;
-	required?: boolean;
+	kind:         HtmlTagMemberKind;
+	builtIn?:     boolean;
+	required?:    boolean;
 	description?: string;
 	declaration?: ComponentMember;
-	name?: string;
+	name?:        string;
 	fromTagName?: string;
-	related?: HtmlMember[];
+	related?:     HtmlMember[];
 	getType(): SimpleType;
 }
 
 export interface HtmlAttr extends HtmlMemberBase {
-	kind: "attribute";
-	name: string;
+	kind:     'attribute';
+	name:     string;
 	related?: HtmlMember[];
 }
 
 export interface HtmlProp extends HtmlMemberBase {
-	kind: "property";
-	name: string;
+	kind:     'property';
+	name:     string;
 	related?: HtmlMember[];
 }
 
 export type HtmlMember = HtmlAttr | HtmlProp;
 
 export interface HtmlEvent {
-	name: string;
+	name:         string;
 	description?: string;
 	declaration?: ComponentEvent;
-	builtIn?: boolean;
-	global?: boolean;
+	builtIn?:     boolean;
+	global?:      boolean;
 	fromTagName?: string;
-	related?: HtmlEvent[];
+	related?:     HtmlEvent[];
 	getType(): SimpleType;
 }
 
 export interface HtmlSlot {
-	name: string;
+	name:         string;
 	fromTagName?: string;
 	description?: string;
 	declaration?: ComponentSlot;
-	related?: HtmlCssPart[];
+	related?:     HtmlCssPart[];
 }
 
 export interface HtmlCssPart {
-	name: string;
+	name:         string;
 	fromTagName?: string;
 	description?: string;
 	declaration?: ComponentCssPart;
-	related?: HtmlCssPart[];
+	related?:     HtmlCssPart[];
 }
 
 export interface HtmlCssProperty {
-	name: string;
+	name:         string;
 	fromTagName?: string;
 	description?: string;
-	typeHint?: string;
+	typeHint?:    string;
 	declaration?: ComponentCssProperty;
-	related?: HtmlCssProperty[];
+	related?:     HtmlCssProperty[];
 }
 
 export type HtmlAttrTarget = HtmlEvent | HtmlMember;
 
 export function isHtmlMember(target: HtmlAttrTarget): target is HtmlMember {
-	return "kind" in target;
+	return 'kind' in target;
 }
 
 export function isHtmlAttr(target: HtmlAttrTarget): target is HtmlAttr {
-	return isHtmlMember(target) && target.kind === "attribute";
+	return isHtmlMember(target) && target.kind === 'attribute';
 }
 
 export function isHtmlProp(target: HtmlAttrTarget): target is HtmlProp {
-	return isHtmlMember(target) && target.kind === "property";
+	return isHtmlMember(target) && target.kind === 'property';
 }
 
 export function isHtmlEvent(target: HtmlAttrTarget): target is HtmlEvent {
@@ -118,13 +119,15 @@ export function isHtmlEvent(target: HtmlAttrTarget): target is HtmlEvent {
 
 export function litAttributeModifierForTarget(target: HtmlAttrTarget): string {
 	if (isHtmlAttr(target)) {
-		if (isAssignableToSimpleTypeKind(target.getType(), "BOOLEAN")) {
+		if (isAssignableToSimpleTypeKind(target.getType(), 'BOOLEAN'))
 			return LIT_HTML_BOOLEAN_ATTRIBUTE_MODIFIER;
-		}
-		return "";
-	} else if (isHtmlProp(target)) {
+
+		return '';
+	}
+	else if (isHtmlProp(target)) {
 		return LIT_HTML_PROP_ATTRIBUTE_MODIFIER;
-	} else {
+	}
+	else {
 		return LIT_HTML_EVENT_LISTENER_ATTRIBUTE_MODIFIER;
 	}
 }
@@ -134,116 +137,127 @@ export interface DescriptionOptions {
 }
 
 function descriptionHeader(title: string, titleLevel = 0, { markdown }: DescriptionOptions) {
-	return markdown ? (titleLevel === 0 ? `**${title.trim()}**` : `${"#".repeat(titleLevel)} ${title}`) : title;
+	return markdown ? (titleLevel === 0 ? `**${ title.trim() }**` : `${ '#'.repeat(titleLevel) } ${ title }`) : title;
 }
 
 function descriptionListItem(item: string, { markdown }: DescriptionOptions) {
-	return markdown ? ` * ${item.replace("\n", " ")}` : ` * ${item}`;
+	return markdown ? ` * ${ item.replace('\n', ' ') }` : ` * ${ item }`;
 }
 
 function descriptionList<T>(title: string, items: T[], toString: (item: T) => string, options: DescriptionOptions) {
-	const itemsDesc = items.map(item => descriptionListItem(toString(item), options)).join("\n");
-	return `${descriptionHeader(`${title}:`, 0, options)}\n${itemsDesc}`;
+	const itemsDesc = items.map(item => descriptionListItem(toString(item), options)).join('\n');
+
+	return `${ descriptionHeader(`${ title }:`, 0, options) }\n${ itemsDesc }`;
 }
 
 export function documentationForCssPart(cssPart: HtmlCssPart, options: DescriptionOptions = {}): string | undefined {
 	const relatedText = (() => {
-		if ((cssPart.related?.length || 0) > 0) {
-			return `From multiple elements: ${cssPart.related!.map(p => `<${p.fromTagName}>`).join(", ")}`;
-		} else if (cssPart.fromTagName != null) {
-			return `From: <${cssPart.fromTagName}>`;
-		}
+		if ((cssPart.related?.length || 0) > 0)
+			return `From multiple elements: ${ cssPart.related!.map(p => `<${ p.fromTagName }>`).join(', ') }`;
+		else if (cssPart.fromTagName != null)
+			return `From: <${ cssPart.fromTagName }>`;
+
 
 		return undefined;
 	})();
 
-	return iterableDefined([cssPart.description, relatedText]).join("\n\n");
+	return iterableDefined([ cssPart.description, relatedText ]).join('\n\n');
 }
 
 export function documentationForCssProperty(cssProperty: HtmlCssProperty, options: DescriptionOptions = {}): string | undefined {
 	const relatedText = (() => {
-		if ((cssProperty.related?.length || 0) > 0) {
-			return `From multiple elements: ${cssProperty.related!.map(p => `<${p.fromTagName}>`).join(", ")}`;
-		} else if (cssProperty.fromTagName != null) {
-			return `From: <${cssProperty.fromTagName}>`;
-		}
+		if ((cssProperty.related?.length || 0) > 0)
+			return `From multiple elements: ${ cssProperty.related!.map(p => `<${ p.fromTagName }>`).join(', ') }`;
+		else if (cssProperty.fromTagName != null)
+			return `From: <${ cssProperty.fromTagName }>`;
+
 
 		return undefined;
 	})();
 
-	return iterableDefined([cssProperty.description, cssProperty.typeHint, relatedText]).join("\n\n");
+	return iterableDefined([ cssProperty.description, cssProperty.typeHint, relatedText ]).join('\n\n');
 }
 
 export function documentationForHtmlTag(htmlTag: HtmlTag, options: DescriptionOptions = {}): string | undefined {
-	let desc = htmlTag.description || "";
+	let desc = htmlTag.description || '';
 
 	if (htmlTag.slots.length > 0) {
 		const items = htmlTag.slots.sort((a, b) => a.name.localeCompare(b.name));
-		desc += `\n\n${descriptionList(
-			"Slots",
+		desc += `\n\n${ descriptionList(
+			'Slots',
 			items,
-			slot => `${descriptionHeader(`@slot ${slot.name}`, 0, options)}${slot.description ? ` - ${slot.description}` : ""}`,
-			options
-		)}`;
+			slot => `${ descriptionHeader(`@slot ${ slot.name }`, 0, options) }${
+				slot.description ? ` - ${ slot.description }` : ''
+			}`,
+			options,
+		) }`;
 	}
 
 	if (htmlTag.events.length > 0) {
 		const items = htmlTag.events.sort((a, b) => a.name.localeCompare(b.name));
-		desc += `\n\n${descriptionList(
-			"Events",
+		desc += `\n\n${ descriptionList(
+			'Events',
 			items,
-			event => `${descriptionHeader(`@fires ${event.name}`, 0, options)}${event.description ? ` - ${event.description}` : ""}`,
-			options
-		)}`;
+			event => `${ descriptionHeader(`@fires ${ event.name }`, 0, options) }${
+				event.description ? ` - ${ event.description }` : ''
+			}`,
+			options,
+		) }`;
 	}
 
 	return desc || undefined;
 }
 
-export function documentationForTarget(target: HtmlAttrTarget, options: DescriptionOptions & { modifier?: string } = {}): string | undefined {
+export function documentationForTarget(
+	target: HtmlAttrTarget,
+	options: DescriptionOptions & { modifier?: string; } = {},
+): string | undefined {
 	const typeText = targetKindAndTypeText(target, options);
 	const documentation = descriptionForTarget(target, options);
 
-	return `${typeText}${documentation != null ? ` \n\n${documentation}` : ""}`;
+	return `${ typeText }${ documentation != null ? ` \n\n${ documentation }` : '' }`;
 }
 
 export function descriptionForTarget(target: HtmlAttrTarget, options: DescriptionOptions = {}): string | undefined {
 	if (target.related != null && target.related.length > 1) {
 		const subDocumentation = (target.related as HtmlAttrTarget[])
-			.map(t => `${t.fromTagName ? `<${t.fromTagName}>: ` : "(global): "}${t.description || "[no documentation]"}`)
-			.map((doc, i) => `${i + 1}. ${doc}`);
-		return `${descriptionHeader("Multiple declarations (best match first):", 0, options)}\n${subDocumentation.join("\n")}`;
+			.map(t => `${ t.fromTagName ? `<${ t.fromTagName }>: ` : '(global): ' }${ t.description || '[no documentation]' }`)
+			.map((doc, i) => `${ i + 1 }. ${ doc }`);
+
+		return `${ descriptionHeader('Multiple declarations (best match first):', 0, options) }\n${ subDocumentation.join('\n') }`;
 	}
 
 	return target.description;
 }
 
-export function targetKindAndTypeText(target: HtmlAttrTarget, options: DescriptionOptions & { modifier?: string } = {}): string {
-	const prefix = `(${targetKindText(target)}) ${options.modifier || ""}${target.name}`;
+export function targetKindAndTypeText(target: HtmlAttrTarget, options: DescriptionOptions & { modifier?: string; } = {}): string {
+	const prefix = `(${ targetKindText(target) }) ${ options.modifier || '' }${ target.name }`;
 
-	if (isAssignableToSimpleTypeKind(target.getType(), "ANY")) {
-		return `${prefix}`;
-	}
+	if (isAssignableToSimpleTypeKind(target.getType(), 'ANY'))
+		return `${ prefix }`;
 
-	return `${prefix}: ${typeToString(target.getType())}`;
+
+	return `${ prefix }: ${ typeToString(target.getType()) }`;
 }
 
 export function targetKindText(target: HtmlAttrTarget): string {
-	if (isHtmlMember(target)) {
-		return target.kind === "property" ? "property" : "attribute";
-	} else if (isHtmlEvent(target)) {
-		return "event";
-	}
+	if (isHtmlMember(target))
+		return target.kind === 'property' ? 'property' : 'attribute';
+	else if (isHtmlEvent(target))
+		return 'event';
 
-	return "unknown";
+
+	return 'unknown';
 }
 
 function mergeFirstUnique<T, U>(items: T[], uniqueOn: (item: T) => U): T[] {
-	const unique = new Set<U>();
+	const unique: Set<U> = new Set();
+
 	return items.filter(item => {
 		const identity = uniqueOn(item);
 		if (!unique.has(identity)) {
 			unique.add(identity);
+
 			return true;
 		}
 
@@ -276,24 +290,26 @@ export function mergeCssProperties(cssProperties: HtmlCssProperty[]): HtmlCssPro
 }
 
 export function mergeHtmlTags(tags: HtmlTag[]): HtmlTag[] {
-	const mergedTags = new Map<string, HtmlTag>();
+	const mergedTags: Map<string, HtmlTag> = new Map();
 	for (const tag of tags) {
 		const existingTag = mergedTags.get(tag.tagName);
 		if (existingTag != null) {
 			mergedTags.set(tag.tagName, {
 				...tag,
-				builtIn: tag.builtIn || existingTag.builtIn,
-				global: tag.global || existingTag.global,
+				builtIn:     tag.builtIn || existingTag.builtIn,
+				global:      tag.global || existingTag.global,
 				declaration: tag.declaration || existingTag.declaration,
 				description: tag.description || existingTag.description,
-				attributes: mergeHtmlAttrs([...tag.attributes, ...existingTag.attributes]),
-				properties: mergeHtmlProps([...tag.properties, ...existingTag.properties]),
-				events: mergeHtmlEvents([...tag.events, ...existingTag.events]),
-				slots: mergeHtmlSlots([...tag.slots, ...existingTag.slots])
+				attributes:  mergeHtmlAttrs([ ...tag.attributes, ...existingTag.attributes ]),
+				properties:  mergeHtmlProps([ ...tag.properties, ...existingTag.properties ]),
+				events:      mergeHtmlEvents([ ...tag.events, ...existingTag.events ]),
+				slots:       mergeHtmlSlots([ ...tag.slots, ...existingTag.slots ]),
 			});
-		} else {
+		}
+		else {
 			mergedTags.set(tag.tagName, tag);
 		}
 	}
+
 	return Array.from(mergedTags.values());
 }

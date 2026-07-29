@@ -1,6 +1,6 @@
-import { SourceFileRange } from "./range.js";
+import { SourceFileRange } from './range.js';
 
 export interface LitFormatEdit {
-	range: SourceFileRange;
+	range:   SourceFileRange;
 	newText: string;
 }

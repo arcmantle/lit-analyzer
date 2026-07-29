@@ -1,14 +1,15 @@
-import { Program, SourceFile } from "typescript";
-import { DefaultLitAnalyzerContext } from "../../lib/analyze/default-lit-analyzer-context.js";
-import { LitAnalyzer } from "../../lib/analyze/lit-analyzer.js";
-import { LitAnalyzerConfig, makeConfig } from "../../lib/analyze/lit-analyzer-config.js";
-import { LitAnalyzerContext } from "../../lib/analyze/lit-analyzer-context.js";
-import { LitDiagnostic } from "../../lib/analyze/types/lit-diagnostic.js";
-import { compileFiles, TestFile } from "./compile-files.js";
-import { getCurrentTsModule } from "./ts-test.js";
-import { Range } from "../../lib/analyze/types/range.js";
-import { LitCodeFix } from "../../lib/analyze/types/lit-code-fix.js";
-import { LitIndexEntry } from "../../lib/analyze/document-analyzer/html/lit-html-document-analyzer.js";
+import { Program, SourceFile } from 'typescript';
+
+import { DefaultLitAnalyzerContext } from '../../lib/analyze/default-lit-analyzer-context.js';
+import { LitIndexEntry } from '../../lib/analyze/document-analyzer/html/lit-html-document-analyzer.js';
+import { LitAnalyzer } from '../../lib/analyze/lit-analyzer.js';
+import { LitAnalyzerConfig, makeConfig } from '../../lib/analyze/lit-analyzer-config.js';
+import { LitAnalyzerContext } from '../../lib/analyze/lit-analyzer-context.js';
+import { LitCodeFix } from '../../lib/analyze/types/lit-code-fix.js';
+import { LitDiagnostic } from '../../lib/analyze/types/lit-diagnostic.js';
+import { Range } from '../../lib/analyze/types/range.js';
+import { compileFiles, TestFile } from './compile-files.js';
+import { getCurrentTsModule } from './ts-test.js';
 
 /**
  * Prepares both the Typescript program and the LitAnalyzer
@@ -17,15 +18,15 @@ import { LitIndexEntry } from "../../lib/analyze/document-analyzer/html/lit-html
  */
 export function prepareAnalyzer(
 	inputFiles: TestFile[] | TestFile,
-	config: Partial<LitAnalyzerConfig> = {}
-): { analyzer: LitAnalyzer; program: Program; sourceFile: SourceFile; context: LitAnalyzerContext } {
+	config: Partial<LitAnalyzerConfig> = {},
+): { analyzer: LitAnalyzer; program: Program; sourceFile: SourceFile; context: LitAnalyzerContext; } {
 	const { program, sourceFile } = compileFiles(inputFiles);
 
 	const context = new DefaultLitAnalyzerContext({
 		ts: getCurrentTsModule(),
 		getProgram(): Program {
 			return program;
-		}
+		},
 	});
 
 	const analyzer = new LitAnalyzer(context);
@@ -36,7 +37,7 @@ export function prepareAnalyzer(
 		analyzer,
 		program,
 		sourceFile,
-		context
+		context,
 	};
 }
 
@@ -47,14 +48,14 @@ export function prepareAnalyzer(
  */
 export function getDiagnostics(
 	inputFiles: TestFile[] | TestFile,
-	config: Partial<LitAnalyzerConfig> = {}
-): { diagnostics: LitDiagnostic[]; program: Program; sourceFile: SourceFile } {
+	config: Partial<LitAnalyzerConfig> = {},
+): { diagnostics: LitDiagnostic[]; program: Program; sourceFile: SourceFile; } {
 	const { analyzer, sourceFile, program } = prepareAnalyzer(inputFiles, config);
 
 	return {
 		diagnostics: analyzer.getDiagnosticsInFile(sourceFile),
 		program,
-		sourceFile
+		sourceFile,
 	};
 }
 
@@ -67,14 +68,14 @@ export function getDiagnostics(
 export function getCodeFixesAtRange(
 	inputFiles: TestFile[] | TestFile,
 	range: Range,
-	config: Partial<LitAnalyzerConfig> = {}
-): { codeFixes: LitCodeFix[]; program: Program; sourceFile: SourceFile } {
+	config: Partial<LitAnalyzerConfig> = {},
+): { codeFixes: LitCodeFix[]; program: Program; sourceFile: SourceFile; } {
 	const { analyzer, sourceFile, program } = prepareAnalyzer(inputFiles, config);
 
 	return {
 		codeFixes: analyzer.getCodeFixesAtPositionRange(sourceFile, range),
 		program,
-		sourceFile
+		sourceFile,
 	};
 }
 
@@ -84,13 +85,13 @@ export function getCodeFixesAtRange(
  */
 export function getIndexEntries(
 	inputFiles: TestFile[] | TestFile,
-	config: Partial<LitAnalyzerConfig> = {}
-): { indexEntries: IterableIterator<LitIndexEntry>; program: Program; sourceFile: SourceFile } {
+	config: Partial<LitAnalyzerConfig> = {},
+): { indexEntries: IterableIterator<LitIndexEntry>; program: Program; sourceFile: SourceFile; } {
 	const { analyzer, sourceFile, program } = prepareAnalyzer(inputFiles, config);
 
 	return {
 		indexEntries: analyzer.indexFile(sourceFile),
 		program,
-		sourceFile
+		sourceFile,
 	};
 }

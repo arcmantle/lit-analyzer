@@ -1,14 +1,15 @@
-import { SourceFile } from "typescript";
-import { ComponentDefinition } from "web-component-analyzer";
-import { LitAnalyzerContext } from "../../lit-analyzer-context.js";
-import { visitIndirectImportsFromSourceFile } from "./visit-dependencies.js";
+import { SourceFile } from 'typescript';
+import { ComponentDefinition } from 'web-component-analyzer';
+
+import { LitAnalyzerContext } from '../../lit-analyzer-context.js';
+import { visitIndirectImportsFromSourceFile } from './visit-dependencies.js';
 
 // A cache used to prevent traversing through entire source files multiple times to find direct imports
-const DIRECT_IMPORT_CACHE = new WeakMap<SourceFile, Set<SourceFile>>();
+const DIRECT_IMPORT_CACHE: WeakMap<SourceFile, Set<SourceFile>> = new WeakMap();
 
 // Two caches used to return the result of of a known source file right away
-const RESULT_CACHE = new WeakMap<SourceFile, ComponentDefinition[]>();
-const IMPORTED_SOURCE_FILES_CACHE = new WeakMap<SourceFile, Set<SourceFile>>();
+const RESULT_CACHE: WeakMap<SourceFile, ComponentDefinition[]> = new WeakMap();
+const IMPORTED_SOURCE_FILES_CACHE: WeakMap<SourceFile, Set<SourceFile>> = new WeakMap();
 
 /**
  * Returns a map of imported component definitions in each file encountered from a source file recursively.
@@ -31,7 +32,8 @@ export function parseDependencies(sourceFile: SourceFile, context: LitAnalyzerCo
 		if (invalidate) {
 			RESULT_CACHE.delete(sourceFile);
 			IMPORTED_SOURCE_FILES_CACHE.delete(sourceFile);
-		} else {
+		}
+		else {
 			return RESULT_CACHE.get(sourceFile)!;
 		}
 	}
@@ -41,11 +43,10 @@ export function parseDependencies(sourceFile: SourceFile, context: LitAnalyzerCo
 	IMPORTED_SOURCE_FILES_CACHE.set(sourceFile, importedSourceFiles);
 
 	// Get component definitions from all these source files
-	const definitions = new Set<ComponentDefinition>();
+	const definitions: Set<ComponentDefinition> = new Set();
 	for (const file of importedSourceFiles) {
-		for (const def of context.definitionStore.getDefinitionsInFile(file)) {
+		for (const def of context.definitionStore.getDefinitionsInFile(file))
 			definitions.add(def);
-		}
 	}
 
 	// Cache the result
@@ -65,26 +66,25 @@ export function parseDependencies(sourceFile: SourceFile, context: LitAnalyzerCo
 export function parseAllIndirectImports(
 	sourceFile: SourceFile,
 	context: LitAnalyzerContext,
-	{ maxExternalDepth, maxInternalDepth }: { maxExternalDepth?: number; maxInternalDepth?: number } = {}
+	{ maxExternalDepth, maxInternalDepth }: { maxExternalDepth?: number; maxInternalDepth?: number; } = {},
 ): Set<SourceFile> {
-	const importedSourceFiles = new Set<SourceFile>();
+	const importedSourceFiles: Set<SourceFile> = new Set();
 
 	visitIndirectImportsFromSourceFile(sourceFile, {
-		project: context.project,
-		program: context.program,
-		ts: context.ts,
+		program:           context.program,
+		ts:                context.ts,
 		directImportCache: DIRECT_IMPORT_CACHE,
-		maxExternalDepth: maxExternalDepth ?? context.config.maxNodeModuleImportDepth,
-		maxInternalDepth: maxInternalDepth ?? context.config.maxProjectImportDepth,
+		maxExternalDepth:  maxExternalDepth ?? context.config.maxNodeModuleImportDepth,
+		maxInternalDepth:  maxInternalDepth ?? context.config.maxProjectImportDepth,
 		emitIndirectImport(file: SourceFile): boolean {
-			if (importedSourceFiles.has(file)) {
+			if (importedSourceFiles.has(file))
 				return false;
-			}
+
 
 			importedSourceFiles.add(file);
 
 			return true;
-		}
+		},
 	});
 
 	return importedSourceFiles;

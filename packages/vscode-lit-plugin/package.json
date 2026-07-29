@@ -8,7 +8,8 @@
 	"icon": "docs/assets/lit-plugin@256w.png",
 	"license": "MIT",
 	"engines": {
-		"vscode": "^1.63.0"
+		"vscode": "^1.74.0",
+		"node": ">=24"
 	},
 	"categories": [
 		"Programming Languages"
@@ -25,156 +26,30 @@
 	"main": "bundle.js",
 	"scripts": {
 		"watch": "tsc -watch -p ./",
-		"package": "wireit",
 		"readme": "readme generate -i readme.blueprint.md -c readme.config.json",
-		"test": "wireit",
-		"build": "wireit",
-		"test:normal": "wireit",
-		"test:packaged": "wireit",
-		"create-isolated-extension-dir": "wireit",
-		"test:packaged-sequentialized": "wireit",
-		"bundle": "wireit",
-		"make-built-dir": "wireit"
-	},
-	"wireit": {
-		"build": {
-			"dependencies": [
-				"../lit-analyzer:build",
-				"make-built-dir"
-			],
-			"command": "tsc --build --pretty",
-			"files": [
-				"src/**/*",
-				"tsconfig.json"
-			],
-			"output": [
-				"out/**/*.js",
-				"out/**/*.d.ts",
-				"out/**/*.d.ts.map",
-				".tsbuildinfo"
-			],
-			"clean": "if-file-deleted"
-		},
-		"test": {
-			"dependencies": [
-				"test:normal",
-				"test:packaged-sequentialized"
-			]
-		},
-		"test:normal": {
-			"dependencies": [
-				"build"
-			],
-			"files": [
-				"package.json",
-				"schemas/**/*"
-			],
-			"output": [],
-			"command": "node ./out/test/scripts/test-runner.js ./built"
-		},
-		"test:packaged": {
-			"dependencies": [
-				"build",
-				"create-isolated-extension-dir"
-			],
-			"files": [],
-			"output": [],
-			"command": "node ./out/test/scripts/test-runner.js ../../../packaged-extension/extension/"
-		},
-		"test:packaged-sequentialized": {
-			"#comment": "like test:packaged, only it ensures that test:normal runs first",
-			"dependencies": [
-				"test:normal",
-				"build",
-				"create-isolated-extension-dir"
-			],
-			"files": [],
-			"output": [],
-			"command": "node ./out/test/scripts/test-runner.js ../../../packaged-extension/extension/"
-		},
-		"package": {
-			"dependencies": [
-				"make-built-dir"
-			],
-			"files": [],
-			"output": [
-				"out/packaged.vsix"
-			],
-			"command": "mkdir -p out && cd built && vsce package -o ../out/packaged.vsix"
-		},
-		"publish": {
-			"dependencies": [
-				"make-built-dir"
-			],
-			"command": "cd built && vsce publish"
-		},
-		"create-isolated-extension-dir": {
-			"dependencies": [
-				"package"
-			],
-			"files": [
-				"out/packaged.vsix"
-			],
-			"command": "rm -rf ../../../packaged-extension/ && mkdir ../../../packaged-extension/ && unzip -qq ./out/packaged.vsix -d ../../../packaged-extension/",
-			"clean": false
-		},
-		"bundle": {
-			"dependencies": [
-				"../lit-analyzer:build"
-			],
-			"command": "node esbuild.script.mjs",
-			"files": [
-				"src/**/*",
-				"../ts-lit-plugin/src/**/*",
-				"../ts-lit-plugin/index.js",
-				"esbuild.script.mjs"
-			],
-			"output": [
-				"built/bundle.js",
-				"built/node_modules/ts-lit-plugin/index.js"
-			]
-		},
-		"make-built-dir": {
-			"dependencies": [
-				"../ts-lit-plugin:build",
-				"bundle"
-			],
-			"files": [
-				"../ts-lit-plugin/package.json",
-				"package.json",
-				"schemas/**",
-				"syntaxes/**",
-				"docs/**",
-				"README.md",
-				"LICENSE.md",
-				"copy-to-built.js"
-			],
-			"output": [
-				"built/docs",
-				"built/node_modules/typescript",
-				"built/node_modules/ts-lit-plugin/package.json",
-				"built/node_modules/ts-lit-plugin/index.js",
-				"built/schemas",
-				"built/syntaxes",
-				"built/LICENSE.md",
-				"built/package.json",
-				"built/README.md"
-			],
-			"command": "node ./copy-to-built.js"
-		}
+		"bundle": "node esbuild.script.js",
+		"make-built-dir": "rm -rf built && pnpm run bundle && node ./copy-to-built.js",
+		"build": "pnpm run make-built-dir && tsc --build --pretty",
+		"rebuild": "rm -rf out && pnpm run make-built-dir && tsc --build --force --pretty",
+		"package": "pnpm run make-built-dir && mkdir -p out && cd built && vsce package -o ../out/packaged.vsix",
+		"publish": "pnpm run make-built-dir && cd built && vsce publish",
+		"test": "pnpm run build && vitest run",
+		"test:packaged": "pnpm run package && pnpm run unzip-vsix && LIT_PLUGIN_EXTENSION=packaged vitest run",
+		"unzip-vsix": "rm -rf out/packaged-extension && mkdir -p out/packaged-extension && unzip -qq out/packaged.vsix -d out/packaged-extension"
 	},
 	"dependencies": {
-		"typescript": "~5.2.2"
+		"typescript": "catalog:"
 	},
 	"devDependencies": {
-		"@types/mocha": "^9.1.0",
-		"@types/node": "^14.0.13",
+		"@types/node": "^24.0.0",
 		"@types/vscode": "^1.30.0",
-		"esbuild": "^0.14.36",
-		"lit-analyzer": "^2.0.3",
-		"mocha": "^9.1.4",
-		"vsce": "^2.7.0",
-		"wireit": "^0.1.1"
+		"@vscode/test-electron": "^2.3.8",
+		"@vscode/vsce": "^3.7.0",
+		"esbuild": "^0.28.1",
+		"fs-extra": "^9.0.1",
+		"lit-analyzer": "workspace:*",
+		"vitest": "^4.1.10",
+		"vscode-languageclient": "^10.1.0"
 	},
 	"activationEvents": [
 		"onCommand:lit-plugin.analyze",
@@ -748,12 +623,6 @@
 				}
 			}
 		],
-		"typescriptServerPlugins": [
-			{
-				"name": "ts-lit-plugin",
-				"enableForWorkspaceTypeScriptVersions": true
-			}
-		],
 		"jsonValidation": [
 			{
 				"fileMatch": "jsconfig*.json",
@@ -847,5 +716,6 @@
 				}
 			}
 		]
-	}
+	},
+	"type": "module"
 }

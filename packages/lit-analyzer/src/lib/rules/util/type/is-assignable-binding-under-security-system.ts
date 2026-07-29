@@ -1,8 +1,9 @@
-import { SimpleType, typeToString } from "ts-simple-type";
-import { HtmlNodeAttr } from "../../../analyze/types/html-node/html-node-attr-types.js";
-import { RuleModuleContext } from "../../../analyze/types/rule/rule-module-context.js";
-import { isLitDirective } from "../directive/is-lit-directive.js";
-import { rangeFromHtmlNodeAttr } from "../../../analyze/util/range-util.js";
+import { SimpleType, typeToString } from 'ts-simple-type';
+
+import { HtmlNodeAttr } from '../../../analyze/types/html-node/html-node-attr-types.js';
+import { RuleModuleContext } from '../../../analyze/types/rule/rule-module-context.js';
+import { rangeFromHtmlNodeAttr } from '../../../analyze/util/range-util.js';
+import { isLitDirective } from '../directive/is-lit-directive.js';
 
 /**
  * If the user's security policy overrides normal type checking for this
@@ -12,20 +13,21 @@ import { rangeFromHtmlNodeAttr } from "../../../analyze/util/range-util.js";
  */
 export function isAssignableBindingUnderSecuritySystem(
 	htmlAttr: HtmlNodeAttr,
-	{ typeA, typeB }: { typeA: SimpleType; typeB: SimpleType },
-	context: RuleModuleContext
+	{ typeA, typeB }: { typeA: SimpleType; typeB: SimpleType; },
+	context: RuleModuleContext,
 ): boolean | undefined {
 	const securityPolicy = context.config.securitySystem;
 	switch (securityPolicy) {
-		case "off":
-			return undefined; // No security checks apply.
-		case "ClosureSafeTypes":
-			return checkClosureSecurityAssignability(typeB, htmlAttr, context);
-		default: {
-			const never: never = securityPolicy;
-			context.logger.error(`Unexpected security policy: ${never}`);
-			return undefined;
-		}
+	case 'off':
+		return undefined; // No security checks apply.
+	case 'ClosureSafeTypes':
+		return checkClosureSecurityAssignability(typeB, htmlAttr, context);
+	default: {
+		const never: never = securityPolicy;
+		context.logger.error(`Unexpected security policy: ${ never }`);
+
+		return undefined;
+	}
 	}
 }
 
@@ -41,39 +43,43 @@ interface SecurityOverrideMap {
 
 const closureScopedOverrides: TagNameToSecurityOverrideMap = {
 	iframe: {
-		src: ["TrustedResourceUrl"]
+		src: [ 'TrustedResourceUrl' ],
 	},
 	a: {
-		href: ["TrustedResourceUrl", "SafeUrl", "string"]
+		href: [ 'TrustedResourceUrl', 'SafeUrl', 'string' ],
 	},
 	img: {
-		src: ["TrustedResourceUrl", "SafeUrl", "string"]
+		src: [ 'TrustedResourceUrl', 'SafeUrl', 'string' ],
 	},
 	script: {
-		src: ["TrustedResourceUrl"]
+		src: [ 'TrustedResourceUrl' ],
 	},
 	source: {
-		src: ["TrustedResourceUrl", "SafeUrl"]
-	}
+		src: [ 'TrustedResourceUrl', 'SafeUrl' ],
+	},
 };
 const closureGlobalOverrides: SecurityOverrideMap = {
-	style: ["SafeStyle", "string"]
+	style: [ 'SafeStyle', 'string' ],
 };
 
-function checkClosureSecurityAssignability(typeB: SimpleType, htmlAttr: HtmlNodeAttr, context: RuleModuleContext): boolean | undefined {
+function checkClosureSecurityAssignability(
+	typeB: SimpleType,
+	htmlAttr: HtmlNodeAttr,
+	context: RuleModuleContext,
+): boolean | undefined {
 	const scopedOverride = closureScopedOverrides[htmlAttr.htmlNode.tagName];
 	const overriddenTypes = (scopedOverride && scopedOverride[htmlAttr.name]) || closureGlobalOverrides[htmlAttr.name];
-	if (overriddenTypes === undefined) {
+	if (overriddenTypes === undefined)
 		return undefined;
-	}
+
 	// `any` is allowed to bind to anything.
-	if (typeB.kind === "ANY") {
+	if (typeB.kind === 'ANY')
 		return undefined;
-	}
+
 	// Directives are responsible for their own security.
-	if (isLitDirective(typeB)) {
+	if (isLitDirective(typeB))
 		return undefined;
-	}
+
 
 	const typeMatch = matchesAtLeastOneNominalType(overriddenTypes, typeB);
 	if (typeMatch === false) {
@@ -85,8 +91,10 @@ function checkClosureSecurityAssignability(typeB: SimpleType, htmlAttr: HtmlNode
 
 		context.report({
 			location: rangeFromHtmlNodeAttr(htmlAttr),
-			message: `Type '${typeToString(typeB)}' is not assignable to '${overriddenTypes.join(" | ")}'. This is due to Closure Safe Type enforcement.`
+			message:  `Type '${ typeToString(typeB) }' is not assignable to '${ overriddenTypes.join(' | ') }'. This is due to \
+Closure Safe Type enforcement.`,
 		});
+
 		return false;
 	}
 
@@ -98,9 +106,9 @@ function normalizeTypeName(typeName: string) {
 	// module$contents$goog$html$SafeUrl_SafeUrl and extract the
 	// actual type name (SafeUrl in that case)
 	const match = typeName.match(/module\$.*_(.*)/);
-	if (match == null) {
+	if (match == null)
 		return undefined;
-	}
+
 	return match[1];
 }
 
@@ -108,24 +116,24 @@ function matchesAtLeastOneNominalType(typeNames: string[], typeB: SimpleType): b
 	// Check if typeB.name is in typeNames, either before or after normalization.
 	const typeBName = typeB.name;
 	if (typeBName !== undefined) {
-		if (typeNames.includes(typeBName)) {
+		if (typeNames.includes(typeBName))
 			return true;
-		}
+
 		const normalized = normalizeTypeName(typeBName);
-		if (normalized !== undefined && typeNames.includes(normalized)) {
+		if (normalized !== undefined && typeNames.includes(normalized))
 			return true;
-		}
 	}
+
 	// Otherwise, check for other cases beyond just a simple named type.
 	switch (typeB.kind) {
-		case "UNION":
-			return typeB.types.every(t => matchesAtLeastOneNominalType(typeNames, t));
-		case "STRING_LITERAL":
-		case "STRING":
-			return typeNames.includes("string");
-		case "GENERIC_ARGUMENTS":
-			return matchesAtLeastOneNominalType(typeNames, typeB.target);
-		default:
-			return false;
+	case 'UNION':
+		return typeB.types.every(t => matchesAtLeastOneNominalType(typeNames, t));
+	case 'STRING_LITERAL':
+	case 'STRING':
+		return typeNames.includes('string');
+	case 'GENERIC_ARGUMENTS':
+		return matchesAtLeastOneNominalType(typeNames, typeB.target);
+	default:
+		return false;
 	}
 }

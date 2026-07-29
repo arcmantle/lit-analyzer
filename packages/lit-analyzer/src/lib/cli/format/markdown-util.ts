@@ -3,7 +3,7 @@
  * @param text
  */
 export function markdownHighlight(text: string): string {
-	return `\`${text}\``;
+	return `\`${ text }\``;
 }
 
 /**
@@ -12,21 +12,21 @@ export function markdownHighlight(text: string): string {
  * @param title
  */
 export function markdownHeader(level: number, title: string): string {
-	return `${"#".repeat(level)} ${title}`;
+	return `${ '#'.repeat(level) } ${ title }`;
 }
 
 export interface MarkdownTableOptions {
 	removeEmptyColumns: boolean;
-	minCellWidth: number;
-	maxCellWidth: number;
-	cellPadding: number;
+	minCellWidth:       number;
+	maxCellWidth:       number;
+	cellPadding:        number;
 }
 
 const DEFAULT_MARKDOWN_TABLE_OPTIONS: MarkdownTableOptions = {
 	removeEmptyColumns: true,
-	minCellWidth: 3,
-	maxCellWidth: 50,
-	cellPadding: 1
+	minCellWidth:       3,
+	maxCellWidth:       50,
+	cellPadding:        1,
 };
 
 /**
@@ -67,16 +67,17 @@ export function markdownTable(rows: string[][], options: Partial<MarkdownTableOp
 	// This is done by taking the largest width of all cells in each column.
 	const columnWidths = Array(columnCount)
 		.fill(0)
-		.map((c, i) => Math.min(MAX_CELL_WIDTH, Math.max(MIN_CELL_WIDTH, ...rows.map(r => (r[i] || "").length)) + CELL_PADDING * 2));
+		.map((c, i) =>
+			Math.min(MAX_CELL_WIDTH, Math.max(MIN_CELL_WIDTH, ...rows.map(r => (r[i] || '').length)) + CELL_PADDING * 2));
 
 	// Build up the table
 	return `
-|${rows[0].map((r, i) => fillWidth(r, columnWidths[i], CELL_PADDING)).join("|")}|
-|${columnWidths.map(c => "-".repeat(c)).join("|")}|
-${rows
+|${ rows[0].map((r, i) => fillWidth(r, columnWidths[i], CELL_PADDING)).join('|') }|
+|${ columnWidths.map(c => '-'.repeat(c)).join('|') }|
+${ rows
 	.slice(1)
-	.map(r => `|${r.map((r, i) => fillWidth(r, columnWidths[i], CELL_PADDING)).join("|")}|`)
-	.join("\n")}
+	.map(r => `|${ r.map((r, i) => fillWidth(r, columnWidths[i], CELL_PADDING)).join('|') }|`)
+	.join('\n') }
 `;
 }
 
@@ -88,11 +89,11 @@ function markdownEscapeTableCell(text: string): string {
 	return (
 		text
 			// Change newlines
-			.replace(/\n/g, "<br />")
+			.replace(/\n/g, '<br />')
 			// Change "@property" to "`@property`" (so eg. Github doesn't treat it as tagging a user)
-			.replace(/(@\S+)/g, "`$1`")
+			.replace(/(@\S+)/g, '`$1`')
 			// Escape |, < and >
-			.replace(/([|<>])/g, "\\$1")
+			.replace(/([|<>])/g, '\\$1')
 	);
 }
 
@@ -103,5 +104,5 @@ function markdownEscapeTableCell(text: string): string {
  * @param paddingStart
  */
 function fillWidth(text: string, width: number, paddingStart: number): string {
-	return " ".repeat(paddingStart) + text + " ".repeat(Math.max(1, width - text.length - paddingStart));
+	return ' '.repeat(paddingStart) + text + ' '.repeat(Math.max(1, width - text.length - paddingStart));
 }

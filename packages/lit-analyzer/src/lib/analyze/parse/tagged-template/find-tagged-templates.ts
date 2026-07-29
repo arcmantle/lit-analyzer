@@ -1,6 +1,7 @@
-import { Node, SourceFile, TaggedTemplateExpression } from "typescript";
-import { tsModule } from "../../ts-module.js";
-import { findParent, getNodeAtPosition } from "../../util/ast-util.js";
+import { Node, SourceFile, TaggedTemplateExpression } from 'typescript';
+
+import { tsModule } from '../../ts-module.js';
+import { findParent, getNodeAtPosition } from '../../util/ast-util.js';
 
 /**
  * Returns all virtual documents in a given file.
@@ -8,24 +9,28 @@ import { findParent, getNodeAtPosition } from "../../util/ast-util.js";
  * @param templateTags
  */
 export function findTaggedTemplates(sourceFile: SourceFile, templateTags: string[]): TaggedTemplateExpression[];
-export function findTaggedTemplates(sourceFile: SourceFile, templateTags: string[], position?: number): TaggedTemplateExpression | undefined;
 export function findTaggedTemplates(
 	sourceFile: SourceFile,
 	templateTags: string[],
-	position?: number
+	position?: number,
+): TaggedTemplateExpression | undefined;
+export function findTaggedTemplates(
+	sourceFile: SourceFile,
+	templateTags: string[],
+	position?: number,
 ): TaggedTemplateExpression[] | TaggedTemplateExpression | undefined {
 	if (position != null) {
 		const token = getNodeAtPosition(sourceFile, position);
 		const node = findParent(token, tsModule.ts.isTaggedTemplateExpression);
 
 		if (node != null && tsModule.ts.isTaggedTemplateExpression(node)) {
-			if (templateTags.includes(node.tag.getText())) {
+			if (templateTags.includes(node.tag.getText()))
 				return node;
-			}
 		}
 
 		return undefined;
-	} else {
+	}
+	else {
 		const taggedTemplates: TaggedTemplateExpression[] = [];
 
 		visitTaggedTemplateNodes(sourceFile, {
@@ -34,7 +39,7 @@ export function findTaggedTemplates(
 			},
 			emitTaggedTemplateNode(node: TaggedTemplateExpression) {
 				taggedTemplates.push(node);
-			}
+			},
 		});
 
 		return taggedTemplates;

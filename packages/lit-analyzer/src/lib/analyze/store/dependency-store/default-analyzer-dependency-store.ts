@@ -1,9 +1,11 @@
-import { SourceFile } from "typescript";
-import { ComponentDefinition } from "web-component-analyzer";
-import { AnalyzerDependencyStore } from "../analyzer-dependency-store.js";
+import { SourceFile } from 'typescript';
+import { ComponentDefinition } from 'web-component-analyzer';
+
+import { AnalyzerDependencyStore } from '../analyzer-dependency-store.js';
 
 export class DefaultAnalyzerDependencyStore implements AnalyzerDependencyStore {
-	private importedComponentDefinitionsInFile = new Map<string, ComponentDefinition[]>();
+
+	private importedComponentDefinitionsInFile: Map<string, ComponentDefinition[]> = new Map();
 
 	absorbComponentDefinitionsForFile(sourceFile: SourceFile, result: ComponentDefinition[]): void {
 		this.importedComponentDefinitionsInFile.set(sourceFile.fileName, result);
@@ -16,11 +18,11 @@ export class DefaultAnalyzerDependencyStore implements AnalyzerDependencyStore {
 	 */
 	hasTagNameBeenImported(fileName: string, tagName: string): boolean {
 		for (const file of this.importedComponentDefinitionsInFile.get(fileName) || []) {
-			if (file.tagName === tagName) {
+			if (file.tagName === tagName)
 				return true;
-			}
 		}
 
 		return false;
 	}
+
 }

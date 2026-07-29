@@ -1,3 +1,3 @@
-import { VirtualAstDocument } from "./virtual-ast-document.js";
+import { VirtualAstDocument } from './virtual-ast-document.js';
 
 export class VirtualAstHtmlDocument extends VirtualAstDocument {}

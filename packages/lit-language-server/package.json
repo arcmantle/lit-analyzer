@@ -1,0 +1,34 @@
+{
+	"name": "lit-language-server",
+	"private": true,
+	"version": "0.0.0",
+	"description": "Standalone language server that serves lit-html analysis over the Language Server Protocol.",
+	"author": "runem",
+	"license": "MIT",
+	"engines": {
+		"node": ">=24"
+	},
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/runem/lit-analyzer.git"
+	},
+	"main": "lib/main.js",
+	"scripts": {
+		"watch": "tsc --watch",
+		"build": "tsc --build --pretty",
+		"rebuild": "tsc --build --force --pretty",
+		"test": "pnpm run build && vitest run"
+	},
+	"dependencies": {
+		"lit-analyzer": "workspace:*",
+		"vscode-languageserver": "^10.0.0",
+		"vscode-languageserver-textdocument": "^1.0.12"
+	},
+	"devDependencies": {
+		"@types/node": "^24.0.0",
+		"typescript": "catalog:",
+		"vitest": "^4.1.10",
+		"vscode-jsonrpc": "^9.0.0"
+	},
+	"type": "module"
+}

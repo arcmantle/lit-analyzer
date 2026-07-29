@@ -1,18 +1,19 @@
-import { LitAnalyzerContext } from "../../lit-analyzer-context.js";
-import { CssDocument } from "../../parse/document/text-document/css-document/css-document.js";
-import { LitCompletion } from "../../types/lit-completion.js";
-import { LitCompletionDetails } from "../../types/lit-completion-details.js";
-import { LitDefinition } from "../../types/lit-definition.js";
-import { LitDiagnostic } from "../../types/lit-diagnostic.js";
-import { LitQuickInfo } from "../../types/lit-quick-info.js";
-import { DocumentOffset } from "../../types/range.js";
-import { getNodeIdentifier } from "../../util/ast-util.js";
-import { getPositionContextInDocument } from "../../util/get-position-context-in-document.js";
-import { iterableDefined } from "../../util/iterable-util.js";
-import { documentRangeToSFRange } from "../../util/range-util.js";
-import { LitCssVscodeService } from "./lit-css-vscode-service.js";
+import { LitAnalyzerContext } from '../../lit-analyzer-context.js';
+import { CssDocument } from '../../parse/document/text-document/css-document/css-document.js';
+import { LitCompletion } from '../../types/lit-completion.js';
+import { LitCompletionDetails } from '../../types/lit-completion-details.js';
+import { LitDefinition } from '../../types/lit-definition.js';
+import { LitDiagnostic } from '../../types/lit-diagnostic.js';
+import { LitQuickInfo } from '../../types/lit-quick-info.js';
+import { DocumentOffset } from '../../types/range.js';
+import { getNodeIdentifier } from '../../util/ast-util.js';
+import { getPositionContextInDocument } from '../../util/get-position-context-in-document.js';
+import { iterableDefined } from '../../util/iterable-util.js';
+import { documentRangeToSFRange } from '../../util/range-util.js';
+import { LitCssVscodeService } from './lit-css-vscode-service.js';
 
 export class LitCssDocumentAnalyzer {
+
 	private vscodeCssService = new LitCssVscodeService();
 	private completionsCache: LitCompletion[] = [];
 
@@ -20,24 +21,27 @@ export class LitCssDocumentAnalyzer {
 		document: CssDocument,
 		offset: DocumentOffset,
 		name: string,
-		context: LitAnalyzerContext
+		context: LitAnalyzerContext,
 	): LitCompletionDetails | undefined {
 		const completionWithName = this.completionsCache.find(completion => completion.name === name);
 
-		if (completionWithName == null || completionWithName.documentation == null) return undefined;
+		if (completionWithName == null || completionWithName.documentation == null)
+			return undefined;
 
 		const primaryInfo = completionWithName.documentation();
-		if (primaryInfo == null) return undefined;
+		if (primaryInfo == null)
+			return undefined;
 
 		return {
 			name,
 			kind: completionWithName.kind,
-			primaryInfo
+			primaryInfo,
 		};
 	}
 
 	getCompletionsAtOffset(document: CssDocument, offset: DocumentOffset, context: LitAnalyzerContext): LitCompletion[] {
 		this.completionsCache = this.vscodeCssService.getCompletions(document, offset, context);
+
 		return this.completionsCache;
 	}
 
@@ -57,20 +61,22 @@ export class LitCssDocumentAnalyzer {
 		const end = start + word.length;
 
 		// Return definitions for css custom properties
-		if (word.startsWith("-")) {
-			for (const cssProp of context.htmlStore.getAllCssPropertiesForTag("")) {
+		if (word.startsWith('-')) {
+			for (const cssProp of context.htmlStore.getAllCssPropertiesForTag('')) {
 				if (cssProp.name === word) {
-					const nodes = iterableDefined((cssProp.related != null ? cssProp.related : [cssProp]).map(p => p.declaration?.declaration?.node));
-					if (nodes.length === 0) {
+					const nodes = iterableDefined(
+						(cssProp.related != null ? cssProp.related : [ cssProp ]).map(p => p.declaration?.declaration?.node),
+					);
+					if (nodes.length === 0)
 						return;
-					}
+
 
 					return {
 						fromRange: documentRangeToSFRange(document, { start, end }),
-						targets: nodes.map(node => ({
-							kind: "node",
-							node: getNodeIdentifier(node, context.ts) || node
-						}))
+						targets:   nodes.map(node => ({
+							kind: 'node',
+							node: getNodeIdentifier(node, context.ts) || node,
+						})),
 					};
 				}
 			}
@@ -85,16 +91,17 @@ export class LitCssDocumentAnalyzer {
 
 				return {
 					fromRange: documentRangeToSFRange(document, { start, end }),
-					targets: [
+					targets:   [
 						{
-							kind: "node",
-							node: getNodeIdentifier(node, context.ts) || node
-						}
-					]
+							kind: 'node',
+							node: getNodeIdentifier(node, context.ts) || node,
+						},
+					],
 				};
 			}
 		}
 
 		return undefined;
 	}
+
 }

@@ -1,8 +1,9 @@
-import { Node } from "typescript";
-import { TextDocument } from "../parse/document/text-document/text-document.js";
-import { HtmlNodeAttr } from "../types/html-node/html-node-attr-types.js";
-import { HtmlNode } from "../types/html-node/html-node-types.js";
-import { DocumentRange, Range, SourceFileRange } from "../types/range.js";
+import { Node } from 'typescript';
+
+import { TextDocument } from '../parse/document/text-document/text-document.js';
+import { HtmlNodeAttr } from '../types/html-node/html-node-attr-types.js';
+import { HtmlNode } from '../types/html-node/html-node-types.js';
+import { DocumentRange, Range, SourceFileRange } from '../types/range.js';
 
 export function makeSourceFileRange(range: Range): SourceFileRange {
 	return range as SourceFileRange;
@@ -30,14 +31,14 @@ export function rangeFromNode(node: Node): SourceFileRange {
 export function documentRangeToSFRange(document: TextDocument, range: DocumentRange | Range): SourceFileRange {
 	return makeSourceFileRange({
 		start: document.virtualDocument.documentOffsetToSFPosition(range.start),
-		end: document.virtualDocument.documentOffsetToSFPosition(range.end)
+		end:   document.virtualDocument.documentOffsetToSFPosition(range.end),
 	});
 }
 
 export function sfRangeToDocumentRange(document: TextDocument, range: SourceFileRange | Range): DocumentRange {
 	return makeDocumentRange({
 		start: document.virtualDocument.sfPositionToDocumentOffset(range.start),
-		end: document.virtualDocument.sfPositionToDocumentOffset(range.end)
+		end:   document.virtualDocument.sfPositionToDocumentOffset(range.end),
 	});
 }
 
@@ -50,9 +51,8 @@ export function sfRangeToDocumentRange(document: TextDocument, range: SourceFile
 //export function intersects(position: SourceFilePosition | SourceFileRange, { start, end }: SourceFileRange): boolean;
 //export function intersects(position: DocumentOffset | DocumentRange, { start, end }: DocumentRange): boolean;
 export function intersects(position: number | Range, { start, end }: Range): boolean {
-	if (typeof position === "number") {
+	if (typeof position === 'number')
 		return start <= position && position <= end;
-	} else {
+	else
 		return start <= position.start && position.end <= end;
-	}
 }

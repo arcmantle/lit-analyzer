@@ -1,13 +1,15 @@
-import { SourceFile } from "typescript";
-import { AnalyzerResult, ComponentDeclaration, ComponentDefinition, visitAllHeritageClauses } from "web-component-analyzer";
-import { getDeclarationsInFile } from "../../util/component-util.js";
-import { AnalyzerDefinitionStore } from "../analyzer-definition-store.js";
+import { SourceFile } from 'typescript';
+import { AnalyzerResult, ComponentDeclaration, ComponentDefinition, visitAllHeritageClauses } from 'web-component-analyzer';
+
+import { getDeclarationsInFile } from '../../util/component-util.js';
+import { AnalyzerDefinitionStore } from '../analyzer-definition-store.js';
 
 export class DefaultAnalyzerDefinitionStore implements AnalyzerDefinitionStore {
-	private analysisResultForFile = new Map<string, AnalyzerResult>();
-	private definitionForTagName = new Map<string, ComponentDefinition>();
 
-	private intersectingDefinitionsForFile = new Map<string, Set<ComponentDefinition>>();
+	private analysisResultForFile: Map<string, AnalyzerResult> = new Map();
+	private definitionForTagName:  Map<string, ComponentDefinition> = new Map();
+
+	private intersectingDefinitionsForFile: Map<string, Set<ComponentDefinition>> = new Map();
 
 	absorbAnalysisResult(sourceFile: SourceFile, result: AnalyzerResult): void {
 		this.analysisResultForFile.set(sourceFile.fileName, result);
@@ -17,39 +19,38 @@ export class DefaultAnalyzerDefinitionStore implements AnalyzerDefinitionStore {
 
 			addToSetInMap(this.intersectingDefinitionsForFile, definition.sourceFile.fileName, definition);
 
-			if (definition.declaration == null) {
+			if (definition.declaration == null)
 				return;
-			}
+
 
 			addToSetInMap(this.intersectingDefinitionsForFile, definition.declaration?.sourceFile.fileName, definition);
 
 			visitAllHeritageClauses(definition.declaration, clause => {
-				if (clause.declaration != null) {
+				if (clause.declaration != null)
 					addToSetInMap(this.intersectingDefinitionsForFile, clause.declaration.sourceFile.fileName, definition);
-				}
 			});
 		});
 	}
 
 	forgetAnalysisResultForFile(sourceFile: SourceFile): void {
 		const result = this.analysisResultForFile.get(sourceFile.fileName);
-		if (result == null) return;
+		if (result == null)
+			return;
 
 		result.componentDefinitions.forEach(definition => {
 			this.definitionForTagName.delete(definition.tagName);
 
 			this.intersectingDefinitionsForFile.get(definition.sourceFile.fileName)?.delete(definition);
 
-			if (definition.declaration == null) {
+			if (definition.declaration == null)
 				return;
-			}
+
 
 			this.intersectingDefinitionsForFile.get(definition.declaration?.sourceFile.fileName)?.delete(definition);
 
 			visitAllHeritageClauses(definition.declaration, clause => {
-				if (clause.declaration != null) {
+				if (clause.declaration != null)
 					this.intersectingDefinitionsForFile.get(clause.declaration.sourceFile.fileName)?.delete(definition);
-				}
 			});
 		});
 
@@ -65,12 +66,11 @@ export class DefaultAnalyzerDefinitionStore implements AnalyzerDefinitionStore {
 	}
 
 	getComponentDeclarationsInFile(sourceFile: SourceFile): ComponentDeclaration[] {
-		const declarations = new Set<ComponentDeclaration>();
+		const declarations: Set<ComponentDeclaration> = new Set();
 
 		for (const definition of this.intersectingDefinitionsForFile.get(sourceFile.fileName) || []) {
-			for (const declaration of getDeclarationsInFile(definition, sourceFile)) {
+			for (const declaration of getDeclarationsInFile(definition, sourceFile))
 				declarations.add(declaration);
-			}
 		}
 
 		return Array.from(declarations);
@@ -82,8 +82,10 @@ export class DefaultAnalyzerDefinitionStore implements AnalyzerDefinitionStore {
 
 	getDefinitionsInFile(sourceFile: SourceFile): ComponentDefinition[] {
 		const result = this.analysisResultForFile.get(sourceFile.fileName);
+
 		return (result != null && result.componentDefinitions) || [];
 	}
+
 }
 
 function addToSetInMap<K, V>(map: Map<K, Set<V>>, key: K, value: V) {

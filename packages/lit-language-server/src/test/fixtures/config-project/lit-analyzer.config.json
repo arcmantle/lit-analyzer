@@ -1,0 +1,5 @@
+{
+	"rules": {
+		"no-noncallable-event-binding": "off"
+	}
+}

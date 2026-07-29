@@ -1,8 +1,14 @@
 {
 	"extends": "../../tsconfig.json",
-	"include": ["./src"],
+	"include": [
+		"./src"
+	],
 	"compilerOptions": {
+		"rootDir": "./src",
 		"outDir": "./lib",
+		"types": [
+			"node"
+		],
 		"tsBuildInfoFile": "./.tsbuildinfo"
 	}
 }

@@ -1,0 +1,6 @@
+{
+	"rules": {
+		"no-unknown-tag-name": "off",
+		"no-noncallable-event-binding": "off"
+	}
+}

@@ -1,4 +1,9 @@
-const { copy, mkdirp, writeFile } = require("fs-extra");
+import { readFileSync } from 'fs';
+import fsExtra from 'fs-extra';
+
+const { copy, mkdirp, writeFile } = fsExtra;
+
+const readJson = path => JSON.parse(readFileSync(path, 'utf8'));
 
 /**
  * Copy files into the ./built directory.
@@ -12,35 +17,42 @@ const { copy, mkdirp, writeFile } = require("fs-extra");
  */
 async function main() {
 	// We don't bundle the typescript compiler into ./built/bundle.js, so we need
-	// a copy of it.
-	await mkdirp("./node_modules/typescript/lib");
-	await copy("./node_modules/typescript/package.json", "./built/node_modules/typescript/package.json");
-	await copy("./node_modules/typescript/lib/typescript.js", "./built/node_modules/typescript/lib/typescript.js");
-	await copy("./node_modules/typescript/lib/tsserverlibrary.js", "./built/node_modules/typescript/lib/tsserverlibrary.js");
+	// a copy of it. The language server also needs the actual lib.*.d.ts files:
+	// `ts.getDefaultLibFilePath` resolves them relative to this copy, and
+	// without them the language service can't find a default lib and fails to
+	// build a Program. Locale message folders and the tsc/tsserver CLI entry
+	// points aren't needed, so the lib copy is filtered down to just those.
+	const typescriptLibDir = './node_modules/typescript/lib';
+	await mkdirp('./built/node_modules/typescript/lib');
+	await copy('./node_modules/typescript/package.json', './built/node_modules/typescript/package.json');
+	await copy('./node_modules/typescript/lib/typescript.js', './built/node_modules/typescript/lib/typescript.js');
+	await copy('./node_modules/typescript/lib/tsserverlibrary.js', './built/node_modules/typescript/lib/tsserverlibrary.js');
+	await copy(typescriptLibDir, './built/node_modules/typescript/lib', {
+		filter: src => src === typescriptLibDir || src.endsWith('.d.ts'),
+	});
 
-	// For the TS compiler plugin, it must be in node modules because that's
-	// hard coded by the TS compiler's custom module resolution logic.
-	await mkdirp("./built/node_modules/ts-lit-plugin");
-	const tsPluginPackageJson = require("../ts-lit-plugin/package.json");
-	// We're only using the bundled version, so the plugin doesn't need any
-	// dependencies.
-	tsPluginPackageJson.dependencies = {};
-	await writeFile("./built/node_modules/ts-lit-plugin/package.json", JSON.stringify(tsPluginPackageJson, null, 2));
-	await copy("../ts-lit-plugin/index.js", "./built/node_modules/ts-lit-plugin/index.js");
-
-	const pluginPackageJson = require("./package.json");
-	// vsce is _very_ picky about the directories in node_modules matching the
-	// extension's package.json, so we need an entry for ts-lit-plugin or it
-	// will think that it's extraneous.
-	pluginPackageJson.dependencies["ts-lit-plugin"] = "*";
-	await writeFile("./built/package.json", JSON.stringify(pluginPackageJson, null, 2));
+	const pluginPackageJson = readJson('./package.json');
+	// ./built is a published artifact, so it cannot carry workspace-only
+	// specifiers such as `catalog:` -- vsce runs `npm list` over it, and npm
+	// does not understand them. Pin to whatever we actually copied above.
+	// The alias form covers the compiler being installed under a different
+	// package name, e.g. npm:@typescript/typescript6.
+	const typescriptPackageJson = readJson('./node_modules/typescript/package.json');
+	pluginPackageJson.dependencies['typescript'] =
+		typescriptPackageJson.name === 'typescript'
+			? typescriptPackageJson.version
+			: `npm:${ typescriptPackageJson.name }@${ typescriptPackageJson.version }`;
+	// Nothing in ./built is ever installed from, so devDependencies are dead
+	// weight -- and they carry `workspace:` specifiers that npm cannot parse.
+	delete pluginPackageJson.devDependencies;
+	await writeFile('./built/package.json', JSON.stringify(pluginPackageJson, null, 2));
 
 	// Copy static files used by the extension.
-	await copy("./LICENSE.md", "./built/LICENSE.md");
-	await copy("./README.md", "./built/README.md");
-	await copy("./docs", "./built/docs");
-	await copy("./syntaxes", "./built/syntaxes");
-	await copy("./schemas", "./built/schemas");
+	await copy('./LICENSE.md', './built/LICENSE.md');
+	await copy('./README.md', './built/README.md');
+	await copy('./docs', './built/docs');
+	await copy('./syntaxes', './built/syntaxes');
+	await copy('./schemas', './built/schemas');
 }
 
 main().catch(e => {

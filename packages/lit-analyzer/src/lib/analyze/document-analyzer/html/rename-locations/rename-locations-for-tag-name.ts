@@ -1,11 +1,12 @@
-import { JSDocUnknownTag } from "typescript";
-import { LitAnalyzerContext } from "../../../lit-analyzer-context.js";
-import { HtmlDocument } from "../../../parse/document/text-document/html-document/html-document.js";
-import { HtmlNode } from "../../../types/html-node/html-node-types.js";
-import { LitRenameLocation } from "../../../types/lit-rename-location.js";
-import { findChild } from "../../../util/ast-util.js";
-import { iterableFirst } from "../../../util/iterable-util.js";
-import { documentRangeToSFRange, makeSourceFileRange } from "../../../util/range-util.js";
+import { JSDocUnknownTag } from 'typescript';
+
+import { LitAnalyzerContext } from '../../../lit-analyzer-context.js';
+import { HtmlDocument } from '../../../parse/document/text-document/html-document/html-document.js';
+import { HtmlNode } from '../../../types/html-node/html-node-types.js';
+import { LitRenameLocation } from '../../../types/lit-rename-location.js';
+import { findChild } from '../../../util/ast-util.js';
+import { iterableFirst } from '../../../util/iterable-util.js';
+import { documentRangeToSFRange, makeSourceFileRange } from '../../../util/range-util.js';
 
 export function renameLocationsForTagName(tagName: string, context: LitAnalyzerContext): LitRenameLocation[] {
 	const locations: LitRenameLocation[] = [];
@@ -21,9 +22,8 @@ export function renameLocationsForTagName(tagName: string, context: LitAnalyzerC
 						tagName,
 						emitRenameLocation(location: LitRenameLocation): void {
 							locations.push(location);
-						}
-					})
-				);
+						},
+					}));
 			}
 		}
 	}
@@ -36,16 +36,30 @@ export function renameLocationsForTagName(tagName: string, context: LitAnalyzerC
 		if (definitionNode != null) {
 			const fileName = definitionNode.getSourceFile().fileName;
 
-			if (context.ts.isCallLikeExpression(definitionNode)) {
-				const stringLiteralNode = findChild(definitionNode, child => context.ts.isStringLiteralLike(child) && child.text === tagName);
+			if (context.ts.isStringLiteralLike(definitionNode)) {
+				// `customElements.define("my-element", MyElement)` -- the tag
+				// name node here already *is* the string literal, unlike the
+				// call-like and interface cases below where it has to be found
+				// as a child of a larger declaration node.
+				locations.push({
+					fileName,
+					range: makeSourceFileRange({ start: definitionNode.getStart() + 1, end: definitionNode.getEnd() - 1 }),
+				});
+			}
+			else if (context.ts.isCallLikeExpression(definitionNode)) {
+				const stringLiteralNode = findChild(
+					definitionNode,
+					child => context.ts.isStringLiteralLike(child) && child.text === tagName,
+				);
 
 				if (stringLiteralNode != null) {
 					locations.push({
 						fileName,
-						range: makeSourceFileRange({ start: stringLiteralNode.getStart() + 1, end: stringLiteralNode.getEnd() - 1 })
+						range: makeSourceFileRange({ start: stringLiteralNode.getStart() + 1, end: stringLiteralNode.getEnd() - 1 }),
 					});
 				}
-			} else if (definitionNode.kind === context.ts.SyntaxKind.JSDocTag) {
+			}
+			else if (definitionNode.kind === context.ts.SyntaxKind.JSDocTag) {
 				const jsDocTagNode = definitionNode as JSDocUnknownTag;
 
 				if (jsDocTagNode.comment != null) {
@@ -53,16 +67,20 @@ export function renameLocationsForTagName(tagName: string, context: LitAnalyzerC
 
 					locations.push({
 						fileName,
-						range: makeSourceFileRange({ start, end: start + jsDocTagNode.comment.length })
+						range: makeSourceFileRange({ start, end: start + jsDocTagNode.comment.length }),
 					});
 				}
-			} else if (context.ts.isInterfaceDeclaration(definitionNode)) {
-				const stringLiteralNode = findChild(definitionNode, child => context.ts.isStringLiteralLike(child) && child.text === tagName);
+			}
+			else if (context.ts.isInterfaceDeclaration(definitionNode)) {
+				const stringLiteralNode = findChild(
+					definitionNode,
+					child => context.ts.isStringLiteralLike(child) && child.text === tagName,
+				);
 
 				if (stringLiteralNode != null) {
 					locations.push({
 						fileName,
-						range: makeSourceFileRange({ start: stringLiteralNode.getStart() + 1, end: stringLiteralNode.getEnd() - 1 })
+						range: makeSourceFileRange({ start: stringLiteralNode.getStart() + 1, end: stringLiteralNode.getEnd() - 1 }),
 					});
 				}
 			}
@@ -74,22 +92,22 @@ export function renameLocationsForTagName(tagName: string, context: LitAnalyzerC
 
 interface VisitHtmlNodeContext {
 	document: HtmlDocument;
-	tagName: string;
+	tagName:  string;
 	emitRenameLocation(location: LitRenameLocation): void;
 }
 
 function visitHtmlNode(node: HtmlNode, context: VisitHtmlNodeContext) {
 	if (node.tagName === context.tagName) {
 		context.emitRenameLocation({
-			range: documentRangeToSFRange(context.document, node.location.name),
-			fileName: context.document.virtualDocument.fileName
+			range:    documentRangeToSFRange(context.document, node.location.name),
+			fileName: context.document.virtualDocument.fileName,
 		});
 
 		if (node.location.endTag != null) {
 			const { start, end } = node.location.endTag;
 			context.emitRenameLocation({
-				range: documentRangeToSFRange(context.document, { start: start + 2, end: end - 1 }),
-				fileName: context.document.virtualDocument.fileName
+				range:    documentRangeToSFRange(context.document, { start: start + 2, end: end - 1 }),
+				fileName: context.document.virtualDocument.fileName,
 			});
 		}
 	}

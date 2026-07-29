@@ -1,6 +1,7 @@
-import { LitRenameLocation } from "lit-analyzer";
-import { translateRange } from "./translate-range.js";
-import { RenameLocation } from "typescript";
+import { LitRenameLocation } from 'lit-analyzer';
+import { RenameLocation } from 'typescript';
+
+import { translateRange } from './translate-range.js';
 
 export function translateRenameLocations(renameLocations: LitRenameLocation[]): RenameLocation[] {
 	return renameLocations.map(renameLocation => translateRenameLocation(renameLocation));
@@ -13,6 +14,6 @@ function translateRenameLocation({ fileName, prefixText, suffixText, range }: Li
 		textSpan,
 		fileName,
 		prefixText,
-		suffixText
+		suffixText,
 	};
 }

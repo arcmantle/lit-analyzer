@@ -1,4 +1,4 @@
-import "./my-defined-element.js";
+import './my-defined-element.js';
 
 // Pretending this is the Lit html function
 // eslint-disable-next-line @typescript-eslint/no-explicit-any

@@ -2,15 +2,20 @@
 	"name": "dev",
 	"version": "1.0.0",
 	"description": "",
+	"private": true,
+	"engines": {
+		"node": ">=24"
+	},
 	"dependencies": {
 		"lit-element": "^2.3.1",
 		"lit-html": "^1.2.1",
-		"ts-lit-plugin": "file:../packages/ts-lit-plugin"
+		"ts-lit-plugin": "workspace:*"
 	},
 	"devDependencies": {
-		"typescript": "~4.4.3"
+		"typescript": "catalog:"
 	},
 	"keywords": [],
 	"author": "",
-	"license": "MIT"
+	"license": "MIT",
+	"type": "commonjs"
 }

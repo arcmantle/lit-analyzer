@@ -1,9 +1,9 @@
-import { HtmlNodeAttrAssignmentKind } from "../analyze/types/html-node/html-node-attr-assignment-types.js";
-import { HtmlNodeAttrKind } from "../analyze/types/html-node/html-node-attr-types.js";
-import { RuleModule } from "../analyze/types/rule/rule-module.js";
-import { rangeFromHtmlNodeAttr } from "../analyze/util/range-util.js";
+import { HtmlNodeAttrAssignmentKind } from '../analyze/types/html-node/html-node-attr-assignment-types.js';
+import { HtmlNodeAttrKind } from '../analyze/types/html-node/html-node-attr-types.js';
+import { RuleModule } from '../analyze/types/rule/rule-module.js';
+import { rangeFromHtmlNodeAttr } from '../analyze/util/range-util.js';
 
-const CONTROL_CHARACTERS = ["'", '"', "}", "/"];
+const CONTROL_CHARACTERS = [ "'", '"', '}', '/' ];
 
 /**
  * This rule validates that bindings are not followed by certain characters that indicate typos.
@@ -14,32 +14,32 @@ const CONTROL_CHARACTERS = ["'", '"', "}", "/"];
  *   <input value=${val}} />
  */
 const rule: RuleModule = {
-	id: "no-unintended-mixed-binding",
+	id:   'no-unintended-mixed-binding',
 	meta: {
-		priority: "high"
+		priority: 'high',
 	},
 	visitHtmlAssignment(assignment, context) {
 		// Check only mixed bindings
-		if (assignment.kind !== HtmlNodeAttrAssignmentKind.MIXED) {
+		if (assignment.kind !== HtmlNodeAttrAssignmentKind.MIXED)
 			return;
-		}
+
 
 		// Only check mixed bindings with 2 values
-		if (assignment.values.length !== 2) {
+		if (assignment.values.length !== 2)
 			return;
-		}
+
 
 		// Event listener binding ignores mixed bindings.
 		// This kind of binding only uses the first expression present in the mixed binding.
-		if (assignment.htmlAttr.kind === HtmlNodeAttrKind.EVENT_LISTENER) {
+		if (assignment.htmlAttr.kind === HtmlNodeAttrKind.EVENT_LISTENER)
 			return;
-		}
+
 
 		// Ensure the last value is a string literal
 		const secondAssignment = assignment.values[1];
-		if (typeof secondAssignment !== "string") {
+		if (typeof secondAssignment !== 'string')
 			return;
-		}
+
 
 		// Report error if the string literal is one of the control characters
 		if (CONTROL_CHARACTERS.includes(secondAssignment)) {
@@ -47,21 +47,22 @@ const rule: RuleModule = {
 
 			const message = (() => {
 				switch (secondAssignment) {
-					case "/":
-						return `This binding is directly followed by a '/' which is probably unintended.`;
-					default:
-						return `This binding is directly followed by an unmatched ${quoteChar}${secondAssignment}${quoteChar} which is probably unintended.`;
+				case '/':
+					return `This binding is directly followed by a '/' which is probably unintended.`;
+				default:
+					return `This binding is directly followed by an unmatched ${ quoteChar }${ secondAssignment }${ quoteChar } which \
+is probably unintended.`;
 				}
 			})();
 
 			context.report({
 				location: rangeFromHtmlNodeAttr(assignment.htmlAttr),
-				message
+				message,
 			});
 		}
 
 		return;
-	}
+	},
 };
 
 export default rule;

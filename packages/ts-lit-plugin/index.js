@@ -1,5 +1,6 @@
-// A TypeScript compiler plugin must do a CJS style default export, but
-// we can't express that in proper ESM, so this hand-written JS
-// file bridges the difference.
+// tsserver loads TypeScript compiler plugins with `require` and expects a CJS
+// style default export, which cannot be expressed in ESM. That consumer is why
+// this package stays CommonJS, and why this hand-written file exists to bridge
+// the difference.
 
 module.exports = require("./lib/index").init;

@@ -1,0 +1,32 @@
+packages:
+  - packages/*
+  - internal/*
+  - dev
+
+catalog:
+  # The one TypeScript in this repository. lit-analyzer builds a Program and
+  # queries the TypeChecker with it, and `dev/` runs it as the host compiler for
+  # dogfooding. Declared once so moving it is a one-line change.
+  typescript: ^6.0.3
+
+# `web-component-analyzer` declares its own `typescript` dependency (~5.2.0), and
+# lit-analyzer hands it Program/SourceFile values built by the analysis compiler.
+# Two TypeScript instances in one graph means those types do not unify. Point it
+# at the catalog so there is exactly one. Absorbing this package
+# (ADR_5DHSRF5RQ79S7ATW8V574YDD2X) removes the need for the override.
+overrides:
+  web-component-analyzer>typescript: 'catalog:'
+
+allowBuilds:
+  # Needed: esbuild's platform binary, and husky's git hook installation.
+  esbuild: true
+  husky: true
+  # Both are only reached by `vsce publish`: credential storage and the
+  # extension signing binary. Nothing in build, test or package needs them.
+  '@vscode/vsce-sign': false
+  keytar: false
+
+# The package scripts are plain shell (`mkdir -p`, `rm -rf`, `&&`). Run them
+# through pnpm's bash-like emulator so they behave the same on Windows, which CI
+# builds and packages on.
+shellEmulator: true

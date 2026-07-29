@@ -1,9 +1,12 @@
-import { litDiagnosticRuleSeverity, ruleIdCode } from "../lit-analyzer-config.js";
-import { LitAnalyzerContext } from "../lit-analyzer-context.js";
-import { ReportedRuleDiagnostic } from "../rule-collection.js";
-import { LitDiagnostic } from "../types/lit-diagnostic.js";
+import { litDiagnosticRuleSeverity, ruleIdCode } from '../lit-analyzer-config.js';
+import { LitAnalyzerContext } from '../lit-analyzer-context.js';
+import { ReportedRuleDiagnostic } from '../rule-collection.js';
+import { LitDiagnostic } from '../types/lit-diagnostic.js';
 
-export function convertRuleDiagnosticToLitDiagnostic(reported: ReportedRuleDiagnostic, context: LitAnalyzerContext): LitDiagnostic {
+export function convertRuleDiagnosticToLitDiagnostic(
+	reported: ReportedRuleDiagnostic,
+	context: LitAnalyzerContext,
+): LitDiagnostic {
 	const source = reported.source;
 	const { message, location, fixMessage, suggestion } = reported.diagnostic;
 
@@ -13,8 +16,8 @@ export function convertRuleDiagnosticToLitDiagnostic(reported: ReportedRuleDiagn
 		suggestion,
 		message,
 		source,
-		file: context.currentFile,
+		file:     context.currentFile,
 		severity: litDiagnosticRuleSeverity(context.config, source),
-		code: ruleIdCode(source)
+		code:     ruleIdCode(source),
 	};
 }

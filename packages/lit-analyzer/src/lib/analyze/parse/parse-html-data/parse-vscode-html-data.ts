@@ -1,8 +1,9 @@
-import { SimpleType, SimpleTypeStringLiteral } from "ts-simple-type";
-import { HTMLDataV1, IAttributeData, ITagData, IValueData, IValueSet } from "vscode-html-languageservice";
-import { MarkupContent } from "vscode-languageserver-types";
-import { lazy } from "../../util/general-util.js";
-import { HtmlAttr, HtmlDataCollection, HtmlEvent, HtmlTag } from "./html-tag.js";
+import { SimpleType, SimpleTypeStringLiteral } from 'ts-simple-type';
+import { HTMLDataV1, IAttributeData, ITagData, IValueData, IValueSet } from 'vscode-html-languageservice';
+import { MarkupContent } from 'vscode-languageserver-types';
+
+import { lazy } from '../../util/general-util.js';
+import { HtmlAttr, HtmlDataCollection, HtmlEvent, HtmlTag } from './html-tag.js';
 
 export interface ParseVscodeHtmlDataConfig {
 	builtIn?: boolean;
@@ -11,26 +12,25 @@ export interface ParseVscodeHtmlDataConfig {
 
 export function parseVscodeHtmlData(data: HTMLDataV1, config: ParseVscodeHtmlDataConfig = {}): HtmlDataCollection {
 	switch (data.version) {
-		case 1:
-		case 1.1:
-			return parseVscodeDataV1(data, config);
+	case 1:
+	case 1.1:
+		return parseVscodeDataV1(data, config);
 	}
 }
 
 function parseVscodeDataV1(data: HTMLDataV1, config: ParseVscodeHtmlDataConfig): HtmlDataCollection {
 	const valueSetTypeMap = valueSetsToTypeMap(data.valueSets || []);
-	valueSetTypeMap.set("v", { kind: "BOOLEAN" });
+	valueSetTypeMap.set('v', { kind: 'BOOLEAN' });
 
 	// Transfer existing typemap to new typemap
 	if (config.typeMap != null) {
-		for (const [k, v] of config.typeMap.entries()) {
+		for (const [ k, v ] of config.typeMap.entries())
 			valueSetTypeMap.set(k, v);
-		}
 	}
 
 	const newConfig = {
 		...config,
-		typeMap: valueSetTypeMap
+		typeMap: valueSetTypeMap,
 	};
 
 	const globalAttributes = (data.globalAttributes || []).map(tagDataAttr => tagDataToHtmlTagAttr(tagDataAttr, newConfig));
@@ -38,11 +38,11 @@ function parseVscodeDataV1(data: HTMLDataV1, config: ParseVscodeHtmlDataConfig):
 	const globalEvents = attrsToEvents(globalAttributes).map(evt => ({ ...evt, global: true }));
 
 	return {
-		tags: (data.tags || []).map(tagData => tagDataToHtmlTag(tagData, newConfig)),
+		tags:   (data.tags || []).map(tagData => tagDataToHtmlTag(tagData, newConfig)),
 		global: {
 			attributes: globalAttributes,
-			events: globalEvents
-		}
+			events:     globalEvents,
+		},
 	};
 }
 
@@ -54,15 +54,15 @@ function tagDataToHtmlTag(tagData: ITagData, config: ParseVscodeHtmlDataConfig):
 	const events = attrsToEvents(attributes);
 
 	return {
-		tagName: name,
-		description: stringOrMarkupContentToString(description),
+		tagName:       name,
+		description:   stringOrMarkupContentToString(description),
 		attributes,
 		events,
-		properties: [],
-		slots: [],
-		builtIn: config.builtIn,
-		cssParts: [],
-		cssProperties: []
+		properties:    [],
+		slots:         [],
+		builtIn:       config.builtIn,
+		cssParts:      [],
+		cssProperties: [],
 	};
 }
 
@@ -72,50 +72,50 @@ function tagDataToHtmlTagAttr(tagDataAttr: IAttributeData, config: ParseVscodeHt
 	const type = valueSet != null ? config.typeMap?.get(valueSet) : values != null ? attrValuesToUnion(values) : undefined;
 
 	return {
-		kind: "attribute",
+		kind:        'attribute',
 		name,
 		description: stringOrMarkupContentToString(description),
 		fromTagName,
-		getType: lazy(() => type || { kind: "ANY" }),
-		builtIn: config.builtIn
+		getType:     lazy(() => type || { kind: 'ANY' }),
+		builtIn:     config.builtIn,
 	};
 }
 
 function valueSetsToTypeMap(valueSets: IValueSet[]): Map<string, SimpleType> {
-	const entries = valueSets.map(valueSet => [valueSet.name, attrValuesToUnion(valueSet.values)] as [string, SimpleType]);
+	const entries = valueSets.map(valueSet => [ valueSet.name, attrValuesToUnion(valueSet.values) ] as [string, SimpleType]);
 
 	return new Map(entries);
 }
 
 function attrValuesToUnion(attrValues: IValueData[]): SimpleType {
 	return {
-		kind: "UNION",
+		kind:  'UNION',
 		types: attrValues.map(
 			value =>
 				({
 					value: value.name,
-					kind: "STRING_LITERAL"
-				} as SimpleTypeStringLiteral)
-		)
+					kind:  'STRING_LITERAL',
+				} as SimpleTypeStringLiteral),
+		),
 	};
 }
 
 function stringOrMarkupContentToString(str: string | MarkupContent | undefined): string | undefined {
-	if (str == null || typeof str === "string") {
+	if (str == null || typeof str === 'string')
 		return str;
-	}
+
 
 	return str.value;
 }
 
 function attrsToEvents(htmlAttrs: HtmlAttr[]): HtmlEvent[] {
 	return htmlAttrs
-		.filter(htmlAttr => htmlAttr.name.startsWith("on"))
+		.filter(htmlAttr => htmlAttr.name.startsWith('on'))
 		.map(htmlAttr => ({
-			name: htmlAttr.name.replace(/^on/, ""),
+			name:        htmlAttr.name.replace(/^on/, ''),
 			description: htmlAttr.description,
 			fromTagName: htmlAttr.fromTagName,
-			getType: lazy(() => ({ kind: "ANY" } as SimpleType)),
-			builtIn: htmlAttr.builtIn
+			getType:     lazy(() => ({ kind: 'ANY' } as SimpleType)),
+			builtIn:     htmlAttr.builtIn,
 		}));
 }

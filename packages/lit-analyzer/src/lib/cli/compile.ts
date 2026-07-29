@@ -1,26 +1,27 @@
-import { existsSync, readFileSync } from "fs";
+import { existsSync, readFileSync } from 'fs';
 import {
 	CompilerOptions,
-	parseJsonConfigFileContent,
-	sys,
 	createProgram,
 	findConfigFile,
 	ModuleKind,
 	ModuleResolutionKind,
+	parseJsonConfigFileContent,
 	Program,
 	readConfigFile,
 	ScriptTarget,
-	SourceFile
-} from "typescript";
-import { LitAnalyzerConfig } from "../analyze/lit-analyzer-config.js";
+	SourceFile,
+	sys,
+} from 'typescript';
+
+import { LitAnalyzerConfig } from '../analyze/lit-analyzer-config.js';
 
 const requiredCompilerOptions: CompilerOptions = {
-	noEmitOnError: false,
-	noEmit: true,
-	allowJs: true,
+	noEmitOnError:    false,
+	noEmit:           true,
+	allowJs:          true,
 	//maxNodeModuleJsDepth: 3,
 	strictNullChecks: true, // Type checking will remove all "null" and "undefined" from types if "strictNullChecks" is false
-	skipLibCheck: true
+	skipLibCheck:     true,
 };
 
 /**
@@ -28,21 +29,21 @@ const requiredCompilerOptions: CompilerOptions = {
  */
 const defaultCompilerOptions: CompilerOptions = {
 	...requiredCompilerOptions,
-	experimentalDecorators: true,
-	target: ScriptTarget.Latest,
-	downlevelIteration: true,
-	module: ModuleKind.ESNext,
+	experimentalDecorators:       true,
+	target:                       ScriptTarget.Latest,
+	module:                       ModuleKind.ESNext,
 	//module: ModuleKind.CommonJS,
-	esModuleInterop: true,
+	moduleResolution:             ModuleResolutionKind.Bundler,
+	esModuleInterop:              true,
 	allowSyntheticDefaultImports: true,
-	allowUnreachableCode: true,
-	allowUnusedLabels: true,
-	lib: ["lib.esnext.d.ts", "lib.dom.d.ts"]
+	allowUnreachableCode:         true,
+	allowUnusedLabels:            true,
+	lib:                          [ 'lib.esnext.d.ts', 'lib.dom.d.ts' ],
 };
 
 export interface CompileResult {
-	program: Program;
-	files: SourceFile[];
+	program:        Program;
+	files:          SourceFile[];
 	pluginOptions?: LitAnalyzerConfig;
 }
 
@@ -52,7 +53,7 @@ export interface CompileResult {
  */
 export function compileTypescript(filePaths: string | string[]): CompileResult {
 	const options = getCompilerOptions();
-	filePaths = Array.isArray(filePaths) ? filePaths : [filePaths];
+	filePaths = Array.isArray(filePaths) ? filePaths : [ filePaths ];
 	const program = createProgram(filePaths, options);
 	const files = program
 		.getSourceFiles()
@@ -73,13 +74,16 @@ export function getCompilerOptions(): CompilerOptions {
 	if (compilerOptions != null) {
 		const options = {
 			...compilerOptions,
-			...requiredCompilerOptions
+			...requiredCompilerOptions,
 		};
-		// set module resolution to nodejs if it is classic
-		// but if the user has set it to something else, don't override it
-		if (!options.moduleResolution || options.moduleResolution === ModuleResolutionKind.Classic) {
-			options.moduleResolution = ModuleResolutionKind.NodeJs;
-		}
+		// Classic resolution cannot find anything in node_modules, and is removed in
+		// TypeScript 7 along with the other pre-Node16 modes. Upgrade it, and an
+		// absent setting, to Bundler: the most permissive mode that survives, and
+		// the one least likely to leave a user's imports unresolved.
+		// If the user chose a mode themselves, leave it alone.
+		if (!options.moduleResolution || options.moduleResolution === ModuleResolutionKind.Classic)
+			options.moduleResolution = ModuleResolutionKind.Bundler;
+
 		return options;
 	}
 
@@ -92,14 +96,15 @@ export function getCompilerOptions(): CompilerOptions {
  */
 export function resolveTsConfigCompilerOptions(): CompilerOptions | undefined {
 	// Find the nearest tsconfig.json file if possible
-	const tsConfigFilePath = findConfigFile(process.cwd(), existsSync, "tsconfig.json");
+	const tsConfigFilePath = findConfigFile(process.cwd(), existsSync, 'tsconfig.json');
 
 	if (tsConfigFilePath != null) {
 		// Read the tsconfig.json file
-		const parsedConfig = readConfigFile(tsConfigFilePath, path => readFileSync(path, "utf8"));
+		const parsedConfig = readConfigFile(tsConfigFilePath, path => readFileSync(path, 'utf8'));
 		if (parsedConfig != null && parsedConfig.config != null) {
 			// Parse the tsconfig.json file
 			const parsedJson = parseJsonConfigFileContent(parsedConfig.config, sys, process.cwd());
+
 			return parsedJson?.options;
 		}
 	}
@@ -114,12 +119,11 @@ export function readLitAnalyzerConfigFromTsConfig(): Partial<LitAnalyzerConfig> 
 	const compilerOptions = resolveTsConfigCompilerOptions();
 
 	// Finds the plugin section
-	if (compilerOptions != null && "plugins" in compilerOptions) {
-		const plugins = compilerOptions.plugins as ({ name: string } & Partial<LitAnalyzerConfig>)[];
-		const tsLitPluginOptions = plugins.find(plugin => plugin.name === "ts-lit-plugin");
-		if (tsLitPluginOptions != null) {
+	if (compilerOptions != null && 'plugins' in compilerOptions) {
+		const plugins = compilerOptions.plugins as ({ name: string; } & Partial<LitAnalyzerConfig>)[];
+		const tsLitPluginOptions = plugins.find(plugin => plugin.name === 'ts-lit-plugin');
+		if (tsLitPluginOptions != null)
 			return tsLitPluginOptions;
-		}
 	}
 
 	return undefined;

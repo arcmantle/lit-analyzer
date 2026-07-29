@@ -1,19 +1,21 @@
-import { ComponentDeclaration, ComponentDefinition } from "web-component-analyzer";
-import { isRuleEnabled, LitAnalyzerRuleId } from "./lit-analyzer-config.js";
-import { LitAnalyzerContext } from "./lit-analyzer-context.js";
-import { HtmlDocument } from "./parse/document/text-document/html-document/html-document.js";
-import { HtmlNodeAttr } from "./types/html-node/html-node-attr-types.js";
-import { HtmlNode, HtmlNodeKind } from "./types/html-node/html-node-types.js";
-import { RuleDiagnostic } from "./types/rule/rule-diagnostic.js";
-import { RuleModule, RuleModuleImplementation } from "./types/rule/rule-module.js";
-import { RuleModuleContext } from "./types/rule/rule-module-context.js";
+import { ComponentDeclaration, ComponentDefinition } from 'web-component-analyzer';
+
+import { isRuleEnabled, LitAnalyzerRuleId } from './lit-analyzer-config.js';
+import { LitAnalyzerContext } from './lit-analyzer-context.js';
+import { HtmlDocument } from './parse/document/text-document/html-document/html-document.js';
+import { HtmlNodeAttr } from './types/html-node/html-node-attr-types.js';
+import { HtmlNode, HtmlNodeKind } from './types/html-node/html-node-types.js';
+import { RuleDiagnostic } from './types/rule/rule-diagnostic.js';
+import { RuleModule, RuleModuleImplementation } from './types/rule/rule-module.js';
+import { RuleModuleContext } from './types/rule/rule-module-context.js';
 
 export interface ReportedRuleDiagnostic {
-	source: LitAnalyzerRuleId;
+	source:     LitAnalyzerRuleId;
 	diagnostic: RuleDiagnostic;
 }
 
 export class RuleCollection {
+
 	private rules: RuleModule[] = [];
 
 	push(...rule: RuleModule[]): void {
@@ -27,7 +29,7 @@ export class RuleCollection {
 		functionName: VisitFunctionName,
 		parameter: Parameters<NonNullable<RuleModuleImplementation[VisitFunctionName]>>[0],
 		report: (diagnostic: ReportedRuleDiagnostic) => void,
-		baseContext: LitAnalyzerContext
+		baseContext: LitAnalyzerContext,
 	): void {
 		let shouldBreak = false;
 
@@ -46,14 +48,14 @@ export class RuleCollection {
 			ts,
 			file: baseContext.currentFile,
 			report(diagnostic: RuleDiagnostic): void {
-				if (currentRuleId != null) {
+				if (currentRuleId != null)
 					report({ diagnostic, source: currentRuleId });
-				}
+
 				shouldBreak = true;
 			},
 			break(): void {
 				shouldBreak = true;
-			}
+			},
 		};
 
 		for (const rule of this.rules) {
@@ -67,9 +69,8 @@ export class RuleCollection {
 				}
 			}
 
-			if (shouldBreak) {
+			if (shouldBreak)
 				break;
-			}
 		}
 	}
 
@@ -78,12 +79,11 @@ export class RuleCollection {
 
 		const diagnostics: ReportedRuleDiagnostic[] = [];
 
-		this.invokeRules("visitComponentDeclaration", declaration, d => diagnostics.push(d), baseContext);
+		this.invokeRules('visitComponentDeclaration', declaration, d => diagnostics.push(d), baseContext);
 
 		for (const member of declaration.members) {
-			if (member.node.getSourceFile() === file) {
-				this.invokeRules("visitComponentMember", member, d => diagnostics.push(d), baseContext);
-			}
+			if (member.node.getSourceFile() === file)
+				this.invokeRules('visitComponentMember', member, d => diagnostics.push(d), baseContext);
 		}
 
 		return diagnostics;
@@ -94,9 +94,9 @@ export class RuleCollection {
 
 		const diagnostics: ReportedRuleDiagnostic[] = [];
 
-		if (definition.sourceFile === file) {
-			this.invokeRules("visitComponentDefinition", definition, d => diagnostics.push(d), baseContext);
-		}
+		if (definition.sourceFile === file)
+			this.invokeRules('visitComponentDefinition', definition, d => diagnostics.push(d), baseContext);
+
 
 		return diagnostics;
 	}
@@ -107,19 +107,18 @@ export class RuleCollection {
 		const iterateNodes = (nodes: HtmlNode[]) => {
 			for (const childNode of nodes) {
 				// Don't check SVG yet. We don't yet have all the data for it, and it hasn't been tested fully.
-				if (childNode.kind === HtmlNodeKind.SVG) {
+				if (childNode.kind === HtmlNodeKind.SVG)
 					continue;
-				}
 
-				this.invokeRules("visitHtmlNode", childNode, d => diagnostics.push(d), baseContext);
+
+				this.invokeRules('visitHtmlNode', childNode, d => diagnostics.push(d), baseContext);
 
 				const iterateAttrs = (attrs: HtmlNodeAttr[]) => {
 					for (const attr of attrs) {
-						this.invokeRules("visitHtmlAttribute", attr, d => diagnostics.push(d), baseContext);
+						this.invokeRules('visitHtmlAttribute', attr, d => diagnostics.push(d), baseContext);
 
-						if (attr.assignment != null) {
-							this.invokeRules("visitHtmlAssignment", attr.assignment, d => diagnostics.push(d), baseContext);
-						}
+						if (attr.assignment != null)
+							this.invokeRules('visitHtmlAssignment', attr.assignment, d => diagnostics.push(d), baseContext);
 					}
 				};
 
@@ -133,17 +132,18 @@ export class RuleCollection {
 
 		return diagnostics;
 	}
+
 }
 
 function getPriorityValue(rule: RuleModule): number {
 	if (rule.meta?.priority != null) {
 		switch (rule.meta?.priority) {
-			case "low":
-				return 0;
-			case "medium":
-				return 1;
-			case "high":
-				return 2;
+		case 'low':
+			return 0;
+		case 'medium':
+			return 1;
+		case 'high':
+			return 2;
 		}
 	}
 

@@ -1,28 +1,29 @@
-import { Node, SourceFile } from "typescript";
-import { SourceFileRange } from "./range.js";
+import { Node, SourceFile } from 'typescript';
 
-export type LitDefinitionTargetKind = "node" | "range";
+import { SourceFileRange } from './range.js';
+
+export type LitDefinitionTargetKind = 'node' | 'range';
 
 export interface LitDefinitionTargetBase {
 	kind: LitDefinitionTargetKind;
 }
 
 export interface LitDefinitionTargetNode extends LitDefinitionTargetBase {
-	kind: "node";
-	node: Node;
+	kind:  'node';
+	node:  Node;
 	name?: string;
 }
 
 export interface LitDefinitionTargetRange {
-	kind: "range";
+	kind:       'range';
 	sourceFile: SourceFile;
-	range: SourceFileRange;
-	name?: string;
+	range:      SourceFileRange;
+	name?:      string;
 }
 
 export type LitDefinitionTarget = LitDefinitionTargetNode | LitDefinitionTargetRange;
 
 export interface LitDefinition {
 	fromRange: SourceFileRange;
-	targets: LitDefinitionTarget[];
+	targets:   LitDefinitionTarget[];
 }

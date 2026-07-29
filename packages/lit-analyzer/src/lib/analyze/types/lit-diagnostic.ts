@@ -1,16 +1,17 @@
-import { SourceFile } from "typescript";
-import { LitAnalyzerRuleId } from "../lit-analyzer-config.js";
-import { SourceFileRange } from "./range.js";
+import { SourceFile } from 'typescript';
 
-export type LitDiagnosticSeverity = "error" | "warning";
+import { LitAnalyzerRuleId } from '../lit-analyzer-config.js';
+import { SourceFileRange } from './range.js';
+
+export type LitDiagnosticSeverity = 'error' | 'warning';
 
 export interface LitDiagnostic {
-	location: SourceFileRange;
-	code?: number;
-	message: string;
+	location:    SourceFileRange;
+	code?:       number;
+	message:     string;
 	fixMessage?: string;
 	suggestion?: string;
-	source: LitAnalyzerRuleId;
-	severity: LitDiagnosticSeverity;
-	file: SourceFile;
+	source:      LitAnalyzerRuleId;
+	severity:    LitDiagnosticSeverity;
+	file:        SourceFile;
 }

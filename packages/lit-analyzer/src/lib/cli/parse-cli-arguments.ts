@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { dashToCamelCase } from "./util.js";
+import { dashToCamelCase } from './util.js';
 
-export type CliArguments = { _: string[] } & Record<string, number | string | boolean>;
+export type CliArguments = { _: string[]; } & Record<string, number | string | boolean>;
 
 /**
  * Parses CLI arguments.
@@ -14,10 +14,10 @@ export function parseCliArguments(args: string[]): CliArguments {
 		const arg = args[i];
 
 		// Parses: "--key", "-k", "--key=value", "--key value"
-		if (arg.startsWith("-")) {
+		if (arg.startsWith('-')) {
 			// Parses: "--key=value"
-			if (arg.includes("=")) {
-				const [key, value] = arg.split("=");
+			if (arg.includes('=')) {
+				const [ key, value ] = arg.split('=');
 				assignValue(result, key, value);
 			}
 
@@ -28,7 +28,7 @@ export function parseCliArguments(args: string[]): CliArguments {
 				// Parses: "--key value"
 				if (i < args.length - 1) {
 					const value = args[i + 1];
-					if (!value.startsWith("-")) {
+					if (!value.startsWith('-')) {
 						assignValue(result, key, value);
 						i++;
 						continue;
@@ -54,13 +54,13 @@ export function parseCliArguments(args: string[]): CliArguments {
  * @param value
  */
 function transformValue(value: any): string | boolean | number {
-	if (typeof value === "boolean") {
+	if (typeof value === 'boolean')
 		return value;
-	} else if (!isNaN(Number(value))) {
+	else if (!isNaN(Number(value)))
 		return Number(value);
-	} else if (value === "true" || value === "false") {
-		return value === "true";
-	}
+	else if (value === 'true' || value === 'false')
+		return value === 'true';
+
 
 	return value;
 }
@@ -70,7 +70,7 @@ function transformValue(value: any): string | boolean | number {
  * @param key
  */
 function transformKey(key: string): string {
-	return dashToCamelCase(key.replace(/^-*/g, ""));
+	return dashToCamelCase(key.replace(/^-*/g, ''));
 }
 
 /**
@@ -81,7 +81,7 @@ function transformKey(key: string): string {
  */
 function assignValue(obj: any, key: string, value: any) {
 	// The key could be "nested.key"
-	const keys = transformKey(key).split(".");
+	const keys = transformKey(key).split('.');
 
 	keys.forEach((k, i) => {
 		// Assign the final value
@@ -91,9 +91,9 @@ function assignValue(obj: any, key: string, value: any) {
 
 		// Create nested objects
 		else {
-			if (!(k in obj)) {
+			if (!(k in obj))
 				obj[k] = {};
-			}
+
 			obj = obj[k];
 		}
 	});

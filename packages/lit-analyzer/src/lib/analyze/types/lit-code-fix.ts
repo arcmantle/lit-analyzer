@@ -1,7 +1,7 @@
-import { LitCodeFixAction } from "./lit-code-fix-action.js";
+import { LitCodeFixAction } from './lit-code-fix-action.js';
 
 export interface LitCodeFix {
-	name: string;
+	name:    string;
 	message: string;
 	actions: LitCodeFixAction[];
 }

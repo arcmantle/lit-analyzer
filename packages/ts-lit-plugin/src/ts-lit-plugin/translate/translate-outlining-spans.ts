@@ -1,6 +1,7 @@
-import { LitOutliningSpan } from "lit-analyzer";
-import { translateRange } from "./translate-range.js";
-import type * as ts from "typescript";
+import { LitOutliningSpan } from 'lit-analyzer';
+import type * as ts from 'typescript';
+
+import { translateRange } from './translate-range.js';
 
 export function translateOutliningSpans(outliningSpans: LitOutliningSpan[]): ts.OutliningSpan[] {
 	return outliningSpans.map(outliningSpan => translateOutliningSpan(outliningSpan));
@@ -11,9 +12,9 @@ function translateOutliningSpan(outliningSpan: LitOutliningSpan): ts.OutliningSp
 
 	return {
 		autoCollapse: outliningSpan.autoCollapse || false,
-		textSpan: span,
-		hintSpan: span,
-		kind: outliningSpan.kind as unknown as ts.OutliningSpanKind,
-		bannerText: outliningSpan.bannerText
+		textSpan:     span,
+		hintSpan:     span,
+		kind:         outliningSpan.kind as unknown as ts.OutliningSpanKind,
+		bannerText:   outliningSpan.bannerText,
 	};
 }

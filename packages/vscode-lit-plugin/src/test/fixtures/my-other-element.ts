@@ -1,9 +1,9 @@
 export class MyOtherElement extends HTMLElement {}
 
-customElements.define("my-other-element", MyOtherElement);
+customElements.define('my-other-element', MyOtherElement);
 
 declare global {
 	interface HTMLElementTagNameMap {
-		"my-other-element": MyOtherElement;
+		'my-other-element': MyOtherElement;
 	}
 }

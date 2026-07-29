@@ -1,32 +1,36 @@
-import { isAssignableToPrimitiveType, typeToString } from "ts-simple-type";
-import { HtmlNodeAttrAssignmentKind } from "../analyze/types/html-node/html-node-attr-assignment-types.js";
-import { HtmlNodeAttrKind } from "../analyze/types/html-node/html-node-attr-types.js";
-import { RuleModule } from "../analyze/types/rule/rule-module.js";
-import { rangeFromHtmlNodeAttr } from "../analyze/util/range-util.js";
-import { isLitDirective } from "./util/directive/is-lit-directive.js";
-import { extractBindingTypes } from "./util/type/extract-binding-types.js";
-import { isAssignableBindingUnderSecuritySystem } from "./util/type/is-assignable-binding-under-security-system.js";
+import { isAssignableToPrimitiveType, typeToString } from 'ts-simple-type';
+
+import { HtmlNodeAttrAssignmentKind } from '../analyze/types/html-node/html-node-attr-assignment-types.js';
+import { HtmlNodeAttrKind } from '../analyze/types/html-node/html-node-attr-types.js';
+import { RuleModule } from '../analyze/types/rule/rule-module.js';
+import { rangeFromHtmlNodeAttr } from '../analyze/util/range-util.js';
+import { isLitDirective } from './util/directive/is-lit-directive.js';
+import { extractBindingTypes } from './util/type/extract-binding-types.js';
+import { isAssignableBindingUnderSecuritySystem } from './util/type/is-assignable-binding-under-security-system.js';
 
 /**
  * This rule validates that complex types are not used within an expression in an attribute binding.
  */
 const rule: RuleModule = {
-	id: "no-complex-attribute-binding",
+	id:   'no-complex-attribute-binding',
 	meta: {
-		priority: "medium"
+		priority: 'medium',
 	},
 	visitHtmlAssignment(assignment, context) {
 		// Only validate attribute bindings, because you are able to assign complex types in property bindings.
 		const { htmlAttr } = assignment;
-		if (htmlAttr.kind !== HtmlNodeAttrKind.ATTRIBUTE) return;
+		if (htmlAttr.kind !== HtmlNodeAttrKind.ATTRIBUTE)
+			return;
 
 		// Ignore element expressions
-		if (assignment.kind === HtmlNodeAttrAssignmentKind.ELEMENT_EXPRESSION) return;
+		if (assignment.kind === HtmlNodeAttrAssignmentKind.ELEMENT_EXPRESSION)
+			return;
 
 		const { typeA, typeB } = extractBindingTypes(assignment, context);
 
 		// Don't validate directives in this rule, because they are assignable even though they are complex types (functions).
-		if (isLitDirective(typeB)) return;
+		if (isLitDirective(typeB))
+			return;
 
 		// Only primitive types should be allowed as "typeB"
 		if (!isAssignableToPrimitiveType(typeB)) {
@@ -36,48 +40,50 @@ const rule: RuleModule = {
 				return;
 			}
 
-			const message = `You are binding a non-primitive type '${typeToString(typeB)}'. This could result in binding the string "[object Object]".`;
-			const newModifier = ".";
+			const message = `You are binding a non-primitive type '${ typeToString(typeB) }'. This could result in binding the \
+string "[object Object]".`;
+			const newModifier = '.';
 
 			context.report({
-				location: rangeFromHtmlNodeAttr(htmlAttr),
+				location:   rangeFromHtmlNodeAttr(htmlAttr),
 				message,
-				fixMessage: `Use '${newModifier}' binding instead?`,
-				fix: () => ({
-					message: `Use '${newModifier}' modifier instead`,
+				fixMessage: `Use '${ newModifier }' binding instead?`,
+				fix:        () => ({
+					message: `Use '${ newModifier }' modifier instead`,
 					actions: [
 						{
-							kind: "changeAttributeModifier",
+							kind: 'changeAttributeModifier',
 							htmlAttr,
-							newModifier
-						}
-					]
-				})
+							newModifier,
+						},
+					],
+				}),
 			});
 		}
 
 		// Only primitive types should be allowed as "typeA"
 		else if (!isAssignableToPrimitiveType(typeA)) {
-			const message = `You are assigning the primitive '${typeToString(typeB)}' to a non-primitive type '${typeToString(typeA)}'.`;
-			const newModifier = ".";
+			const message = `You are assigning the primitive '${ typeToString(typeB) }' to a non-primitive type \
+'${ typeToString(typeA) }'.`;
+			const newModifier = '.';
 
 			context.report({
-				location: rangeFromHtmlNodeAttr(htmlAttr),
+				location:   rangeFromHtmlNodeAttr(htmlAttr),
 				message,
-				fixMessage: `Use '${newModifier}' binding instead?`,
-				fix: () => ({
-					message: `Use '${newModifier}' modifier instead`,
+				fixMessage: `Use '${ newModifier }' binding instead?`,
+				fix:        () => ({
+					message: `Use '${ newModifier }' modifier instead`,
 					actions: [
 						{
-							kind: "changeAttributeModifier",
+							kind: 'changeAttributeModifier',
 							htmlAttr,
-							newModifier
-						}
-					]
-				})
+							newModifier,
+						},
+					],
+				}),
 			});
 		}
-	}
+	},
 };
 
 export default rule;

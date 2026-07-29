@@ -4,17 +4,19 @@ declare const html: any;
 
 /** An element to test autocomplete with. */
 class CompleteMe extends HTMLElement {
+
 	/** Docs for prop 1. */
-	prop1 = "";
+	prop1 = '';
 	/** Docs for prop 2. */
-	prop2 = "";
+	prop2 = '';
 	/** Docs for prop 3. */
-	prop3 = "";
+	prop3 = '';
+
 }
-customElements.define("complete-me", CompleteMe);
+customElements.define('complete-me', CompleteMe);
 declare global {
 	interface HTMLElementTagNameMap {
-		"complete-me": CompleteMe;
+		'complete-me': CompleteMe;
 	}
 }
 

@@ -1,78 +1,79 @@
-import { Identifier, SourceFile } from "typescript";
-import { HtmlNodeAttrAssignment } from "../html-node/html-node-attr-assignment-types.js";
-import { HtmlNodeAttr } from "../html-node/html-node-attr-types.js";
-import { HtmlNode } from "../html-node/html-node-types.js";
-import { SourceFileRange } from "../range.js";
+import { Identifier, SourceFile } from 'typescript';
+
+import { HtmlNodeAttrAssignment } from '../html-node/html-node-attr-assignment-types.js';
+import { HtmlNodeAttr } from '../html-node/html-node-attr-types.js';
+import { HtmlNode } from '../html-node/html-node-types.js';
+import { SourceFileRange } from '../range.js';
 
 export type RuleFixActionKind =
-	| "changeTagName"
-	| "addAttribute"
-	| "changeAttributeName"
-	| "changeAttributeModifier"
-	| "changeAssignment"
-	| "import"
-	| "extendGlobalDeclaration"
-	| "changeRange"
-	| "changeIdentifier";
+	| 'changeTagName'
+	| 'addAttribute'
+	| 'changeAttributeName'
+	| 'changeAttributeModifier'
+	| 'changeAssignment'
+	| 'import'
+	| 'extendGlobalDeclaration'
+	| 'changeRange'
+	| 'changeIdentifier';
 
 export interface RuleFixActionBase {
-	kind: RuleFixActionKind;
+	kind:  RuleFixActionKind;
 	file?: SourceFile;
 }
 
 export interface RuleFixActionChangeTagName extends RuleFixActionBase {
-	kind: "changeTagName";
+	kind:     'changeTagName';
 	htmlNode: HtmlNode;
-	newName: string;
+	newName:  string;
 }
 
 export interface RuleFixActionAddAttribute extends RuleFixActionBase {
-	kind: "addAttribute";
+	kind:     'addAttribute';
 	htmlNode: HtmlNode;
-	name: string;
-	value?: string;
+	name:     string;
+	value?:   string;
 }
 
 export interface RuleFixActionChangeAttributeName extends RuleFixActionBase {
-	kind: "changeAttributeName";
+	kind:     'changeAttributeName';
 	htmlAttr: HtmlNodeAttr;
-	newName: string;
+	newName:  string;
 }
 
 export interface RuleFixActionChangeAttributeModifier extends RuleFixActionBase {
-	kind: "changeAttributeModifier";
-	htmlAttr: HtmlNodeAttr;
+	kind:        'changeAttributeModifier';
+	htmlAttr:    HtmlNodeAttr;
 	newModifier: string;
 }
 
 export interface RuleFixActionChangeAssignment extends RuleFixActionBase {
-	kind: "changeAssignment";
+	kind:       'changeAssignment';
 	assignment: HtmlNodeAttrAssignment;
-	newValue: string;
+	newValue:   string;
 }
 
 export interface RuleFixActionChangeIdentifier extends RuleFixActionBase {
-	kind: "changeIdentifier";
+	kind:       'changeIdentifier';
 	identifier: Identifier;
-	newText: string;
+	newText:    string;
 }
 
 export interface RuleFixActionImport extends RuleFixActionBase {
-	kind: "import";
-	file: SourceFile;
-	path: string;
+	kind:         'import';
+	file:         SourceFile;
+	path:         string;
 	identifiers?: string[];
 }
 
 export interface RuleFixActionChangeRange extends RuleFixActionBase {
-	kind: "changeRange";
-	range: SourceFileRange;
+	kind:    'changeRange';
+	range:   SourceFileRange;
 	newText: string;
 }
 
 export interface RuleFixActionExtendGlobalDeclaration extends RuleFixActionBase {
-	kind: "extendGlobalDeclaration";
-	name: string;
+	kind:       'extendGlobalDeclaration';
+	name:       string;
 	newMembers: string[];
 }
 

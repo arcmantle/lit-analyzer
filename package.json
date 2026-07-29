@@ -1,18 +1,20 @@
 {
-	"name": "lit-analyzer",
-	"version": "1.0.0",
-	"description": "Monorepo for tools that analyze lit-html templates",
 	"private": true,
-	"author": "runem",
+	"type": "module",
+	"packageManager": "pnpm@11.3.0",
+	"engines": {
+		"node": ">=24"
+	},
+	"author": "arcmantle",
 	"license": "MIT",
 	"repository": {
 		"type": "git",
-		"url": "https://github.com/runem/lit-analyzer.git"
+		"url": "https://github.com/arcmantle/lit-analyzer.git"
 	},
 	"bugs": {
-		"url": "https://github.com/runem/lit-analyzer/issues"
+		"url": "https://github.com/arcmantle/lit-analyzer/issues"
 	},
-	"homepage": "https://github.com/runem/lit-analyzer#readme",
+	"homepage": "https://github.com/arcmantle/lit-analyzer#readme",
 	"keywords": [
 		"lit-html",
 		"lit",
@@ -26,118 +28,35 @@
 		"template"
 	],
 	"scripts": {
-		"postinstall": "npm run bootstrap",
-		"prettier:write": "prettier --write \"packages/*/src/**/*.ts\"",
-		"postpublish": "echo \"🎉 Published successfully! You can now publish the vscode extension seperately by running 'cd packages/vscode-lit-plugin && npm run publish'\"",
-		"publish": "lerna run prepare && lerna publish --exact && npm run postpublish",
-		"publish:next": "lerna run prepare && echo \"When asked, please choose 'Custom Prerelease' and use default value\" && lerna publish --dist-tag next --preid next --exact && npm run postpublish",
-		"bootstrap": "lerna clean --yes && lerna bootstrap",
-		"test:watch": "lerna run test:watch --parallel --stream",
-		"readme": "lerna run readme && readme generate -i readme.blueprint.md -c readme.config.json",
-		"dev": "cd dev && TSS_DEBUG=5999 code . --disable-extension runem.lit-plugin",
+		"postpublish": "echo \"\ud83c\udf89 Published successfully! You can now publish the vscode extension seperately by running 'cd packages/vscode-lit-plugin && pnpm run publish'\"",
+		"release:version": "pnpm -r version",
+		"release:version:next": "pnpm -r version prerelease --preid next",
+		"publish": "pnpm -r publish && pnpm run postpublish",
+		"publish:next": "pnpm -r publish --tag next && pnpm run postpublish",
+		"test:watch": "pnpm -r --parallel run test:watch",
+		"dev": "cd dev && TSS_DEBUG=5999 code . --disable-extension arcmantle.lit-plugin",
 		"dev:logs": "touch dev/lit-plugin.log && tail -f dev/lit-plugin.log",
-		"lint": "wireit",
-		"eslint": "wireit",
-		"build": "wireit",
-		"test": "wireit",
-		"test:headless": "wireit",
-		"test:headful": "wireit",
-		"prettier:check": "wireit",
-		"package": "wireit"
-	},
-	"wireit": {
-		"build": {
-			"dependencies": [
-				"./packages/lit-analyzer:build",
-				"./packages/ts-lit-plugin:build",
-				"./packages/vscode-lit-plugin:build"
-			]
-		},
-		"test": {
-			"dependencies": [
-				"test:headless",
-				"test:headful",
-				"lint"
-			]
-		},
-		"lint": {
-			"dependencies": [
-				"eslint",
-				"prettier:check"
-			]
-		},
-		"test:headless": {
-			"dependencies": [
-				"./packages/lit-analyzer:test"
-			]
-		},
-		"test:headful": {
-			"dependencies": [
-				"./packages/vscode-lit-plugin:test"
-			]
-		},
-		"eslint": {
-			"command": "eslint ."
-		},
-		"prettier:check": {
-			"files": [
-				"packages/*/src/**/*.ts",
-				"prettier.config.js"
-			],
-			"command": "prettier --check \"packages/*/src/**/*.ts\""
-		},
-		"package": {
-			"dependencies": [
-				"./packages/vscode-lit-plugin:package"
-			]
-		}
+		"build": "pnpm -r run build",
+		"eslint": "eslint .",
+		"lint": "pnpm run eslint && pnpm run prettier:check",
+		"test:headless": "pnpm --filter ./packages/lit-analyzer run test && pnpm --filter ./packages/lit-language-server run test",
+		"test:headful": "pnpm run build && pnpm --filter ./packages/vscode-lit-plugin run test",
+		"test": "pnpm run test:headless && pnpm run test:headful && pnpm run lint",
+		"package": "pnpm run build && pnpm --filter ./packages/vscode-lit-plugin run package",
+		"verify": "pnpm --filter ./internal/scripts run verify"
 	},
 	"devDependencies": {
-		"@appnest/readme": "^1.2.7",
-		"@typescript-eslint/eslint-plugin": "^5.0.0",
-		"@typescript-eslint/parser": "^5.0.0",
-		"@vscode/test-electron": "^2.3.8",
-		"eslint": "^8.0.0",
-		"eslint-config-prettier": "^8.3.0",
-		"eslint-plugin-import": "^2.25.2",
-		"fs-extra": "^9.0.1",
-		"husky": "^4.2.5",
-		"lerna": "^4.0.0",
-		"lint-staged": "^10.2.10",
-		"nodemon": "^2.0.4",
-		"prettier": "^2.4.1",
-		"typescript": "~4.8.4",
-		"wireit": "^0.9.5"
-	},
-	"husky": {
-		"hooks": {
-			"pre-commit": "lint-staged"
-		}
-	},
-	"lint-staged": {
-		"*.{ts,js}": "eslint --fix",
-		"*.{ts,js,md,json}": "prettier --write"
+		"@arcmantle/eslint-config": "^1.0.2",
+		"eslint": "^9.29.0",
+		"globals": "^17.8.0",
+		"typescript": "catalog:",
+		"vitest": "^4.1.10"
 	},
 	"contributors": [
 		{
-			"name": "Rune Mehlsen",
-			"url": "https://twitter.com/runemehlsen",
-			"img": "https://avatars2.githubusercontent.com/u/5372940?s=460&v=4"
-		},
-		{
-			"name": "Andreas Mehlsen",
-			"url": "https://twitter.com/andreasmehlsen",
-			"img": "https://avatars1.githubusercontent.com/u/6267397?s=460&v=4"
-		},
-		{
-			"name": "Peter Burns",
-			"url": "https://twitter.com/rictic",
-			"img": "https://avatars3.githubusercontent.com/u/1659?s=460&v=4"
-		},
-		{
 			"name": "You?",
 			"img": "https://joeschmoe.io/api/v1/random",
-			"url": "https://github.com/runem/lit-analyzer/blob/master/CONTRIBUTING.md"
+			"url": "https://github.com/arcmantle/lit-analyzer/blob/master/CONTRIBUTING.md"
 		}
 	]
 }

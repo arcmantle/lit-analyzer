@@ -1,17 +1,18 @@
-import { SourceFile, TaggedTemplateExpression } from "typescript";
-import { HtmlNodeKind, IHtmlNodeStyleTag } from "../../types/html-node/html-node-types.js";
-import { SourceFilePosition } from "../../types/range.js";
-import { arrayFlat } from "../../util/array-util.js";
-import { documentRangeToSFRange, intersects, makeDocumentRange } from "../../util/range-util.js";
-import { findTaggedTemplates } from "../tagged-template/find-tagged-templates.js";
-import { CssDocument } from "./text-document/css-document/css-document.js";
-import { HtmlDocument } from "./text-document/html-document/html-document.js";
-import { parseHtmlDocument } from "./text-document/html-document/parse-html-document.js";
-import { TextDocument } from "./text-document/text-document.js";
-import { VirtualAstCssDocument } from "./virtual-document/virtual-css-document.js";
+import { SourceFile, TaggedTemplateExpression } from 'typescript';
+
+import { HtmlNodeKind, IHtmlNodeStyleTag } from '../../types/html-node/html-node-types.js';
+import { SourceFilePosition } from '../../types/range.js';
+import { arrayFlat } from '../../util/array-util.js';
+import { documentRangeToSFRange, intersects, makeDocumentRange } from '../../util/range-util.js';
+import { findTaggedTemplates } from '../tagged-template/find-tagged-templates.js';
+import { CssDocument } from './text-document/css-document/css-document.js';
+import { HtmlDocument } from './text-document/html-document/html-document.js';
+import { parseHtmlDocument } from './text-document/html-document/parse-html-document.js';
+import { TextDocument } from './text-document/text-document.js';
+import { VirtualAstCssDocument } from './virtual-document/virtual-css-document.js';
 
 export interface ParseDocumentOptions {
-	cssTags: string[];
+	cssTags:  string[];
 	htmlTags: string[];
 }
 
@@ -24,35 +25,37 @@ export function parseDocumentsInSourceFile(
 export function parseDocumentsInSourceFile(
 	sourceFile: SourceFile,
 	options: ParseDocumentOptions,
-	position?: SourceFilePosition
+	position?: SourceFilePosition,
 ): TextDocument[] | TextDocument | undefined {
 	// Parse html tags in the relevant source file
-	const templateTags = [...options.cssTags, ...options.htmlTags];
+	const templateTags = [ ...options.cssTags, ...options.htmlTags ];
 	const taggedTemplates = findTaggedTemplates(sourceFile, templateTags, position);
 	let result: TextDocument[] | TextDocument | undefined = undefined;
 
-	if (taggedTemplates == null) {
+	if (taggedTemplates == null)
 		return undefined;
-	} else if (Array.isArray(taggedTemplates)) {
+	else if (Array.isArray(taggedTemplates))
 		result = taggedTemplates.map(t => taggedTemplateToDocument(t, options));
-	} else {
+	else
 		result = taggedTemplateToDocument(taggedTemplates, options);
-	}
 
-	if (result == null) return undefined;
+
+	if (result == null)
+		return undefined;
 
 	if (Array.isArray(result)) {
 		return arrayFlat(
 			result.map(document => {
 				const res = unpackHtmlDocument(document, position);
-				return [document, ...(res == null ? [] : Array.isArray(res) ? res : [res])];
-			})
+
+				return [ document, ...(res == null ? [] : Array.isArray(res) ? res : [ res ]) ];
+			}),
 		);
-	} else {
+	}
+	else {
 		const nestedDocuments = unpackHtmlDocument(result, position);
-		if (position != null && nestedDocuments != null) {
+		if (position != null && nestedDocuments != null)
 			return nestedDocuments;
-		}
 	}
 
 	return result;
@@ -60,16 +63,18 @@ export function parseDocumentsInSourceFile(
 
 function taggedTemplateToDocument(taggedTemplate: TaggedTemplateExpression, { cssTags }: ParseDocumentOptions): TextDocument {
 	const tag = taggedTemplate.tag.getText();
-	if (cssTags.includes(tag)) {
+	if (cssTags.includes(tag))
 		return new CssDocument(new VirtualAstCssDocument(taggedTemplate));
-	} else {
+	else
 		return parseHtmlDocument(taggedTemplate);
-	}
 }
 
 function unpackHtmlDocument(textDocument: TextDocument, position: SourceFilePosition): TextDocument | undefined;
 function unpackHtmlDocument(textDocument: TextDocument, position?: SourceFilePosition): TextDocument | TextDocument[];
-function unpackHtmlDocument(textDocument: TextDocument, position?: SourceFilePosition): TextDocument[] | TextDocument | undefined {
+function unpackHtmlDocument(
+	textDocument: TextDocument,
+	position?: SourceFilePosition,
+): TextDocument[] | TextDocument | undefined {
 	const documents: TextDocument[] = [];
 
 	if (textDocument instanceof HtmlDocument) {
@@ -77,13 +82,13 @@ function unpackHtmlDocument(textDocument: TextDocument, position?: SourceFilePos
 			if (rootNode.kind === HtmlNodeKind.STYLE && rootNode.location.endTag != null) {
 				if (position == null) {
 					const nestedDocument = styleHtmlNodeToCssDocument(textDocument, rootNode);
-					if (nestedDocument != null) {
+					if (nestedDocument != null)
 						documents.push(nestedDocument);
-					}
-				} else if (
+				}
+				else if (
 					intersects(textDocument.virtualDocument.sfPositionToDocumentOffset(position), {
 						start: rootNode.location.startTag.end,
-						end: rootNode.location.endTag.start
+						end:   rootNode.location.endTag.start,
 					})
 				) {
 					return styleHtmlNodeToCssDocument(textDocument, rootNode);
@@ -92,25 +97,27 @@ function unpackHtmlDocument(textDocument: TextDocument, position?: SourceFilePos
 		}
 	}
 
-	if (position != null) return undefined;
+	if (position != null)
+		return undefined;
 
 	return documents;
 }
 
 function styleHtmlNodeToCssDocument(htmlDocument: HtmlDocument, styleNode: IHtmlNodeStyleTag): CssDocument | undefined {
-	if (styleNode.location.endTag == null) return undefined;
+	if (styleNode.location.endTag == null)
+		return undefined;
 
 	const cssDocumentParts = htmlDocument.virtualDocument.getPartsAtDocumentRange(
 		makeDocumentRange({
 			start: styleNode.location.startTag.start,
-			end: styleNode.location.endTag.start
-		})
+			end:   styleNode.location.endTag.start,
+		}),
 	);
 
 	const cssVirtualDocument = new VirtualAstCssDocument(
 		cssDocumentParts,
 		documentRangeToSFRange(htmlDocument, styleNode.location.startTag),
-		htmlDocument.virtualDocument.fileName
+		htmlDocument.virtualDocument.fileName,
 	);
 
 	return new CssDocument(cssVirtualDocument);
