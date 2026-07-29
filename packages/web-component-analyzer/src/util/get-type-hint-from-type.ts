@@ -1,6 +1,6 @@
 import { isSimpleType, SimpleType, SimpleTypeAlias, typeToString } from "ts-simple-type";
 import { Type, TypeChecker, TypeFormatFlags } from "typescript";
-import { TransformerConfig } from "../transformers/transformer-config";
+import { TransformerConfig } from "../transformers/transformer-config.js";
 
 /**
  * Returns a "type hint" from a type

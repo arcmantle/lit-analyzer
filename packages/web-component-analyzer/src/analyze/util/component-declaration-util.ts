@@ -1,4 +1,4 @@
-import { ComponentDeclaration, ComponentHeritageClause } from "../types/component-declaration";
+import { ComponentDeclaration, ComponentHeritageClause } from "../types/component-declaration.js";
 
 /**
  * Returns the superclass heritage clause

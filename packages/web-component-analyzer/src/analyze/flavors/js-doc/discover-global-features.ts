@@ -1,12 +1,12 @@
 import { Node } from "typescript";
-import { AnalyzerVisitContext } from "../../analyzer-visit-context";
-import { ComponentCssPart } from "../../types/features/component-css-part";
-import { ComponentCssProperty } from "../../types/features/component-css-property";
-import { ComponentEvent } from "../../types/features/component-event";
-import { ComponentMember } from "../../types/features/component-member";
-import { ComponentSlot } from "../../types/features/component-slot";
-import { AnalyzerFlavor } from "../analyzer-flavor";
-import { discoverFeatures } from "./discover-features";
+import { AnalyzerVisitContext } from "../../analyzer-visit-context.js";
+import { ComponentCssPart } from "../../types/features/component-css-part.js";
+import { ComponentCssProperty } from "../../types/features/component-css-property.js";
+import { ComponentEvent } from "../../types/features/component-event.js";
+import { ComponentMember } from "../../types/features/component-member.js";
+import { ComponentSlot } from "../../types/features/component-slot.js";
+import { AnalyzerFlavor } from "../analyzer-flavor.js";
+import { discoverFeatures } from "./discover-features.js";
 
 export const discoverGlobalFeatures: AnalyzerFlavor["discoverGlobalFeatures"] = {
 	csspart: (node: Node, context: AnalyzerVisitContext): ComponentCssPart[] | undefined => {

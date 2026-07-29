@@ -1,5 +1,5 @@
 import { Node } from "typescript";
-import { AnalyzerVisitContext } from "../../analyzer-visit-context";
+import { AnalyzerVisitContext } from "../../analyzer-visit-context.js";
 
 /**
  * Excludes nodes from "lib.dom.d.ts" if analyzeLibDom is false

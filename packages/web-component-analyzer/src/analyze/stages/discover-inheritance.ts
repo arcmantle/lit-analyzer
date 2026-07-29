@@ -1,8 +1,8 @@
 import { Node } from "typescript";
-import { AnalyzerVisitContext } from "../analyzer-visit-context";
-import { InheritanceResult } from "../flavors/analyzer-flavor";
-import { ComponentDeclarationKind, ComponentHeritageClause } from "../types/component-declaration";
-import { visitInheritance } from "./flavor/visit-inheritance";
+import { AnalyzerVisitContext } from "../analyzer-visit-context.js";
+import { InheritanceResult } from "../flavors/analyzer-flavor.js";
+import { ComponentDeclarationKind, ComponentHeritageClause } from "../types/component-declaration.js";
+import { visitInheritance } from "./flavor/visit-inheritance.js";
 
 /**
  * Uses flavors in order to discover inheritance from one of more nodes.

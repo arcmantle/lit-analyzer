@@ -1,14 +1,14 @@
 import { Node, ClassDeclaration } from "typescript";
-import { AnalyzerVisitContext } from "../../analyzer-visit-context";
-import { getDecorators } from "../../util/ast-util";
-import { camelToDashCase } from "../../util/text-util";
+import { AnalyzerVisitContext } from "../../analyzer-visit-context.js";
+import { getDecorators } from "../../util/ast-util.js";
+import { camelToDashCase } from "../../util/text-util.js";
 import { existsSync, readFileSync } from "fs";
-import { parseJsDocForNode } from "../js-doc/parse-js-doc-for-node";
+import { parseJsDocForNode } from "../js-doc/parse-js-doc-for-node.js";
 
 // Discover TS nodes
 // https://ts-ast-viewer.com/#
 
-type ComponentRef = { tagName: string };
+interface ComponentRef { tagName: string }
 
 const LWCCACHE = Symbol("LWC Component");
 interface LwcClassDeclaration extends ClassDeclaration {

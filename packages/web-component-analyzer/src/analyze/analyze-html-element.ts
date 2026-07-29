@@ -1,12 +1,12 @@
 import * as tsModule from "typescript";
 import { Node, Program } from "typescript";
-import { AnalyzerVisitContext } from "./analyzer-visit-context";
-import { DEFAULT_COMPONENT_DECLARATION_CACHE, DEFAULT_FEATURE_COLLECTION_CACHE } from "./constants";
-import { CustomElementFlavor } from "./flavors/custom-element/custom-element-flavor";
-import { makeContextFromConfig } from "./make-context-from-config";
-import { analyzeComponentDeclaration } from "./stages/analyze-declaration";
-import { ComponentDeclaration } from "./types/component-declaration";
-import { ALL_COMPONENT_FEATURES } from "./types/features/component-feature";
+import { AnalyzerVisitContext } from "./analyzer-visit-context.js";
+import { DEFAULT_COMPONENT_DECLARATION_CACHE, DEFAULT_FEATURE_COLLECTION_CACHE } from "./constants.js";
+import { CustomElementFlavor } from "./flavors/custom-element/custom-element-flavor.js";
+import { makeContextFromConfig } from "./make-context-from-config.js";
+import { analyzeComponentDeclaration } from "./stages/analyze-declaration.js";
+import { ComponentDeclaration } from "./types/component-declaration.js";
+import { ALL_COMPONENT_FEATURES } from "./types/features/component-feature.js";
 
 /**
  * This function only analyzes the HTMLElement declaration found in "lib.dom.d.ts" source file provided by Typescript.

@@ -1,10 +1,10 @@
 import { SimpleType } from "ts-simple-type";
 import * as tsModule from "typescript";
 import { CallExpression, Node, PropertyAssignment } from "typescript";
-import { AnalyzerVisitContext } from "../../analyzer-visit-context";
-import { LitElementPropertyConfig } from "../../types/features/lit-element-property-config";
-import { getDecorators } from "../../util/ast-util";
-import { resolveNodeValue } from "../../util/resolve-node-value";
+import { AnalyzerVisitContext } from "../../analyzer-visit-context.js";
+import { LitElementPropertyConfig } from "../../types/features/lit-element-property-config.js";
+import { getDecorators } from "../../util/ast-util.js";
+import { resolveNodeValue } from "../../util/resolve-node-value.js";
 
 export type LitElementPropertyDecoratorKind = "property" | "internalProperty" | "state";
 

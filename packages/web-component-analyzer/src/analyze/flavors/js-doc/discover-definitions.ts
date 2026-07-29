@@ -1,8 +1,8 @@
 import { Node } from "typescript";
-import { AnalyzerVisitContext } from "../../analyzer-visit-context";
-import { getNodeIdentifier } from "../../util/ast-util";
-import { DefinitionNodeResult } from "../analyzer-flavor";
-import { parseJsDocForNode } from "./parse-js-doc-for-node";
+import { AnalyzerVisitContext } from "../../analyzer-visit-context.js";
+import { getNodeIdentifier } from "../../util/ast-util.js";
+import { DefinitionNodeResult } from "../analyzer-flavor.js";
+import { parseJsDocForNode } from "./parse-js-doc-for-node.js";
 
 /**
  * Discovers definitions using "@customElement" or "@element" jsdoc

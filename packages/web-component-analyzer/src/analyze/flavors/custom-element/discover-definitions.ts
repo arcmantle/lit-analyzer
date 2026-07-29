@@ -1,8 +1,8 @@
 import { Node } from "typescript";
-import { AnalyzerVisitContext } from "../../analyzer-visit-context";
-import { getInterfaceKeys } from "../../util/ast-util";
-import { resolveNodeValue } from "../../util/resolve-node-value";
-import { DefinitionNodeResult } from "../analyzer-flavor";
+import { AnalyzerVisitContext } from "../../analyzer-visit-context.js";
+import { getInterfaceKeys } from "../../util/ast-util.js";
+import { resolveNodeValue } from "../../util/resolve-node-value.js";
+import { DefinitionNodeResult } from "../analyzer-flavor.js";
 
 /**
  * Visits custom element definitions.

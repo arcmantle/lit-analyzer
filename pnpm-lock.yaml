@@ -10,10 +10,6 @@ catalogs:
       specifier: ^6.0.3
       version: 6.0.3
 
-overrides:
-  web-component-analyzer>typescript: ^6.0.3
-  web-component-analyzer>ts-simple-type: workspace:*
-
 importers:
 
   .:
@@ -82,8 +78,8 @@ importers:
         specifier: ^3.17.5
         version: 3.18.0
       web-component-analyzer:
-        specifier: ^2.0.0
-        version: 2.0.0
+        specifier: workspace:*
+        version: link:../web-component-analyzer
     devDependencies:
       '@appnest/readme':
         specifier: ^1.2.7
@@ -132,8 +128,8 @@ importers:
         specifier: workspace:*
         version: link:../lit-analyzer
       web-component-analyzer:
-        specifier: ^2.0.0
-        version: 2.0.0
+        specifier: workspace:*
+        version: link:../web-component-analyzer
     devDependencies:
       '@types/node':
         specifier: ^24.0.0
@@ -190,6 +186,28 @@ importers:
       vscode-languageclient:
         specifier: ^10.1.0
         version: 10.1.0
+
+  packages/web-component-analyzer:
+    dependencies:
+      fast-glob:
+        specifier: ^3.2.2
+        version: 3.3.3
+      ts-simple-type:
+        specifier: workspace:*
+        version: link:../ts-simple-type
+      typescript:
+        specifier: 'catalog:'
+        version: 6.0.3
+      yargs:
+        specifier: ^17.7.2
+        version: 17.7.3
+    devDependencies:
+      '@types/node':
+        specifier: ^24.0.0
+        version: 24.13.3
+      '@types/yargs':
+        specifier: ^17.0.28
+        version: 17.0.35
 
 packages:
 
@@ -728,6 +746,12 @@ packages:
 
   '@types/vscode@1.125.0':
     resolution: {integrity: sha512-0icm/ZQAaism87P0ekHqi4/Ju9du+Tm0RUW+y7vqRsxY2cY0FNRX1nAnaW7nT6npPt2tfHiheZ55Zm9UhqonFA==}
+
+  '@types/yargs-parser@21.0.3':
+    resolution: {integrity: sha512-I4q9QU9MQv4oEOz4tAHJtNz1cwuLxn2F3xcc2iV5WdqLPpUnj30aUuxt1mAxYTG+oe8CZMV/+6rU4S4gRDzqtQ==}
+
+  '@types/yargs@17.0.35':
+    resolution: {integrity: sha512-qUHkeCyQFxMXg79wQfTtfndEC+N9ZZg76HJftDJp+qH2tV7Gj4OJi7l+PiWwJ+pWtW8GwSmqsDj/oymhrTWXjg==}
 
   '@typescript-eslint/eslint-plugin@8.65.0':
     resolution: {integrity: sha512-IEgob78X12rHpUmtcwFsXhZdVGJtwTVP8FiCLZkR6GlYVrl2PcuB+KhCE5BlVC/eQpQnu8WXRtkHZuPar+gCRA==}
@@ -2421,6 +2445,9 @@ packages:
     peerDependencies:
       typescript: '>=4.8.4'
 
+  ts-simple-type@0.3.7:
+    resolution: {integrity: sha512-bDXWURwpDpe1mA5E9eldmI0Mpt9zGprhtN/ZTLOJjsAMyeMy1UT7WvGRQghYewIYBYxDZurChhe4DrsPbcCVrA==}
+
   tslib@2.8.1:
     resolution: {integrity: sha512-oJFu94HQb+KVduSUQL7wnpmqnfmLsOA/nAh6b6EH0wCEoK0/mPeXU6c3wKDV83MkOuHPRHtSXKKU99IBazS/2w==}
 
@@ -2448,6 +2475,11 @@ packages:
     peerDependencies:
       eslint: ^8.57.0 || ^9.0.0 || ^10.0.0
       typescript: '>=4.8.4 <6.1.0'
+
+  typescript@3.9.10:
+    resolution: {integrity: sha512-w6fIxVE/H1PkLKcCPsFqKE7Kv7QUwhU8qQY2MueZXWx5cPZdwFupLgKK3vntcK98BtNHZtAF4LA/yl2a7k8R6Q==}
+    engines: {node: '>=4.2.0'}
+    hasBin: true
 
   typescript@6.0.3:
     resolution: {integrity: sha512-y2TvuxSZPDyQakkFRPZHKFm+KKVqIisdg9/CZwm9ftvKXLP8NRWj38/ODjNbr43SsoXqNuAisEf1GdCxqWcdBw==}
@@ -2624,10 +2656,6 @@ packages:
 
   web-component-analyzer@1.0.3:
     resolution: {integrity: sha512-QA6GVVJrKRPHLVqPv4evY0H+du1yY+E1q8c82bdY5e10+pWsRfeYA+Hsh2r8yl1EGQVC55SeV3tGvJ6+CxaH/Q==}
-    hasBin: true
-
-  web-component-analyzer@2.0.0:
-    resolution: {integrity: sha512-UEvwfpD+XQw99sLKiH5B1T4QwpwNyWJxp59cnlRwFfhUW6JsQpw5jMeMwi7580sNou8YL3kYoS7BWLm+yJ/jVQ==}
     hasBin: true
 
   whatwg-encoding@3.1.1:
@@ -3237,6 +3265,12 @@ snapshots:
   '@types/sarif@2.1.7': {}
 
   '@types/vscode@1.125.0': {}
+
+  '@types/yargs-parser@21.0.3': {}
+
+  '@types/yargs@17.0.35':
+    dependencies:
+      '@types/yargs-parser': 21.0.3
 
   '@typescript-eslint/eslint-plugin@8.65.0(@typescript-eslint/parser@8.65.0(eslint@9.39.5)(typescript@6.0.3))(eslint@9.39.5)(typescript@6.0.3)':
     dependencies:
@@ -5038,6 +5072,8 @@ snapshots:
     dependencies:
       typescript: 6.0.3
 
+  ts-simple-type@0.3.7: {}
+
   tslib@2.8.1: {}
 
   tunnel-agent@0.6.0:
@@ -5069,6 +5105,8 @@ snapshots:
       typescript: 6.0.3
     transitivePeerDependencies:
       - supports-color
+
+  typescript@3.9.10: {}
 
   typescript@6.0.3: {}
 
@@ -5193,16 +5231,9 @@ snapshots:
   web-component-analyzer@1.0.3:
     dependencies:
       fast-glob: 3.3.3
-      ts-simple-type: link:packages/ts-simple-type
-      typescript: 6.0.3
+      ts-simple-type: 0.3.7
+      typescript: 3.9.10
       yargs: 15.4.1
-
-  web-component-analyzer@2.0.0:
-    dependencies:
-      fast-glob: 3.3.3
-      ts-simple-type: link:packages/ts-simple-type
-      typescript: 6.0.3
-      yargs: 17.7.3
 
   whatwg-encoding@3.1.1:
     dependencies:

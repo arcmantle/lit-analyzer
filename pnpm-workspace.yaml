@@ -9,19 +9,10 @@ catalog:
   # dogfooding. Declared once so moving it is a one-line change.
   typescript: ^6.0.3
 
-# `web-component-analyzer` declares its own `typescript` dependency (~5.2.0), and
-# lit-analyzer hands it Program/SourceFile values built by the analysis compiler.
-# Two TypeScript instances in one graph means those types do not unify. Point it
-# at the catalog so there is exactly one. Absorbing this package
-# (ADR_5DHSRF5RQ79S7ATW8V574YDD2X) removes the need for the override.
-#
-# `web-component-analyzer`'s own published dependency on `ts-simple-type` would
-# otherwise resolve a second, registry copy alongside the subtreed workspace
-# package. Point it at the workspace package too, until
-# `web-component-analyzer` itself is absorbed and this override can go.
-overrides:
-  web-component-analyzer>typescript: 'catalog:'
-  web-component-analyzer>ts-simple-type: 'workspace:*'
+# `web-component-analyzer` is a workspace package now
+# (ADR_5DHSRF5RQ79S7ATW8V574YDD2X), so it declares `typescript: catalog:` and
+# `ts-simple-type: workspace:*` directly. The overrides that used to force those
+# on the registry copy are gone with it.
 
 allowBuilds:
   # Needed: esbuild's platform binary.

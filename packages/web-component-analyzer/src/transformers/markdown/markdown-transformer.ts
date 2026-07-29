@@ -1,21 +1,21 @@
 import { Program, TypeChecker } from "typescript";
-import { AnalyzerResult } from "../../analyze/types/analyzer-result";
-import { ComponentCssPart } from "../../analyze/types/features/component-css-part";
-import { ComponentCssProperty } from "../../analyze/types/features/component-css-property";
-import { ComponentEvent } from "../../analyze/types/features/component-event";
-import { ComponentMemberAttribute, ComponentMemberProperty } from "../../analyze/types/features/component-member";
-import { ComponentMethod } from "../../analyze/types/features/component-method";
-import { ComponentSlot } from "../../analyze/types/features/component-slot";
-import { VisibilityKind } from "../../analyze/types/visibility-kind";
-import { getMixinHeritageClausesInChain } from "../../analyze/util/component-declaration-util";
-import { arrayDedupe, arrayDefined, arrayFlat } from "../../util/array-util";
-import { getExamplesFromComponent } from "../../util/get-examples-from-component";
-import { getTypeHintFromMethod } from "../../util/get-type-hint-from-method";
-import { getTypeHintFromType } from "../../util/get-type-hint-from-type";
-import { filterVisibility } from "../../util/model-util";
-import { TransformerConfig } from "../transformer-config";
-import { TransformerFunction } from "../transformer-function";
-import { markdownHeader, markdownHighlight, markdownTable } from "./markdown-util";
+import { AnalyzerResult } from "../../analyze/types/analyzer-result.js";
+import { ComponentCssPart } from "../../analyze/types/features/component-css-part.js";
+import { ComponentCssProperty } from "../../analyze/types/features/component-css-property.js";
+import { ComponentEvent } from "../../analyze/types/features/component-event.js";
+import { ComponentMemberAttribute, ComponentMemberProperty } from "../../analyze/types/features/component-member.js";
+import { ComponentMethod } from "../../analyze/types/features/component-method.js";
+import { ComponentSlot } from "../../analyze/types/features/component-slot.js";
+import { VisibilityKind } from "../../analyze/types/visibility-kind.js";
+import { getMixinHeritageClausesInChain } from "../../analyze/util/component-declaration-util.js";
+import { arrayDedupe, arrayDefined, arrayFlat } from "../../util/array-util.js";
+import { getExamplesFromComponent } from "../../util/get-examples-from-component.js";
+import { getTypeHintFromMethod } from "../../util/get-type-hint-from-method.js";
+import { getTypeHintFromType } from "../../util/get-type-hint-from-type.js";
+import { filterVisibility } from "../../util/model-util.js";
+import { TransformerConfig } from "../transformer-config.js";
+import { TransformerFunction } from "../transformer-function.js";
+import { markdownHeader, markdownHighlight, markdownTable } from "./markdown-util.js";
 
 /**
  * Transforms the component results to markdown

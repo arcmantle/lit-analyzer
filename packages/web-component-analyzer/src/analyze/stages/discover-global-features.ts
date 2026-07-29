@@ -1,10 +1,10 @@
 import { Node } from "typescript";
-import { AnalyzerVisitContext } from "../analyzer-visit-context";
-import { ComponentFeatures } from "../types/component-declaration";
-import { prepareRefineEmitMap } from "../util/get-refine-emit-map";
-import { refineFeature } from "./flavor/refine-feature";
-import { visitGlobalFeatures } from "./flavor/visit-global-features";
-import { mergeFeatures } from "./merge/merge-features";
+import { AnalyzerVisitContext } from "../analyzer-visit-context.js";
+import { ComponentFeatures } from "../types/component-declaration.js";
+import { prepareRefineEmitMap } from "../util/get-refine-emit-map.js";
+import { refineFeature } from "./flavor/refine-feature.js";
+import { visitGlobalFeatures } from "./flavor/visit-global-features.js";
+import { mergeFeatures } from "./merge/merge-features.js";
 
 /**
  * Discover all global features using flavors

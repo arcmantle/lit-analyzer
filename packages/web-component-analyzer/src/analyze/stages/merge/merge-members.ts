@@ -1,8 +1,8 @@
 import { TypeChecker } from "typescript";
-import { AnalyzerVisitContext } from "../../analyzer-visit-context";
-import { PriorityKind } from "../../flavors/analyzer-flavor";
-import { ComponentMember, ComponentMemberAttribute, ComponentMemberProperty } from "../../types/features/component-member";
-import { mergeJsDoc, mergeModifiers } from "./merge-util";
+import { AnalyzerVisitContext } from "../../analyzer-visit-context.js";
+import { PriorityKind } from "../../flavors/analyzer-flavor.js";
+import { ComponentMember, ComponentMemberAttribute, ComponentMemberProperty } from "../../types/features/component-member.js";
+import { mergeJsDoc, mergeModifiers } from "./merge-util.js";
 
 const priorityValueMap: Record<PriorityKind, number> = {
 	low: 0,

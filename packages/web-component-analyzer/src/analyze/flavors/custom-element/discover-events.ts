@@ -1,9 +1,9 @@
 import { Node } from "typescript";
-import { AnalyzerVisitContext } from "../../analyzer-visit-context";
-import { ComponentEvent } from "../../types/features/component-event";
-import { getJsDoc } from "../../util/js-doc-util";
-import { lazy } from "../../util/lazy";
-import { resolveNodeValue } from "../../util/resolve-node-value";
+import { AnalyzerVisitContext } from "../../analyzer-visit-context.js";
+import { ComponentEvent } from "../../types/features/component-event.js";
+import { getJsDoc } from "../../util/js-doc-util.js";
+import { lazy } from "../../util/lazy.js";
+import { resolveNodeValue } from "../../util/resolve-node-value.js";
 
 const EVENT_NAMES = [
 	"Event",

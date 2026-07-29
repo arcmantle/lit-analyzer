@@ -1,11 +1,11 @@
 import { Node } from "typescript";
-import { AnalyzerVisitContext } from "../../analyzer-visit-context";
-import { ComponentEvent } from "../../types/features/component-event";
-import { ComponentMember } from "../../types/features/component-member";
-import { getJsDoc } from "../../util/js-doc-util";
-import { lazy } from "../../util/lazy";
-import { resolveNodeValue } from "../../util/resolve-node-value";
-import { AnalyzerFlavor } from "../analyzer-flavor";
+import { AnalyzerVisitContext } from "../../analyzer-visit-context.js";
+import { ComponentEvent } from "../../types/features/component-event.js";
+import { ComponentMember } from "../../types/features/component-member.js";
+import { getJsDoc } from "../../util/js-doc-util.js";
+import { lazy } from "../../util/lazy.js";
+import { resolveNodeValue } from "../../util/resolve-node-value.js";
+import { AnalyzerFlavor } from "../analyzer-flavor.js";
 
 /**
  * Discovers global feature defined on "HTMLElementEventMap" or "HTMLElement"

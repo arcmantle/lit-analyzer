@@ -1,17 +1,17 @@
 import { writeFileSync } from "fs";
 import { basename, dirname, extname, relative, resolve } from "path";
 import { Program } from "typescript";
-import { AnalyzerResult } from "../../analyze/types/analyzer-result";
-import { transformAnalyzerResult } from "../../transformers/transform-analyzer-result";
-import { TransformerConfig } from "../../transformers/transformer-config";
-import { TransformerKind } from "../../transformers/transformer-kind";
-import { arrayFlat } from "../../util/array-util";
-import { AnalyzerCliConfig } from "../analyzer-cli-config";
-import { CliCommand } from "../cli-command";
-import { analyzeGlobs, AnalyzeGlobsContext } from "../util/analyze-globs";
-import { makeCliError } from "../util/cli-error";
-import { ensureDirSync } from "../util/file-util";
-import { log } from "../util/log";
+import { AnalyzerResult } from "../../analyze/types/analyzer-result.js";
+import { transformAnalyzerResult } from "../../transformers/transform-analyzer-result.js";
+import { TransformerConfig } from "../../transformers/transformer-config.js";
+import { TransformerKind } from "../../transformers/transformer-kind.js";
+import { arrayFlat } from "../../util/array-util.js";
+import { AnalyzerCliConfig } from "../analyzer-cli-config.js";
+import { CliCommand } from "../cli-command.js";
+import { analyzeGlobs, AnalyzeGlobsContext } from "../util/analyze-globs.js";
+import { makeCliError } from "../util/cli-error.js";
+import { ensureDirSync } from "../util/file-util.js";
+import { log } from "../util/log.js";
 
 type OutStrategy = "file" | "console_stream" | "console_bulk";
 

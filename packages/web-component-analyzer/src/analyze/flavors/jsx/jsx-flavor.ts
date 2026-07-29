@@ -1,6 +1,6 @@
-import { AnalyzerFlavor } from "../analyzer-flavor";
-import { discoverDefinitions } from "./discover-definitions";
-import { discoverGlobalFeatures } from "./discover-global-features";
+import { AnalyzerFlavor } from "../analyzer-flavor.js";
+import { discoverDefinitions } from "./discover-definitions.js";
+import { discoverGlobalFeatures } from "./discover-global-features.js";
 
 /**
  * Flavors for analyzing jsx related features

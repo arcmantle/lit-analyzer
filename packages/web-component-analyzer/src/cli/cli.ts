@@ -1,14 +1,19 @@
-import * as yargs from "yargs";
-import { analyzeCliCommand } from "./analyze/analyze-cli-command";
-import { AnalyzerCliConfig } from "./analyzer-cli-config";
-import { isCliError } from "./util/cli-error";
-import { log } from "./util/log";
+// yargs is CommonJS. Under node16 resolution its export is the factory, not the
+// pre-built singleton the namespace import upstream resolved to. The factory
+// defaults to an empty argument list, so the process arguments are passed in
+// explicitly to keep the upstream behaviour.
+import yargs from "yargs";
+import { hideBin } from "yargs/helpers";
+import { analyzeCliCommand } from "./analyze/analyze-cli-command.js";
+import { AnalyzerCliConfig } from "./analyzer-cli-config.js";
+import { isCliError } from "./util/cli-error.js";
+import { log } from "./util/log.js";
 
 /**
  * The main function of the cli.
  */
 export function cli(): void {
-	const argv = yargs
+	const argv = yargs(hideBin(process.argv))
 		.usage("Usage: $0 <command> [glob..] [options]")
 		.command<AnalyzerCliConfig>({
 			command: ["analyze [glob..]", "$0"],

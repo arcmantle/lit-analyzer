@@ -1,7 +1,7 @@
 import { Node } from "typescript";
-import { AnalyzerVisitContext } from "../../analyzer-visit-context";
-import { DefinitionNodeResult } from "../analyzer-flavor";
-import { getLwcComponent } from "./utils";
+import { AnalyzerVisitContext } from "../../analyzer-visit-context.js";
+import { DefinitionNodeResult } from "../analyzer-flavor.js";
+import { getLwcComponent } from "./utils.js";
 
 export function discoverDefinitions(node: Node, context: AnalyzerVisitContext): DefinitionNodeResult[] | undefined {
 	const { ts } = context;

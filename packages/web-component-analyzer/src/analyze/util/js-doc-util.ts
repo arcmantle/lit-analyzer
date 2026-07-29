@@ -1,11 +1,11 @@
 import { SimpleType, SimpleTypeStringLiteral } from "ts-simple-type";
 import * as tsModule from "typescript";
 import { JSDoc, JSDocParameterTag, JSDocTypeTag, Node, Program } from "typescript";
-import { arrayDefined } from "../../util/array-util";
-import { JsDoc, JsDocTag, JsDocTagParsed } from "../types/js-doc";
-import { getLeadingCommentForNode } from "./ast-util";
-import { lazy } from "./lazy";
-import { getLibTypeWithName } from "./type-util";
+import { arrayDefined } from "../../util/array-util.js";
+import { JsDoc, JsDocTag, JsDocTagParsed } from "../types/js-doc.js";
+import { getLeadingCommentForNode } from "./ast-util.js";
+import { lazy } from "./lazy.js";
+import { getLibTypeWithName } from "./type-util.js";
 
 /**
  * Returns typescript jsdoc node for a given node

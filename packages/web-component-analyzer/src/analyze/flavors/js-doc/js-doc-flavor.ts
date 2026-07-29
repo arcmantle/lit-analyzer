@@ -1,9 +1,9 @@
-import { AnalyzerFlavor } from "../analyzer-flavor";
-import { discoverDefinitions } from "./discover-definitions";
-import { discoverFeatures } from "./discover-features";
-import { discoverGlobalFeatures } from "./discover-global-features";
-import { refineDeclaration } from "./refine-declaration";
-import { refineFeature } from "./refine-feature";
+import { AnalyzerFlavor } from "../analyzer-flavor.js";
+import { discoverDefinitions } from "./discover-definitions.js";
+import { discoverFeatures } from "./discover-features.js";
+import { discoverGlobalFeatures } from "./discover-global-features.js";
+import { refineDeclaration } from "./refine-declaration.js";
+import { refineFeature } from "./refine-feature.js";
 
 /**
  * Flavors for analyzing jsdoc related features

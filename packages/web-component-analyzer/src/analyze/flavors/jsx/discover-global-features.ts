@@ -1,9 +1,9 @@
 import { Node } from "typescript";
-import { AnalyzerVisitContext } from "../../analyzer-visit-context";
-import { ComponentMember } from "../../types/features/component-member";
-import { getJsDoc } from "../../util/js-doc-util";
-import { resolveNodeValue } from "../../util/resolve-node-value";
-import { AnalyzerFlavor } from "../analyzer-flavor";
+import { AnalyzerVisitContext } from "../../analyzer-visit-context.js";
+import { ComponentMember } from "../../types/features/component-member.js";
+import { getJsDoc } from "../../util/js-doc-util.js";
+import { resolveNodeValue } from "../../util/resolve-node-value.js";
+import { AnalyzerFlavor } from "../analyzer-flavor.js";
 
 /**
  * Discovers members declared on "IntrinsicAttributes"

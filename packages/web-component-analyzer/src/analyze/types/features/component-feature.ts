@@ -1,5 +1,5 @@
-import { ComponentDeclaration } from "../component-declaration";
-import { JsDoc } from "../js-doc";
+import { ComponentDeclaration } from "../component-declaration.js";
+import { JsDoc } from "../js-doc.js";
 
 export type ComponentFeature = "member" | "method" | "cssproperty" | "csspart" | "event" | "slot";
 

@@ -1,7 +1,7 @@
 import { Node } from "typescript";
-import { AnalyzerVisitContext } from "../../analyzer-visit-context";
-import { DefinitionNodeResult } from "../../flavors/analyzer-flavor";
-import { executeFunctionsUntilMatch } from "../../util/execute-functions-until-match";
+import { AnalyzerVisitContext } from "../../analyzer-visit-context.js";
+import { DefinitionNodeResult } from "../../flavors/analyzer-flavor.js";
+import { executeFunctionsUntilMatch } from "../../util/execute-functions-until-match.js";
 
 /**
  * Uses flavors to visit definitions

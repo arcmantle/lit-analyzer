@@ -1,9 +1,9 @@
 import { Program } from "typescript";
-import { AnalyzerResult } from "../../analyze/types/analyzer-result";
-import { arrayFlat } from "../../util/array-util";
-import { stripTypescriptValues } from "../../util/strip-typescript-values";
-import { TransformerConfig } from "../transformer-config";
-import { TransformerFunction } from "../transformer-function";
+import { AnalyzerResult } from "../../analyze/types/analyzer-result.js";
+import { arrayFlat } from "../../util/array-util.js";
+import { stripTypescriptValues } from "../../util/strip-typescript-values.js";
+import { TransformerConfig } from "../transformer-config.js";
+import { TransformerFunction } from "../transformer-function.js";
 
 /**
  * Transforms results to json.

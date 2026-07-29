@@ -1,6 +1,6 @@
 import { TypeChecker } from "typescript";
-import { ComponentMethod } from "../analyze/types/features/component-method";
-import { getTypeHintFromType } from "./get-type-hint-from-type";
+import { ComponentMethod } from "../analyze/types/features/component-method.js";
+import { getTypeHintFromType } from "./get-type-hint-from-type.js";
 
 /**
  * This method returns a "type hint" that represents the method signature

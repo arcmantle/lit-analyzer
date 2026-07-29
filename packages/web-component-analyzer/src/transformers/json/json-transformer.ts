@@ -1,19 +1,19 @@
 import { relative } from "path";
 import { Program, TypeChecker } from "typescript";
-import { AnalyzerResult } from "../../analyze/types/analyzer-result";
-import { ComponentDefinition } from "../../analyze/types/component-definition";
-import { ComponentCssPart } from "../../analyze/types/features/component-css-part";
-import { ComponentCssProperty } from "../../analyze/types/features/component-css-property";
-import { ComponentEvent } from "../../analyze/types/features/component-event";
-import { ComponentMember } from "../../analyze/types/features/component-member";
-import { ComponentSlot } from "../../analyze/types/features/component-slot";
-import { JsDoc } from "../../analyze/types/js-doc";
-import { arrayDefined, arrayFlat } from "../../util/array-util";
-import { getTypeHintFromType } from "../../util/get-type-hint-from-type";
-import { filterVisibility } from "../../util/model-util";
-import { getFirst } from "../../util/set-util";
-import { TransformerConfig } from "../transformer-config";
-import { TransformerFunction } from "../transformer-function";
+import { AnalyzerResult } from "../../analyze/types/analyzer-result.js";
+import { ComponentDefinition } from "../../analyze/types/component-definition.js";
+import { ComponentCssPart } from "../../analyze/types/features/component-css-part.js";
+import { ComponentCssProperty } from "../../analyze/types/features/component-css-property.js";
+import { ComponentEvent } from "../../analyze/types/features/component-event.js";
+import { ComponentMember } from "../../analyze/types/features/component-member.js";
+import { ComponentSlot } from "../../analyze/types/features/component-slot.js";
+import { JsDoc } from "../../analyze/types/js-doc.js";
+import { arrayDefined, arrayFlat } from "../../util/array-util.js";
+import { getTypeHintFromType } from "../../util/get-type-hint-from-type.js";
+import { filterVisibility } from "../../util/model-util.js";
+import { getFirst } from "../../util/set-util.js";
+import { TransformerConfig } from "../transformer-config.js";
+import { TransformerFunction } from "../transformer-function.js";
 import {
 	HtmlData,
 	HtmlDataAttribute,
@@ -23,7 +23,7 @@ import {
 	HtmlDataProperty,
 	HtmlDataSlot,
 	HtmlDataTag
-} from "./custom-elements-json-data";
+} from "./custom-elements-json-data.js";
 
 /**
  * Transforms results to json.

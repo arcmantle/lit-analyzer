@@ -1,9 +1,9 @@
 import { Node, SourceFile } from "typescript";
-import { AnalyzerVisitContext } from "../analyzer-visit-context";
-import { ComponentDeclaration } from "../types/component-declaration";
-import { ComponentDefinition } from "../types/component-definition";
-import { getSymbol, resolveSymbolDeclarations } from "../util/ast-util";
-import { visitDefinitions } from "./flavor/visit-definitions";
+import { AnalyzerVisitContext } from "../analyzer-visit-context.js";
+import { ComponentDeclaration } from "../types/component-declaration.js";
+import { ComponentDefinition } from "../types/component-definition.js";
+import { getSymbol, resolveSymbolDeclarations } from "../util/ast-util.js";
+import { visitDefinitions } from "./flavor/visit-definitions.js";
 
 /**
  * Visits the source file and finds all component definitions using flavors

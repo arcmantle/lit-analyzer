@@ -1,8 +1,8 @@
 import { SourceFile } from "typescript";
-import { AnalyzerVisitContext } from "../analyzer-visit-context";
-import { ComponentDeclaration } from "../types/component-declaration";
-import { resolveSymbolDeclarations } from "../util/ast-util";
-import { analyzeComponentDeclaration } from "./analyze-declaration";
+import { AnalyzerVisitContext } from "../analyzer-visit-context.js";
+import { ComponentDeclaration } from "../types/component-declaration.js";
+import { resolveSymbolDeclarations } from "../util/ast-util.js";
+import { analyzeComponentDeclaration } from "./analyze-declaration.js";
 
 /**
  * Visits the source file and finds all component definitions using flavors

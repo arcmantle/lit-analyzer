@@ -1,10 +1,18 @@
-import { AnalyzerVisitContext } from "../../analyzer-visit-context";
-import { ComponentMember, ComponentMemberReflectKind } from "../../types/features/component-member";
-import { JsDoc } from "../../types/js-doc";
-import { VisibilityKind } from "../../types/visibility-kind";
-import { parseSimpleJsDocTypeExpression } from "../../util/js-doc-util";
-import { lazy } from "../../util/lazy";
-import { AnalyzerFlavor } from "../analyzer-flavor";
+import { AnalyzerVisitContext } from "../../analyzer-visit-context.js";
+import { ComponentMember, ComponentMemberReflectKind } from "../../types/features/component-member.js";
+import { JsDoc } from "../../types/js-doc.js";
+import { VisibilityKind } from "../../types/visibility-kind.js";
+import { parseSimpleJsDocTypeExpression } from "../../util/js-doc-util.js";
+import { lazy } from "../../util/lazy.js";
+import { AnalyzerFlavor } from "../analyzer-flavor.js";
+
+/**
+ * The call shape every `applyJsDoc*` helper below shares. Each helper is generic
+ * over the feature it refines, so an array of them only unifies at `Function`,
+ * which is what upstream cast to. This alias names the same erasure without
+ * widening to any function-like value.
+ */
+type ApplyJsDocTag<T> = (feature: T, jsDoc: JsDoc | undefined, context: AnalyzerVisitContext) => T;
 
 /**
  * Refines features by looking at the jsdoc tags on the feature
@@ -19,7 +27,7 @@ export const refineFeature: AnalyzerFlavor["refineFeature"] = {
 		}
 
 		return [applyJsDocDeprecated, applyJsDocVisibility, applyJsDocType].reduce(
-			(event, applyFunc) => (applyFunc as Function)(event, event.jsDoc, context),
+			(event, applyFunc) => (applyFunc as ApplyJsDocTag<typeof event>)(event, event.jsDoc, context),
 			event
 		);
 	},
@@ -32,7 +40,7 @@ export const refineFeature: AnalyzerFlavor["refineFeature"] = {
 		}
 
 		method = [applyJsDocDeprecated, applyJsDocVisibility].reduce(
-			(method, applyFunc) => (applyFunc as Function)(method, method.jsDoc, context),
+			(method, applyFunc) => (applyFunc as ApplyJsDocTag<typeof method>)(method, method.jsDoc, context),
 			method
 		);
 
@@ -56,7 +64,7 @@ export const refineFeature: AnalyzerFlavor["refineFeature"] = {
 			applyJsDocType,
 			applyJsDocAttribute,
 			applyJsDocModifiers
-		].reduce((member, applyFunc) => (applyFunc as Function)(member, member.jsDoc, context), member);
+		].reduce((member, applyFunc) => (applyFunc as ApplyJsDocTag<typeof member>)(member, member.jsDoc, context), member);
 	}
 };
 

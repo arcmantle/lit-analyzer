@@ -1,11 +1,11 @@
-import { AnalyzerFlavor } from "../analyzer-flavor";
-import { discoverDefinitions } from "./discover-definitions";
-import { discoverEvents } from "./discover-events";
-import { discoverGlobalFeatures } from "./discover-global-features";
-import { discoverInheritance } from "./discover-inheritance";
-import { discoverMembers } from "./discover-members";
-import { discoverMethods } from "./discover-methods";
-import { excludeNode } from "./exclude-node";
+import { AnalyzerFlavor } from "../analyzer-flavor.js";
+import { discoverDefinitions } from "./discover-definitions.js";
+import { discoverEvents } from "./discover-events.js";
+import { discoverGlobalFeatures } from "./discover-global-features.js";
+import { discoverInheritance } from "./discover-inheritance.js";
+import { discoverMembers } from "./discover-members.js";
+import { discoverMethods } from "./discover-methods.js";
+import { excludeNode } from "./exclude-node.js";
 
 /**
  * A flavor that discovers using standard custom element rules

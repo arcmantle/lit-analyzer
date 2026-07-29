@@ -1,9 +1,9 @@
 import { Node } from "typescript";
-import { ComponentMethod } from "../../types/features/component-method";
-import { getMemberVisibilityFromNode, hasModifier } from "../../util/ast-util";
-import { getJsDoc } from "../../util/js-doc-util";
-import { lazy } from "../../util/lazy";
-import { AnalyzerDeclarationVisitContext } from "../analyzer-flavor";
+import { ComponentMethod } from "../../types/features/component-method.js";
+import { getMemberVisibilityFromNode, hasModifier } from "../../util/ast-util.js";
+import { getJsDoc } from "../../util/js-doc-util.js";
+import { lazy } from "../../util/lazy.js";
+import { AnalyzerDeclarationVisitContext } from "../analyzer-flavor.js";
 
 /**
  * Discovers methods

@@ -1,6 +1,6 @@
 import { Node } from "typescript";
-import { AnalyzerVisitContext } from "../../analyzer-visit-context";
-import { InheritanceResult } from "../../flavors/analyzer-flavor";
+import { AnalyzerVisitContext } from "../../analyzer-visit-context.js";
+import { InheritanceResult } from "../../flavors/analyzer-flavor.js";
 
 /**
  * Uses flavors to find inheritance for a node

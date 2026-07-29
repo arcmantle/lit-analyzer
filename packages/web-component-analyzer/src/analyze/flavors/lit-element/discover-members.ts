@@ -1,13 +1,13 @@
 import { GetAccessorDeclaration, Node, PropertyDeclaration, PropertySignature, ReturnStatement, SetAccessorDeclaration } from "typescript";
-import { ComponentMember } from "../../types/features/component-member";
-import { LitElementPropertyConfig } from "../../types/features/lit-element-property-config";
-import { getMemberVisibilityFromNode, getModifiersFromNode, getNodeSourceFileLang, hasModifier } from "../../util/ast-util";
-import { getJsDoc, getJsDocType } from "../../util/js-doc-util";
-import { lazy } from "../../util/lazy";
-import { resolveNodeValue } from "../../util/resolve-node-value";
-import { camelToDashCase, isNamePrivate } from "../../util/text-util";
-import { AnalyzerDeclarationVisitContext } from "../analyzer-flavor";
-import { getLitElementPropertyDecoratorConfig, getLitPropertyOptions, getLitPropertyType } from "./parse-lit-property-configuration";
+import { ComponentMember } from "../../types/features/component-member.js";
+import { LitElementPropertyConfig } from "../../types/features/lit-element-property-config.js";
+import { getMemberVisibilityFromNode, getModifiersFromNode, getNodeSourceFileLang, hasModifier } from "../../util/ast-util.js";
+import { getJsDoc, getJsDocType } from "../../util/js-doc-util.js";
+import { lazy } from "../../util/lazy.js";
+import { resolveNodeValue } from "../../util/resolve-node-value.js";
+import { camelToDashCase, isNamePrivate } from "../../util/text-util.js";
+import { AnalyzerDeclarationVisitContext } from "../analyzer-flavor.js";
+import { getLitElementPropertyDecoratorConfig, getLitPropertyOptions, getLitPropertyType } from "./parse-lit-property-configuration.js";
 
 /**
  * Parses lit-related declaration members.

@@ -1,7 +1,7 @@
-import { AnalyzerFlavor } from "../analyzer-flavor";
-import { discoverMembers } from "./discover-members";
-import { discoverDefinitions } from "./discover-definitions";
-import { refineFeature } from "./refine-feature";
+import { AnalyzerFlavor } from "../analyzer-flavor.js";
+import { discoverMembers } from "./discover-members.js";
+import { discoverDefinitions } from "./discover-definitions.js";
+import { refineFeature } from "./refine-feature.js";
 
 /**
  * Flavors for analyzing LWC related features: https://lwc.dev/

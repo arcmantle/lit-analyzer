@@ -1,21 +1,32 @@
 {
-	"include": ["./src/**/*"],
+	"extends": "../../tsconfig.json",
+	"include": [
+		"./src"
+	],
+	"exclude": [
+		"node_modules"
+	],
 	"compilerOptions": {
-		"target": "es2019",
-		"importHelpers": false,
-		"module": "commonjs",
-		"moduleResolution": "node",
-		"lib": ["esnext", "dom"],
-		"outDir": "./lib/esm",
-		"downlevelIteration": true,
-		"strict": true,
-		"noImplicitAny": true,
+		"module": "node16",
+		"moduleResolution": "node16",
+		"target": "es2022",
+		"outDir": "./lib",
+		"lib": [
+			"es2022",
+			"dom"
+		],
+		"types": [
+			"node"
+		],
+		"sourceMap": true,
+		"rootDir": "./src",
 		"allowUnusedLabels": false,
 		"allowUnreachableCode": false,
-		"noUnusedLocals": true,
-		"pretty": true,
-		"declaration": true,
-		"declarationMap": true,
-		"esModuleInterop": true
+		// Vendored upstream source. Its visitor and discovery callbacks use an
+		// implicit `return undefined` as the "no result, keep traversing" signal,
+		// so this check is relaxed for this package only rather than rewriting
+		// its control flow.
+		"noImplicitReturns": false,
+		"tsBuildInfoFile": "./.tsbuildinfo"
 	}
 }

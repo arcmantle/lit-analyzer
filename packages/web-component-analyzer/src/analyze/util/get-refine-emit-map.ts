@@ -1,5 +1,5 @@
-import { ComponentFeatureCollection } from "../flavors/analyzer-flavor";
-import { RefineFeatureEmitMap } from "../stages/flavor/refine-feature";
+import { ComponentFeatureCollection } from "../flavors/analyzer-flavor.js";
+import { RefineFeatureEmitMap } from "../stages/flavor/refine-feature.js";
 
 /**
  * Prepares a map of component features and a callback map that adds to the component feature map.

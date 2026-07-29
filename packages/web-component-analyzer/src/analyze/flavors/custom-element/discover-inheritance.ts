@@ -1,8 +1,8 @@
 import { ConstructSignatureDeclaration, HeritageClause, Node } from "typescript";
-import { AnalyzerVisitContext } from "../../analyzer-visit-context";
-import { ComponentDeclarationKind, ComponentHeritageClause, ComponentHeritageClauseKind } from "../../types/component-declaration";
-import { findChild, findChildren, resolveDeclarationsDeep } from "../../util/ast-util";
-import { InheritanceResult } from "../analyzer-flavor";
+import { AnalyzerVisitContext } from "../../analyzer-visit-context.js";
+import { ComponentDeclarationKind, ComponentHeritageClause, ComponentHeritageClauseKind } from "../../types/component-declaration.js";
+import { findChild, findChildren, resolveDeclarationsDeep } from "../../util/ast-util.js";
+import { InheritanceResult } from "../analyzer-flavor.js";
 
 /**
  * Discovers inheritance from a node by looking at "extends" and "implements"

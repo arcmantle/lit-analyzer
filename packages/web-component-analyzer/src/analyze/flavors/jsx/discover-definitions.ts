@@ -1,7 +1,7 @@
 import { Node } from "typescript";
-import { AnalyzerVisitContext } from "../../analyzer-visit-context";
-import { getInterfaceKeys } from "../../util/ast-util";
-import { DefinitionNodeResult } from "../analyzer-flavor";
+import { AnalyzerVisitContext } from "../../analyzer-visit-context.js";
+import { getInterfaceKeys } from "../../util/ast-util.js";
+import { DefinitionNodeResult } from "../analyzer-flavor.js";
 
 /**
  * Discovers element definitions in "IntrinsicElements"

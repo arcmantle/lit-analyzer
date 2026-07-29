@@ -1,8 +1,8 @@
-import { AnalyzerFlavor } from "../analyzer-flavor";
-import { discoverDefinitions } from "./discover-definitions";
-import { discoverMembers } from "./discover-members";
-import { excludeNode } from "./exclude-node";
-import { refineFeature } from "./refine-feature";
+import { AnalyzerFlavor } from "../analyzer-flavor.js";
+import { discoverDefinitions } from "./discover-definitions.js";
+import { discoverMembers } from "./discover-members.js";
+import { excludeNode } from "./exclude-node.js";
+import { refineFeature } from "./refine-feature.js";
 
 /**
  * Flavors for analyzing LitElement related features: https://lit-element.polymer-project.org/

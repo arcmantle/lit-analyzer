@@ -1,5 +1,5 @@
-import { ComponentDeclaration } from "../analyze/types/component-declaration";
-import { JsDocTag } from "../analyze/types/js-doc";
+import { ComponentDeclaration } from "../analyze/types/component-declaration.js";
+import { JsDocTag } from "../analyze/types/js-doc.js";
 
 export interface Example {
 	lang?: string;

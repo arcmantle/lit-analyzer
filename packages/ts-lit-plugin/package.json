@@ -38,7 +38,7 @@
 	],
 	"dependencies": {
 		"lit-analyzer": "workspace:*",
-		"web-component-analyzer": "^2.0.0"
+		"web-component-analyzer": "workspace:*"
 	},
 	"devDependencies": {
 		"@types/node": "^24.0.0",

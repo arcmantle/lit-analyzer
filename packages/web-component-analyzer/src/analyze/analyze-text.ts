@@ -3,10 +3,10 @@ import { dirname, join } from "path";
 import * as tsModule from "typescript";
 import { CompilerOptions, Program, ScriptKind, ScriptTarget, SourceFile, System, TypeChecker } from "typescript";
 //import * as ts from "typescript";
-import { arrayDefined } from "../util/array-util";
-import { analyzeSourceFile } from "./analyze-source-file";
-import { AnalyzerOptions } from "./types/analyzer-options";
-import { AnalyzerResult } from "./types/analyzer-result";
+import { arrayDefined } from "../util/array-util.js";
+import { analyzeSourceFile } from "./analyze-source-file.js";
+import { AnalyzerOptions } from "./types/analyzer-options.js";
+import { AnalyzerResult } from "./types/analyzer-result.js";
 
 export interface IVirtualSourceFile {
 	fileName: string;

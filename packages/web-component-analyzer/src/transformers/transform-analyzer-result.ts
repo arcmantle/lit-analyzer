@@ -1,13 +1,13 @@
 import { Program } from "typescript";
-import { AnalyzerResult } from "../analyze/types/analyzer-result";
-import { debugJsonTransformer } from "./debug/debug-json-transformer";
-import { jsonTransformer } from "./json/json-transformer";
-import { json2Transformer } from "./json2/json2-transformer";
-import { markdownTransformer } from "./markdown/markdown-transformer";
-import { TransformerConfig } from "./transformer-config";
-import { TransformerFunction } from "./transformer-function";
-import { TransformerKind } from "./transformer-kind";
-import { vscodeTransformer } from "./vscode/vscode-transformer";
+import { AnalyzerResult } from "../analyze/types/analyzer-result.js";
+import { debugJsonTransformer } from "./debug/debug-json-transformer.js";
+import { jsonTransformer } from "./json/json-transformer.js";
+import { json2Transformer } from "./json2/json2-transformer.js";
+import { markdownTransformer } from "./markdown/markdown-transformer.js";
+import { TransformerConfig } from "./transformer-config.js";
+import { TransformerFunction } from "./transformer-function.js";
+import { TransformerKind } from "./transformer-kind.js";
+import { vscodeTransformer } from "./vscode/vscode-transformer.js";
 
 const transformerFunctionMap: Record<TransformerKind, TransformerFunction> = {
 	debug: debugJsonTransformer,

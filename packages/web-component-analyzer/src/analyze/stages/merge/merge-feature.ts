@@ -1,9 +1,9 @@
-import { ComponentCssPart } from "../../types/features/component-css-part";
-import { ComponentCssProperty } from "../../types/features/component-css-property";
-import { ComponentEvent } from "../../types/features/component-event";
-import { ComponentMethod } from "../../types/features/component-method";
-import { ComponentSlot } from "../../types/features/component-slot";
-import { mergeJsDoc, mergeNamedEntries } from "./merge-util";
+import { ComponentCssPart } from "../../types/features/component-css-part.js";
+import { ComponentCssProperty } from "../../types/features/component-css-property.js";
+import { ComponentEvent } from "../../types/features/component-event.js";
+import { ComponentMethod } from "../../types/features/component-method.js";
+import { ComponentSlot } from "../../types/features/component-slot.js";
+import { mergeJsDoc, mergeNamedEntries } from "./merge-util.js";
 
 /**
  * Merges multiple slots

@@ -1,8 +1,8 @@
-import { arrayFlat } from "../../../util/array-util";
-import { AnalyzerVisitContext } from "../../analyzer-visit-context";
-import { ComponentFeatureCollection } from "../../flavors/analyzer-flavor";
-import { mergeCssParts, mergeCssProperties, mergeEvents, mergeMethods, mergeSlots } from "./merge-feature";
-import { mergeMembers } from "./merge-members";
+import { arrayFlat } from "../../../util/array-util.js";
+import { AnalyzerVisitContext } from "../../analyzer-visit-context.js";
+import { ComponentFeatureCollection } from "../../flavors/analyzer-flavor.js";
+import { mergeCssParts, mergeCssProperties, mergeEvents, mergeMethods, mergeSlots } from "./merge-feature.js";
+import { mergeMembers } from "./merge-members.js";
 
 /**
  * Merges all features in collections of features

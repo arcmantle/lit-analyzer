@@ -1,13 +1,13 @@
 import { toSimpleType } from "ts-simple-type";
 import { BinaryExpression, ExpressionStatement, Node, ReturnStatement } from "typescript";
-import { ComponentMember } from "../../types/features/component-member";
-import { getMemberVisibilityFromNode, getModifiersFromNode, hasModifier } from "../../util/ast-util";
-import { getJsDoc } from "../../util/js-doc-util";
-import { lazy } from "../../util/lazy";
-import { resolveNodeValue } from "../../util/resolve-node-value";
-import { isNamePrivate } from "../../util/text-util";
-import { relaxType } from "../../util/type-util";
-import { AnalyzerDeclarationVisitContext } from "../analyzer-flavor";
+import { ComponentMember } from "../../types/features/component-member.js";
+import { getMemberVisibilityFromNode, getModifiersFromNode, hasModifier } from "../../util/ast-util.js";
+import { getJsDoc } from "../../util/js-doc-util.js";
+import { lazy } from "../../util/lazy.js";
+import { resolveNodeValue } from "../../util/resolve-node-value.js";
+import { isNamePrivate } from "../../util/text-util.js";
+import { relaxType } from "../../util/type-util.js";
+import { AnalyzerDeclarationVisitContext } from "../analyzer-flavor.js";
 
 /**
  * Discovers members based on standard vanilla custom element rules

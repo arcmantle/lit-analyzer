@@ -1,6 +1,6 @@
 import { Node } from "typescript";
-import { AnalyzerVisitContext } from "../../analyzer-visit-context";
-import { getNodeName } from "../../util/ast-util";
+import { AnalyzerVisitContext } from "../../analyzer-visit-context.js";
+import { getNodeName } from "../../util/ast-util.js";
 
 export function excludeNode(node: Node, context: AnalyzerVisitContext): boolean | undefined {
 	if (context.config.analyzeDependencies) {

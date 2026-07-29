@@ -2,19 +2,19 @@ import { basename, relative } from "path";
 import { isSimpleType, toSimpleType } from "ts-simple-type";
 import * as tsModule from "typescript";
 import { Node, Program, SourceFile, Type, TypeChecker } from "typescript";
-import { AnalyzerResult } from "../../analyze/types/analyzer-result";
-import { ComponentDeclaration, ComponentHeritageClause } from "../../analyze/types/component-declaration";
-import { ComponentFeatureBase } from "../../analyze/types/features/component-feature";
-import { JsDoc } from "../../analyze/types/js-doc";
-import { findParent, getNodeName, resolveDeclarations } from "../../analyze/util/ast-util";
-import { getMixinHeritageClauses, getSuperclassHeritageClause, visitAllHeritageClauses } from "../../analyze/util/component-declaration-util";
-import { getJsDoc } from "../../analyze/util/js-doc-util";
-import { arrayDefined } from "../../util/array-util";
-import { getTypeHintFromMethod } from "../../util/get-type-hint-from-method";
-import { getTypeHintFromType } from "../../util/get-type-hint-from-type";
-import { filterVisibility } from "../../util/model-util";
-import { TransformerConfig } from "../transformer-config";
-import { TransformerFunction } from "../transformer-function";
+import { AnalyzerResult } from "../../analyze/types/analyzer-result.js";
+import { ComponentDeclaration, ComponentHeritageClause } from "../../analyze/types/component-declaration.js";
+import { ComponentFeatureBase } from "../../analyze/types/features/component-feature.js";
+import { JsDoc } from "../../analyze/types/js-doc.js";
+import { findParent, getNodeName, resolveDeclarations } from "../../analyze/util/ast-util.js";
+import { getMixinHeritageClauses, getSuperclassHeritageClause, visitAllHeritageClauses } from "../../analyze/util/component-declaration-util.js";
+import { getJsDoc } from "../../analyze/util/js-doc-util.js";
+import { arrayDefined } from "../../util/array-util.js";
+import { getTypeHintFromMethod } from "../../util/get-type-hint-from-method.js";
+import { getTypeHintFromType } from "../../util/get-type-hint-from-type.js";
+import { filterVisibility } from "../../util/model-util.js";
+import { TransformerConfig } from "../transformer-config.js";
+import { TransformerFunction } from "../transformer-function.js";
 import {
 	AttributeDoc,
 	ClassDoc,
@@ -35,7 +35,7 @@ import {
 	Reference,
 	SlotDoc,
 	VariableDoc
-} from "./schema";
+} from "./schema.js";
 
 interface TransformerContext {
 	config: TransformerConfig;

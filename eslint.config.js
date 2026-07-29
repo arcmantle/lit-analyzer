@@ -16,6 +16,10 @@ export default [
 			'**/out/**',
 			'**/dist/**',
 			'dev/**',
+			// Deliberately unusual sample components that the vendored
+			// web-component-analyzer suite analyses as fixtures. They are input
+			// data, not source, and several do not parse as plain TypeScript.
+			'packages/*/dev/**',
 			'packages/*/lib/**',
 			'packages/*/out/**',
 			'packages/*/scripts/**',

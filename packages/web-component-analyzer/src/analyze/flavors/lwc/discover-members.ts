@@ -1,12 +1,12 @@
 import type { GetAccessorDeclaration, Node, PropertyDeclaration, PropertySignature, SetAccessorDeclaration } from "typescript";
-import { ComponentMember } from "../../types/features/component-member";
-import { getMemberVisibilityFromNode, getModifiersFromNode } from "../../util/ast-util";
-import { getJsDoc } from "../../util/js-doc-util";
-import { lazy } from "../../util/lazy";
-import { resolveNodeValue } from "../../util/resolve-node-value";
-import { camelToDashCase } from "../../util/text-util";
-import { AnalyzerDeclarationVisitContext } from "../analyzer-flavor";
-import { hasLwcApiPropertyDecorator } from "./utils";
+import { ComponentMember } from "../../types/features/component-member.js";
+import { getMemberVisibilityFromNode, getModifiersFromNode } from "../../util/ast-util.js";
+import { getJsDoc } from "../../util/js-doc-util.js";
+import { lazy } from "../../util/lazy.js";
+import { resolveNodeValue } from "../../util/resolve-node-value.js";
+import { camelToDashCase } from "../../util/text-util.js";
+import { AnalyzerDeclarationVisitContext } from "../analyzer-flavor.js";
+import { hasLwcApiPropertyDecorator } from "./utils.js";
 
 /**
  * Parses LWC related declaration members.

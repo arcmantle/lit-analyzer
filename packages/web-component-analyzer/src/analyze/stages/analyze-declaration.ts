@@ -1,14 +1,14 @@
 import { Node } from "typescript";
-import { AnalyzerVisitContext } from "../analyzer-visit-context";
-import { AnalyzerDeclarationVisitContext, ComponentFeatureCollection } from "../flavors/analyzer-flavor";
-import { ComponentDeclaration } from "../types/component-declaration";
-import { getNodeName, getSymbol, resolveDeclarations } from "../util/ast-util";
-import { getJsDoc } from "../util/js-doc-util";
-import { discoverFeatures } from "./discover-features";
-import { discoverInheritance } from "./discover-inheritance";
-import { excludeNode } from "./flavor/exclude-node";
-import { refineDeclaration } from "./flavor/refine-declaration";
-import { mergeFeatures } from "./merge/merge-features";
+import { AnalyzerVisitContext } from "../analyzer-visit-context.js";
+import { AnalyzerDeclarationVisitContext, ComponentFeatureCollection } from "../flavors/analyzer-flavor.js";
+import { ComponentDeclaration } from "../types/component-declaration.js";
+import { getNodeName, getSymbol, resolveDeclarations } from "../util/ast-util.js";
+import { getJsDoc } from "../util/js-doc-util.js";
+import { discoverFeatures } from "./discover-features.js";
+import { discoverInheritance } from "./discover-inheritance.js";
+import { excludeNode } from "./flavor/exclude-node.js";
+import { refineDeclaration } from "./flavor/refine-declaration.js";
+import { mergeFeatures } from "./merge/merge-features.js";
 
 /**
  * Discovers features on component declaration nodes

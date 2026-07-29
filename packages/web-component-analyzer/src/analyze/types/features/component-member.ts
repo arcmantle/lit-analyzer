@@ -1,10 +1,10 @@
 import { SimpleType } from "ts-simple-type";
 import { Node, Type } from "typescript";
-import { PriorityKind } from "../../flavors/analyzer-flavor";
-import { ModifierKind } from "../modifier-kind";
-import { VisibilityKind } from "../visibility-kind";
-import { ComponentFeatureBase } from "./component-feature";
-import { LitElementPropertyConfig } from "./lit-element-property-config";
+import { PriorityKind } from "../../flavors/analyzer-flavor.js";
+import { ModifierKind } from "../modifier-kind.js";
+import { VisibilityKind } from "../visibility-kind.js";
+import { ComponentFeatureBase } from "./component-feature.js";
+import { LitElementPropertyConfig } from "./lit-element-property-config.js";
 
 export type ComponentMemberKind = "property" | "attribute";
 

@@ -1,9 +1,9 @@
 import { Node } from "typescript";
-import { AnalyzerDeclarationVisitContext, ComponentFeatureCollection } from "../flavors/analyzer-flavor";
-import { prepareRefineEmitMap } from "../util/get-refine-emit-map";
-import { refineFeature } from "./flavor/refine-feature";
-import { visitFeatures } from "./flavor/visit-features";
-import { mergeFeatures } from "./merge/merge-features";
+import { AnalyzerDeclarationVisitContext, ComponentFeatureCollection } from "../flavors/analyzer-flavor.js";
+import { prepareRefineEmitMap } from "../util/get-refine-emit-map.js";
+import { refineFeature } from "./flavor/refine-feature.js";
+import { visitFeatures } from "./flavor/visit-features.js";
+import { mergeFeatures } from "./merge/merge-features.js";
 
 /**
  * Discovers features for a given node using flavors

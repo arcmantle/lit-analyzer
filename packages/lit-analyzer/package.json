@@ -55,7 +55,7 @@
 		"vscode-css-languageservice": "6.3.7",
 		"vscode-html-languageservice": "5.5.1",
 		"vscode-languageserver-types": "^3.17.5",
-		"web-component-analyzer": "^2.0.0"
+		"web-component-analyzer": "workspace:*"
 	},
 	"devDependencies": {
 		"@appnest/readme": "^1.2.7",
