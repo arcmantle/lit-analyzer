@@ -8,18 +8,8 @@
 		"./src/test/fixtures"
 	],
 	"compilerOptions": {
-		"module": "node16",
-		"moduleResolution": "node16",
-		"target": "es2022",
-		"outDir": "./lib",
-		"lib": [
-			"es2022"
-		],
-		"types": [
-			"node"
-		],
-		"sourceMap": true,
 		"rootDir": "./src",
+		"outDir": "./lib",
 		"tsBuildInfoFile": "./.tsbuildinfo"
 	}
 }

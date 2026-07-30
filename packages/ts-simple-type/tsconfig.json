@@ -7,18 +7,8 @@
 		"node_modules"
 	],
 	"compilerOptions": {
-		"module": "node16",
-		"moduleResolution": "node16",
-		"target": "es2022",
-		"outDir": "./lib",
-		"lib": [
-			"es2022"
-		],
-		"types": [
-			"node"
-		],
-		"sourceMap": true,
 		"rootDir": "./src",
+		"outDir": "./lib",
 		"allowUnusedLabels": false,
 		"allowUnreachableCode": false,
 		// Vendored upstream source. Its visitor callbacks use an implicit

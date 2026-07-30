@@ -1,5 +1,9 @@
 .idea
 node_modules
+# This one is a test fixture, not an install directory. `parseTsconfig` has to
+# resolve an `extends` specifier through `node_modules`, so the directory has to
+# be real and has to survive a clean checkout.
+!/packages/lit-language-server/src/test/fixtures/tsconfig-discovery/extends-node-modules/node_modules/
 .vscode-test/
 *.txt
 *.tgz
@@ -10,7 +14,9 @@ dist
 out
 *.vsix
 .tsbuildinfo
+*.tsbuildinfo
 
+/lib
 /packages/*/dist
 /packages/*/lib
 /packages/*/out

@@ -8,9 +8,6 @@
 		"rootDir": "./src",
 		"outDir": "./dist",
 		"resolveJsonModule": true,
-		"types": [
-			"node"
-		],
 		"tsBuildInfoFile": "./.tsbuildinfo"
 	}
 }

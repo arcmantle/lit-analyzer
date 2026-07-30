@@ -7,19 +7,12 @@
 		"node_modules"
 	],
 	"compilerOptions": {
-		"module": "node16",
-		"moduleResolution": "node16",
-		"target": "es2022",
+		"rootDir": "./src",
 		"outDir": "./lib",
 		"lib": [
-			"es2022",
+			"esnext",
 			"dom"
 		],
-		"types": [
-			"node"
-		],
-		"sourceMap": true,
-		"rootDir": "./src",
 		"allowUnusedLabels": false,
 		"allowUnreachableCode": false,
 		// Vendored upstream source. Its visitor and discovery callbacks use an
