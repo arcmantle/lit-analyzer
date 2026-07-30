@@ -1,8 +1,9 @@
-import * as tsModule from "typescript";
-import { Node, Program, TypeChecker } from "typescript";
-import { AnalyzerFlavor, ComponentFeatureCollection } from "./flavors/analyzer-flavor.js";
-import { AnalyzerConfig } from "./types/analyzer-config.js";
-import { ComponentDeclaration } from "./types/component-declaration.js";
+import type tsModule from 'typescript';
+import { Node, Program, TypeChecker } from 'typescript';
+
+import { AnalyzerFlavor, ComponentFeatureCollection } from './flavors/analyzer-flavor.js';
+import { AnalyzerConfig } from './types/analyzer-config.js';
+import { ComponentDeclaration } from './types/component-declaration.js';
 
 /**
  * This context is used in the entire analyzer.
@@ -11,13 +12,13 @@ import { ComponentDeclaration } from "./types/component-declaration.js";
 export interface AnalyzerVisitContext {
 	checker: TypeChecker;
 	program: Program;
-	ts: typeof tsModule;
-	config: AnalyzerConfig;
+	ts:      typeof tsModule;
+	config:  AnalyzerConfig;
 	flavors: AnalyzerFlavor[];
 	emitContinue?(): void;
 	cache: {
-		featureCollection: WeakMap<Node, ComponentFeatureCollection>;
+		featureCollection:         WeakMap<Node, ComponentFeatureCollection>;
 		componentDeclarationCache: WeakMap<Node, ComponentDeclaration>;
-		general: Map<unknown, unknown>;
+		general:                   Map<unknown, unknown>;
 	};
 }

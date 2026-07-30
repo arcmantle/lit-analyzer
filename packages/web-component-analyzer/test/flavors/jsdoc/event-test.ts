@@ -1,7 +1,7 @@
 import { isAssignableToSimpleTypeKind, isAssignableToType, SimpleType, typeToString } from "ts-simple-type";
-import { getLibTypeWithName } from "../../../src/analyze/util/type-util";
-import { analyzeTextWithCurrentTsModule } from "../../helpers/analyze-text-with-current-ts-module";
-import { getCurrentTsModule, tsTest } from "../../helpers/ts-test";
+import { getLibTypeWithName } from "../../../src/analyze/util/type-util.js";
+import { analyzeTextWithCurrentTsModule } from "../../helpers/analyze-text-with-current-ts-module.js";
+import { getCurrentTsModule, tsTest } from "../../helpers/ts-test.js";
 
 tsTest("jsdoc: Discovers custom events with @fires", t => {
 	const {
@@ -11,7 +11,7 @@ tsTest("jsdoc: Discovers custom events with @fires", t => {
 	 * @element
 	 * @fires my-event - This is a comment
 	 */
-	 class MyElement extends HTMLElement { 
+	 class MyElement extends HTMLElement {
 	 }
 	 `);
 
@@ -31,7 +31,7 @@ tsTest("jsdoc: Discovers the detail type of custom events with @fires", t => {
 	 * @fires {string} my-event
 	 * @fires my-second-event {number}
 	 */
-	 class MyElement extends HTMLElement { 
+	 class MyElement extends HTMLElement {
 	 }
 	 `);
 

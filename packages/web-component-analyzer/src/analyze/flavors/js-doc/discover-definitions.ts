@@ -1,8 +1,9 @@
-import { Node } from "typescript";
-import { AnalyzerVisitContext } from "../../analyzer-visit-context.js";
-import { getNodeIdentifier } from "../../util/ast-util.js";
-import { DefinitionNodeResult } from "../analyzer-flavor.js";
-import { parseJsDocForNode } from "./parse-js-doc-for-node.js";
+import { Node } from 'typescript';
+
+import { AnalyzerVisitContext } from '../../analyzer-visit-context.js';
+import { getNodeIdentifier } from '../../util/ast-util.js';
+import { DefinitionNodeResult } from '../analyzer-flavor.js';
+import { parseJsDocForNode } from './parse-js-doc-for-node.js';
 
 /**
  * Discovers definitions using "@customElement" or "@element" jsdoc
@@ -16,16 +17,16 @@ export function discoverDefinitions(node: Node, context: AnalyzerVisitContext): 
 
 		return parseJsDocForNode(
 			node,
-			["customelement", "element"],
+			[ 'customelement', 'element' ],
 			(tagNode, { name }) => {
 				return {
-					tagName: name || "",
+					tagName:        name || '',
 					definitionNode: tagNode,
 					identifierNode: identifier,
-					tagNameNode: tagNode
+					tagNameNode:    tagNode,
 				};
 			},
-			context
+			context,
 		);
 	}
 }

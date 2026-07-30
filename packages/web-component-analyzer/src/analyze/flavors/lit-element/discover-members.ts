@@ -1,13 +1,14 @@
-import { GetAccessorDeclaration, Node, PropertyDeclaration, PropertySignature, ReturnStatement, SetAccessorDeclaration } from "typescript";
-import { ComponentMember } from "../../types/features/component-member.js";
-import { LitElementPropertyConfig } from "../../types/features/lit-element-property-config.js";
-import { getMemberVisibilityFromNode, getModifiersFromNode, getNodeSourceFileLang, hasModifier } from "../../util/ast-util.js";
-import { getJsDoc, getJsDocType } from "../../util/js-doc-util.js";
-import { lazy } from "../../util/lazy.js";
-import { resolveNodeValue } from "../../util/resolve-node-value.js";
-import { camelToDashCase, isNamePrivate } from "../../util/text-util.js";
-import { AnalyzerDeclarationVisitContext } from "../analyzer-flavor.js";
-import { getLitElementPropertyDecoratorConfig, getLitPropertyOptions, getLitPropertyType } from "./parse-lit-property-configuration.js";
+import { GetAccessorDeclaration, Node, PropertyDeclaration, PropertySignature, ReturnStatement, SetAccessorDeclaration } from 'typescript';
+
+import { ComponentMember } from '../../types/features/component-member.js';
+import { LitElementPropertyConfig } from '../../types/features/lit-element-property-config.js';
+import { getMemberVisibilityFromNode, getModifiersFromNode, getNodeSourceFileLang, hasModifier } from '../../util/ast-util.js';
+import { getJsDoc, getJsDocType } from '../../util/js-doc-util.js';
+import { lazy } from '../../util/lazy.js';
+import { resolveNodeValue } from '../../util/resolve-node-value.js';
+import { camelToDashCase, isNamePrivate } from '../../util/text-util.js';
+import { AnalyzerDeclarationVisitContext } from '../analyzer-flavor.js';
+import { getLitElementPropertyDecoratorConfig, getLitPropertyOptions, getLitPropertyType } from './parse-lit-property-configuration.js';
 
 /**
  * Parses lit-related declaration members.
@@ -19,18 +20,17 @@ export function discoverMembers(node: Node, context: AnalyzerDeclarationVisitCon
 	const { ts } = context;
 
 	// Never pick up members not declared directly on the declaration node being traversed
-	if (node.parent !== context.declarationNode) {
+	if (node.parent !== context.declarationNode)
 		return undefined;
-	}
+
 
 	// static get properties() { return { myProp: {type: String} } }
 	if (ts.isGetAccessor(node) && hasModifier(node, ts.SyntaxKind.StaticKeyword, ts)) {
 		const name = node.name.getText();
-		if (name === "properties" && node.body != null) {
+		if (name === 'properties' && node.body != null) {
 			const returnStatement = node.body.statements.find<ReturnStatement>(ts.isReturnStatement.bind(ts));
-			if (returnStatement != null) {
+			if (returnStatement != null)
 				return parseStaticProperties(returnStatement, context);
-			}
 		}
 	}
 
@@ -47,7 +47,7 @@ export function discoverMembers(node: Node, context: AnalyzerDeclarationVisitCon
  */
 function parsePropertyDecorator(
 	node: SetAccessorDeclaration | GetAccessorDeclaration | PropertyDeclaration | PropertySignature,
-	context: AnalyzerDeclarationVisitContext
+	context: AnalyzerDeclarationVisitContext,
 ): ComponentMember[] | undefined {
 	const { ts, checker } = context;
 
@@ -61,7 +61,7 @@ function parsePropertyDecorator(
 		const attrName = getLitAttributeName(propName, litConfig, context);
 
 		// Find the default value for this property
-		const initializer = "initializer" in node ? node.initializer : undefined;
+		const initializer = 'initializer' in node ? node.initializer : undefined;
 		const resolvedDefaultValue = initializer != null ? resolveNodeValue(initializer, context) : undefined;
 		const def = resolvedDefaultValue != null ? resolvedDefaultValue.value : initializer?.getText();
 
@@ -74,24 +74,25 @@ function parsePropertyDecorator(
 		// Emit a property with "attrName"
 		return [
 			{
-				priority: "high",
-				kind: "property",
+				priority: 'high',
+				kind:     'property',
 				propName,
 				attrName,
-				type: lazy(() => {
+				type:     lazy(() => {
 					const propType = checker.getTypeAtLocation(node);
-					const inJavascriptFile = getNodeSourceFileLang(node) === "js";
-					return inJavascriptFile && typeof litConfig.type === "object" && litConfig.type.kind === "ANY" ? litConfig.type : propType;
+					const inJavascriptFile = getNodeSourceFileLang(node) === 'js';
+
+					return inJavascriptFile && typeof litConfig.type === 'object' && litConfig.type.kind === 'ANY' ? litConfig.type : propType;
 				}),
 				node,
-				default: def,
+				default:    def,
 				required,
 				jsDoc,
-				meta: litConfig,
+				meta:       litConfig,
 				visibility: getMemberVisibilityFromNode(node, ts),
-				reflect: litConfig.reflect ? "both" : attrName != null ? "to-property" : undefined,
-				modifiers: getModifiersFromNode(node, ts)
-			}
+				reflect:    litConfig.reflect ? 'both' : attrName != null ? 'to-property' : undefined,
+				modifiers:  getModifiersFromNode(node, ts),
+			},
 		];
 	}
 
@@ -106,23 +107,23 @@ function inPolymerFlavorContext(context: AnalyzerDeclarationVisitContext): boole
 	const declaration = context.getDeclaration();
 
 	// TODO: find a better way to construct a cache key
-	const cacheKey = `isPolymerFlavorContext:${context.sourceFile?.fileName || "unknown"}`;
+	const cacheKey = `isPolymerFlavorContext:${ context.sourceFile?.fileName || 'unknown' }`;
 
-	if (context.cache.general.has(cacheKey)) {
+	if (context.cache.general.has(cacheKey))
 		return context.cache.general.get(cacheKey) as boolean;
-	}
+
 
 	let result = false;
 
 	// Use "@polymer" jsdoc tag to indicate that this is polymer context
-	if (declaration.jsDoc?.tags?.some(t => t.tag === "polymer" || t.tag === "polymerElement")) {
+	if (declaration.jsDoc?.tags?.some(t => t.tag === 'polymer' || t.tag === 'polymerElement'))
 		result = true;
-	}
+
 
 	// TODO: This only checks the immediate inheritance. Make it recursive to go throught the entire inheritance chain.
-	if (context.getDeclaration().heritageClauses.some(c => ["PolymerElement", "Polymer.Element"].includes(c.identifier.getText()))) {
+	if (context.getDeclaration().heritageClauses.some(c => [ 'PolymerElement', 'Polymer.Element' ].includes(c.identifier.getText())))
 		result = true;
-	}
+
 
 	context.cache.general.set(cacheKey, result);
 
@@ -137,12 +138,12 @@ function inPolymerFlavorContext(context: AnalyzerDeclarationVisitContext): boole
  */
 function getLitAttributeName(propName: string, litConfig: LitElementPropertyConfig, context: AnalyzerDeclarationVisitContext): string | undefined {
 	// Don't emit attribute if the value is specifically "false"
-	if (litConfig.attribute === false) {
+	if (litConfig.attribute === false)
 		return undefined;
-	}
+
 
 	// Get the attribute name either by looking at "{attribute: ...}" or just taking the property name.
-	let attrName = typeof litConfig.attribute === "string" ? litConfig.attribute : propName;
+	let attrName = typeof litConfig.attribute === 'string' ? litConfig.attribute : propName;
 
 	if (inPolymerFlavorContext(context)) {
 		// From the documentation: https://polymer-library.polymer-project.org/3.0/docs/devguide/properties#attribute-reflection
@@ -168,9 +169,9 @@ function parseStaticProperties(returnStatement: ReturnStatement, context: Analyz
 		for (const propNode of returnStatement.expression.properties) {
 			// Get propName
 			const propName = propNode.name != null && ts.isIdentifier(propNode.name) ? propNode.name.text : undefined;
-			if (propName == null) {
+			if (propName == null)
 				continue;
-			}
+
 
 			// Parse the lit property config for this property
 			// Treat non-object-literal-expressions like the "type" (to support Polymer specific syntax)
@@ -178,12 +179,12 @@ function parseStaticProperties(returnStatement: ReturnStatement, context: Analyz
 			if (ts.isPropertyAssignment(propNode)) {
 				if (inPolymerFlavorContext(context) && !ts.isObjectLiteralExpression(propNode.initializer)) {
 					litConfig = { type: getLitPropertyType(ts, propNode.initializer) };
-				} else {
+				}
+				else {
 					const resolved = resolveNodeValue(propNode.initializer, context);
 
-					if (resolved) {
+					if (resolved)
 						litConfig = getLitPropertyOptions(resolved.node, resolved.value, context, litConfig);
-					}
 				}
 			}
 
@@ -197,19 +198,19 @@ function parseStaticProperties(returnStatement: ReturnStatement, context: Analyz
 
 			// Emit either the attribute or the property
 			memberResults.push({
-				priority: "high",
-				kind: "property",
-				type: lazy(() => {
-					return (jsDoc && getJsDocType(jsDoc, context)) || (typeof litConfig.type === "object" && litConfig.type) || { kind: "ANY" };
+				priority: 'high',
+				kind:     'property',
+				type:     lazy(() => {
+					return (jsDoc && getJsDocType(jsDoc, context)) || (typeof litConfig.type === 'object' && litConfig.type) || { kind: 'ANY' };
 				}),
-				propName: propName,
-				attrName: emitAttribute ? attrName : undefined,
+				propName:   propName,
+				attrName:   emitAttribute ? attrName : undefined,
 				jsDoc,
-				node: propNode,
-				meta: litConfig,
-				default: litConfig.default,
-				reflect: litConfig.reflect ? "both" : attrName != null ? "to-property" : undefined,
-				visibility: isNamePrivate(propName) ? "private" : undefined
+				node:       propNode,
+				meta:       litConfig,
+				default:    litConfig.default,
+				reflect:    litConfig.reflect ? 'both' : attrName != null ? 'to-property' : undefined,
+				visibility: isNamePrivate(propName) ? 'private' : undefined,
 			});
 		}
 	}

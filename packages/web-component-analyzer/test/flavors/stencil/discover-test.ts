@@ -1,5 +1,5 @@
-import { analyzeTextWithCurrentTsModule } from "../../helpers/analyze-text-with-current-ts-module";
-import { tsTest } from "../../helpers/ts-test";
+import { analyzeTextWithCurrentTsModule } from "../../helpers/analyze-text-with-current-ts-module.js";
+import { tsTest } from "../../helpers/ts-test.js";
 
 tsTest("Discovers elements defined using customElements.define", t => {
 	const {
@@ -7,7 +7,7 @@ tsTest("Discovers elements defined using customElements.define", t => {
 	} = analyzeTextWithCurrentTsModule(`
 		class MyElement extends HTMLElement {
 		}
-		
+
 		customElements.define("my-element", MyElement);
 	 `);
 
@@ -23,7 +23,7 @@ tsTest("Discovers elements defined using window.customElements.define", t => {
 	} = analyzeTextWithCurrentTsModule(`
 		class MyElement extends HTMLElement {
 		}
-		
+
 		window.customElements.define("my-element", MyElement);
 	 `);
 
@@ -39,7 +39,7 @@ tsTest("Discovers only one element defined using multiple customElements.define"
 	} = analyzeTextWithCurrentTsModule(`
 		class MyElement extends HTMLElement {
 		}
-		
+
 		customElements.define("my-element", MyElement);
 		customElements.define("my-element", MyElement);
 		customElements.define("my-element", MyElement);
@@ -63,10 +63,10 @@ tsTest("Does not discover elements defined using custom define function", t => {
 		results: [result]
 	} = analyzeTextWithCurrentTsModule(`
 		function define (tagName: string, elem: any) {}
-		
+
 		class MyElement extends HTMLElement {
 		}
-		
+
 		define("my-element", MyElement);
 	 `);
 
@@ -84,7 +84,7 @@ tsTest("Discovers elements defined using customElements.define without string li
 				return "my-element";
 	        }
 		}
-		
+
 		customElements.define(MyElement.tag, MyElement);
 	 `);
 

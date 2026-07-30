@@ -1,29 +1,30 @@
-import { Node } from "typescript";
-import { AnalyzerVisitContext } from "../../analyzer-visit-context.js";
-import { ComponentEvent } from "../../types/features/component-event.js";
-import { getJsDoc } from "../../util/js-doc-util.js";
-import { lazy } from "../../util/lazy.js";
-import { resolveNodeValue } from "../../util/resolve-node-value.js";
+import { Node } from 'typescript';
+
+import { AnalyzerVisitContext } from '../../analyzer-visit-context.js';
+import { ComponentEvent } from '../../types/features/component-event.js';
+import { getJsDoc } from '../../util/js-doc-util.js';
+import { lazy } from '../../util/lazy.js';
+import { resolveNodeValue } from '../../util/resolve-node-value.js';
 
 const EVENT_NAMES = [
-	"Event",
-	"CustomEvent",
-	"AnimationEvent",
-	"ClipboardEvent",
-	"DragEvent",
-	"FocusEvent",
-	"HashChangeEvent",
-	"InputEvent",
-	"KeyboardEvent",
-	"MouseEvent",
-	"PageTransitionEvent",
-	"PopStateEvent",
-	"ProgressEvent",
-	"StorageEvent",
-	"TouchEvent",
-	"TransitionEvent",
-	"UiEvent",
-	"WheelEvent"
+	'Event',
+	'CustomEvent',
+	'AnimationEvent',
+	'ClipboardEvent',
+	'DragEvent',
+	'FocusEvent',
+	'HashChangeEvent',
+	'InputEvent',
+	'KeyboardEvent',
+	'MouseEvent',
+	'PageTransitionEvent',
+	'PopStateEvent',
+	'ProgressEvent',
+	'StorageEvent',
+	'TouchEvent',
+	'TransitionEvent',
+	'UiEvent',
+	'WheelEvent',
 ];
 
 /**
@@ -43,7 +44,7 @@ export function discoverEvents(node: Node, context: AnalyzerVisitContext): Compo
 
 			const eventName = resolveNodeValue(arg, { ...context, strict: true })?.value;
 
-			if (typeof eventName === "string") {
+			if (typeof eventName === 'string') {
 				// Either grab jsdoc from the new expression or from a possible call expression that its wrapped in
 				const jsDoc =
 					getJsDoc(expression, ts) ||
@@ -56,8 +57,8 @@ export function discoverEvents(node: Node, context: AnalyzerVisitContext): Compo
 						jsDoc,
 						name: eventName,
 						node,
-						type: lazy(() => checker.getTypeAtLocation(node))
-					}
+						type: lazy(() => checker.getTypeAtLocation(node)),
+					},
 				];
 			}
 		}

@@ -1,6 +1,6 @@
-import { analyzeTextWithCurrentTsModule } from "../../helpers/analyze-text-with-current-ts-module";
-import { tsTest } from "../../helpers/ts-test";
-import { assertHasMembers } from "../../helpers/util";
+import { analyzeTextWithCurrentTsModule } from "../../helpers/analyze-text-with-current-ts-module.js";
+import { tsTest } from "../../helpers/ts-test.js";
+import { assertHasMembers } from "../../helpers/util.js";
 
 tsTest("Handle Typescript visibility modifiers", t => {
 	const {

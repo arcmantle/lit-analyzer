@@ -1,12 +1,13 @@
-import * as tsModule from "typescript";
-import { Node, SyntaxKind, TypeChecker } from "typescript";
-import { resolveDeclarations } from "./ast-util.js";
+import type tsModule from 'typescript';
+import { Node, SyntaxKind, TypeChecker } from 'typescript';
+
+import { resolveDeclarations } from './ast-util.js';
 
 export interface Context {
-	ts: typeof tsModule;
+	ts:       typeof tsModule;
 	checker?: TypeChecker;
-	depth?: number;
-	strict?: boolean;
+	depth?:   number;
+	strict?:  boolean;
 }
 
 /**
@@ -15,24 +16,30 @@ export interface Context {
  * @param node
  * @param context
  */
-export function resolveNodeValue(node: Node | undefined, context: Context): { value: unknown; node: Node } | undefined {
-	if (node == null) return undefined;
+export function resolveNodeValue(node: Node | undefined, context: Context): { value: unknown; node: Node; } | undefined {
+	if (node == null)
+		return undefined;
 
 	const { ts, checker } = context;
 	const depth = (context.depth || 0) + 1;
 
 	// Always break when depth is larger than 10.
 	// This ensures we cannot run into infinite recursion.
-	if (depth > 10) return undefined;
+	if (depth > 10)
+		return undefined;
 
 	if (ts.isStringLiteralLike(node)) {
 		return { value: node.text, node };
-	} else if (ts.isNumericLiteral(node)) {
+	}
+	else if (ts.isNumericLiteral(node)) {
 		return { value: Number(node.text), node };
-	} else if (ts.isPrefixUnaryExpression(node)) {
+	}
+	else if (ts.isPrefixUnaryExpression(node)) {
 		const value = resolveNodeValue(node.operand, { ...context, depth })?.value;
+
 		return { value: applyPrefixUnaryOperatorToValue(value, node.operator, ts), node };
-	} else if (ts.isObjectLiteralExpression(node)) {
+	}
+	else if (ts.isObjectLiteralExpression(node)) {
 		const object: Record<string, unknown> = {};
 
 		for (const prop of node.properties) {
@@ -42,23 +49,26 @@ export function resolveNodeValue(node: Node | undefined, context: Context): { va
 
 				// Resolve the "value
 				const resolvedValue = resolveNodeValue(prop.initializer, { ...context, depth });
-				if (resolvedValue != null && typeof name === "string") {
+				if (resolvedValue != null && typeof name === 'string')
 					object[name] = resolvedValue.value;
-				}
 			}
 		}
 
 		return {
 			value: object,
-			node
+			node,
 		};
-	} else if (node.kind === ts.SyntaxKind.TrueKeyword) {
+	}
+	else if (node.kind === ts.SyntaxKind.TrueKeyword) {
 		return { value: true, node };
-	} else if (node.kind === ts.SyntaxKind.FalseKeyword) {
+	}
+	else if (node.kind === ts.SyntaxKind.FalseKeyword) {
 		return { value: false, node };
-	} else if (node.kind === ts.SyntaxKind.NullKeyword) {
+	}
+	else if (node.kind === ts.SyntaxKind.NullKeyword) {
 		return { value: null, node };
-	} else if (node.kind === ts.SyntaxKind.UndefinedKeyword) {
+	}
+	else if (node.kind === ts.SyntaxKind.UndefinedKeyword) {
 		return { value: undefined, node };
 	}
 
@@ -79,11 +89,10 @@ export function resolveNodeValue(node: Node | undefined, context: Context): { va
 
 	// Resolve initializer value of enum members.
 	else if (ts.isEnumMember(node)) {
-		if (node.initializer != null) {
+		if (node.initializer != null)
 			return resolveNodeValue(node.initializer, { ...context, depth });
-		} else {
-			return { value: `${node.parent.name.text}.${node.name.getText()}`, node };
-		}
+		else
+			return { value: `${ node.parent.name.text }.${ node.name.getText() }`, node };
 	}
 
 	// Resolve values of variables.
@@ -91,14 +100,13 @@ export function resolveNodeValue(node: Node | undefined, context: Context): { va
 		const declarations = resolveDeclarations(node, { checker, ts });
 		if (declarations.length > 0) {
 			const resolved = resolveNodeValue(declarations[0], { ...context, depth });
-			if (context.strict || resolved != null) {
+			if (context.strict || resolved != null)
 				return resolved;
-			}
 		}
 
-		if (context.strict) {
+		if (context.strict)
 			return undefined;
-		}
+
 
 		return { value: node.getText(), node };
 	}
@@ -116,9 +124,8 @@ export function resolveNodeValue(node: Node | undefined, context: Context): { va
 	// }
 	else if ((ts.isGetAccessor(node) || ts.isMethodDeclaration(node) || ts.isFunctionDeclaration(node)) && node.body != null) {
 		for (const stm of node.body.statements) {
-			if (ts.isReturnStatement(stm)) {
+			if (ts.isReturnStatement(stm))
 				return resolveNodeValue(stm.expression, { ...context, depth });
-			}
 		}
 	}
 
@@ -126,38 +133,38 @@ export function resolveNodeValue(node: Node | undefined, context: Context): { va
 	else if (ts.isArrayLiteralExpression(node)) {
 		return {
 			node,
-			value: node.elements.map(el => resolveNodeValue(el, { ...context, depth })?.value)
+			value: node.elements.map(el => resolveNodeValue(el, { ...context, depth })?.value),
 		};
 	}
 
-	if (ts.isTypeAliasDeclaration(node)) {
+	if (ts.isTypeAliasDeclaration(node))
 		return resolveNodeValue(node.type, { ...context, depth });
-	}
 
-	if (ts.isLiteralTypeNode(node)) {
+
+	if (ts.isLiteralTypeNode(node))
 		return resolveNodeValue(node.literal, { ...context, depth });
-	}
 
-	if (ts.isTypeReferenceNode(node)) {
+
+	if (ts.isTypeReferenceNode(node))
 		return resolveNodeValue(node.typeName, { ...context, depth });
-	}
+
 
 	return undefined;
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function applyPrefixUnaryOperatorToValue(value: any, operator: SyntaxKind, ts: typeof tsModule): any {
-	if (typeof value === "object" && value != null) {
+	if (typeof value === 'object' && value != null)
 		return value;
-	}
+
 
 	switch (operator) {
-		case ts.SyntaxKind.MinusToken:
-			return -value;
-		case ts.SyntaxKind.ExclamationToken:
-			return !value;
-		case ts.SyntaxKind.PlusToken:
-			return +value;
+	case ts.SyntaxKind.MinusToken:
+		return -value;
+	case ts.SyntaxKind.ExclamationToken:
+		return !value;
+	case ts.SyntaxKind.PlusToken:
+		return +value;
 	}
 
 	return value;

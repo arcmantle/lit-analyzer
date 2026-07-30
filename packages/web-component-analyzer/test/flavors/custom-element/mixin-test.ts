@@ -1,6 +1,6 @@
-import { analyzeTextWithCurrentTsModule } from "../../helpers/analyze-text-with-current-ts-module";
-import { tsTest } from "../../helpers/ts-test";
-import { assertHasMembers, getAttributeNames, getComponentProp, getPropertyNames } from "../../helpers/util";
+import { analyzeTextWithCurrentTsModule } from "../../helpers/analyze-text-with-current-ts-module.js";
+import { tsTest } from "../../helpers/ts-test.js";
+import { assertHasMembers, getAttributeNames, getComponentProp, getPropertyNames } from "../../helpers/util.js";
 
 tsTest("Handles circular inheritance", t => {
 	const {
@@ -8,7 +8,7 @@ tsTest("Handles circular inheritance", t => {
 	} = analyzeTextWithCurrentTsModule(`
 		class MyElement extends MyElement {
 		}
-		
+
 		/**
 		 * @element
 		 */
@@ -33,11 +33,11 @@ tsTest("Handles circular inheritance using mixins", t => {
 		const Mixin1 = (Base) => {
 			return class Mixin1 extends Mixin2(Base) {}
 		}
-		
+
 		const Mixin2 = (Base) => {
 			return class Mixin2 extends Mixin1(Base) {}
 		}
-		
+
 		/**
 		 * @element
 		 */
@@ -62,13 +62,13 @@ tsTest("Handles mixin with variable declaration in TS declaration file", t => {
 		{
 			fileName: "main.js",
 			text: `
-		import { Mixin1 } from "./mixins";
+		import { Mixin1 } from "./mixins.js";
 		/**
 		 * @element
 		 */
 		class MyElement extends Mixin1(HTMLElement) {
 			c: number;
-		}	
+		}
 		`
 		},
 		{
@@ -82,10 +82,10 @@ tsTest("Handles mixin with variable declaration in TS declaration file", t => {
 	export declare abstract class MyClass {
 		b: number;
 	}
-	
+
 	export declare const Mixin1: <T extends Constructor<MyInterface & MyClass>>(base: T) => Constructor<MyClass & MyInterface> & T;
 
-		
+
 		`,
 			analyze: false
 		}
@@ -130,7 +130,7 @@ tsTest("Handles simple mixin", t => {
 				return ["a", "b", ...super.observedAttributes];
 			}
 		}
-		
+
 		customElements.define("my-element", MyElement);
 	 `);
 
@@ -152,7 +152,7 @@ tsTest("Handles mixin with local variable subclass", t => {
 				}
 			}
 		}
-		
+
 		const MyMixin = (base) => {
             const Base = ExtraMixin(base);
 
@@ -168,7 +168,7 @@ tsTest("Handles mixin with local variable subclass", t => {
 				return ["a", "b", ...super.observedAttributes];
 			}
 		}
-		
+
 		customElements.define("my-element", MyElement);
 	 `);
 
@@ -190,7 +190,7 @@ tsTest("Handles 2 levels of mixins", t => {
 				}
 			}
 		}
-		
+
 		const MyMixin2 = (Base) => {
 			return class Mixin extends MyMixin1(Base) {
 				static get observedAttributes() {
@@ -204,7 +204,7 @@ tsTest("Handles 2 levels of mixins", t => {
 				return ["a", ...super.observedAttributes];
 			}
 		}
-		
+
 		customElements.define("my-element", MyElement);
 	 `);
 
@@ -246,18 +246,18 @@ tsTest("Handles mixins generated with factory functions", t => {
 	} = analyzeTextWithCurrentTsModule(`
 		export const FieldCustomMixin = dedupeMixin(superclass =>
 			class FieldCustomMixin extends superclass {
-				static get observedAttributes() { 
-					return ["c", "d"]; 
+				static get observedAttributes() {
+					return ["c", "d"];
 				}
 			},
 		);
 
 		class SomeElement extends FieldCustomMixin(HTMLElement) {
-			static get observedAttributes() { 
-				return ["a", "b", ...super.observedAttributes]; 
+			static get observedAttributes() {
+				return ["a", "b", ...super.observedAttributes];
 			}
 		}
-		
+
 		customElements.define("my-element", SomeElement);
 	 `);
 
@@ -278,7 +278,7 @@ tsTest("Handles nested mixin extends", t => {
 				}
 			}
 		}
-		
+
 		const MyMixin2 = (Base) => {
 			return class Mixin2 extends Base {
 				static get observedAttributes() {
@@ -292,7 +292,7 @@ tsTest("Handles nested mixin extends", t => {
 				return ["a", ...super.observedAttributes];
 			}
 		}
-		
+
 		customElements.define("my-element", MyElement);
 	 `);
 
@@ -331,43 +331,43 @@ tsTest("Handles nested mixin wrapper functions", t => {
 		}
 
 		return AtInputFormItemMixinImplementation;
-	}	
+	}
 
 	function AtInputFormItemMixin<A>(base: A) {
 		return __AtInputFormItemMixin(AtInputOrTextareaFormItemMixin(base));
 	}
-	
+
 	/* =============== Mixin 4 ===================== */
 	function __AtTextFormItemMixin<A>(base: A) {
 		abstract class AtTextFormItemMixinImplementation extends base {
 			c = "c";
 		}
 	}
-	
+
 	function AtTextFormItemMixin<A>(base: A) {
 		return __AtTextFormItemMixin(AtInputFormItemMixin(base));
 	}
-	
+
 	/* =============== Mixin 5 ===================== */
 	function __AtTextFieldFormItemMixin<A>(base: A) {
 		class AtTextFieldFormItemMixinImplementation extends base {
 			b = "b";
 		}
 	}
-	
+
 	function AtTextFieldFormItemMixin<A>(base: A) {
 		return __AtTextFieldFormItemMixin(AtTextFormItemMixin(base));
 	}
-	
+
 	/* =============== Element =====================0 */
 	class AtFormField extends AtFormFieldMixin(HTMLElement) {
 		g = "g";
 	}
-	
+
 	export class AtTextField extends AtTextFieldFormItemMixin(AtFormField) {
 		a = "a";
 	}
-	
+
 	customElements.define("at-text-field", AtTextField);
 	 `);
 
@@ -383,8 +383,8 @@ tsTest("Handles types in declaration files that represents a component with mixi
 	} = analyzeTextWithCurrentTsModule({
 		fileName: "element.d.ts",
 		text: `
-		import { LitElement } from "lit-element";
-import { TemplateResult } from "lit-html";
+		import { LitElement } from "lit-element.js";
+import { TemplateResult } from "lit-html.js";
 declare const AtButton_base: {
     new (...args: any[]): import("lit-element").LitElement & {
         color: "review" | "create" | "act" | "grow" | "rate" | "done" | "error" | "primary" | "accent" | "warn" | "white" | "black" | "success" | "shady" | undefined;

@@ -1,6 +1,6 @@
-import { analyzeTextWithCurrentTsModule } from "../../helpers/analyze-text-with-current-ts-module";
-import { tsTest } from "../../helpers/ts-test";
-import { assertHasMembers } from "../../helpers/util";
+import { analyzeTextWithCurrentTsModule } from "../../helpers/analyze-text-with-current-ts-module.js";
+import { tsTest } from "../../helpers/ts-test.js";
+import { assertHasMembers } from "../../helpers/util.js";
 
 // To run the test:
 //    yarn ava --ext ts test/flavors/lwc/member-test.ts
@@ -202,32 +202,32 @@ tsTest("LWC: Discovers properties. all in one'", t => {
 			/**
 			 */
 			import { api, LightningElement } from 'lwc';
-			class MyElement extends LightningElement { 
+			class MyElement extends LightningElement {
 				/**
 				 * This is a comment
 				 */
 				@api myProp = "hello";
-				
+
 				@api myProp2 = 123;
-				
+
 				@api get myProp3() {};
-				
+
 				myProp4 = "not public";
-				
+
 				myProp5;
-		
+
 				get myProp6() {};
-		
+
 				@api accessKey;
-		
+
 				@api get htmlFor() {};
-		
+
 				@api Upper;
-		
+
 				noValidate;
-				
+
 				@api m() {}
-				
+
 				m() {}
 			}
 		`

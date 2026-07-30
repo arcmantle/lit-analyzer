@@ -1,15 +1,16 @@
-import { isAssignableToSimpleTypeKind, isSimpleType, SimpleType, toSimpleType, typeToString } from "ts-simple-type";
-import { Program, Type, TypeChecker } from "typescript";
-import { AnalyzerResult } from "../../analyze/types/analyzer-result.js";
-import { ComponentDefinition } from "../../analyze/types/component-definition.js";
-import { ComponentEvent } from "../../analyze/types/features/component-event.js";
-import { ComponentMember } from "../../analyze/types/features/component-member.js";
-import { JsDoc } from "../../analyze/types/js-doc.js";
-import { arrayDefined } from "../../util/array-util.js";
-import { markdownHighlight } from "../markdown/markdown-util.js";
-import { TransformerConfig } from "../transformer-config.js";
-import { TransformerFunction } from "../transformer-function.js";
-import { HtmlDataAttr, HtmlDataAttrValue, HtmlDataTag, VscodeHtmlData } from "./vscode-html-data.js";
+import { isAssignableToSimpleTypeKind, isSimpleType, SimpleType, toSimpleType, typeToString } from 'ts-simple-type';
+import { Program, Type, TypeChecker } from 'typescript';
+
+import { AnalyzerResult } from '../../analyze/types/analyzer-result.js';
+import { ComponentDefinition } from '../../analyze/types/component-definition.js';
+import { ComponentEvent } from '../../analyze/types/features/component-event.js';
+import { ComponentMember } from '../../analyze/types/features/component-member.js';
+import { JsDoc } from '../../analyze/types/js-doc.js';
+import { arrayDefined } from '../../util/array-util.js';
+import { markdownHighlight } from '../markdown/markdown-util.js';
+import { TransformerConfig } from '../transformer-config.js';
+import { TransformerFunction } from '../transformer-function.js';
+import { HtmlDataAttr, HtmlDataAttrValue, HtmlDataTag, VscodeHtmlData } from './vscode-html-data.js';
 
 /**
  * Vscode json output format transformer.
@@ -21,16 +22,16 @@ export const vscodeTransformer: TransformerFunction = (results: AnalyzerResult[]
 	const checker = program.getTypeChecker();
 
 	// Grab all definitions
-	const definitions = results.map(res => res.componentDefinitions).reduce((acc, cur) => [...acc, ...cur], []);
+	const definitions = results.map(res => res.componentDefinitions).reduce((acc, cur) => [ ...acc, ...cur ], []);
 
 	// Transform all definitions into "tags"
 	const tags = definitions.map(d => definitionToHtmlDataTag(d, checker));
 
 	const vscodeJson: VscodeHtmlData = {
-		version: 1,
+		version:          1,
 		tags,
 		globalAttributes: [],
-		valueSets: []
+		valueSets:        [],
 	};
 
 	return JSON.stringify(vscodeJson, null, 2);
@@ -41,8 +42,8 @@ function definitionToHtmlDataTag(definition: ComponentDefinition, checker: TypeC
 
 	if (declaration == null) {
 		return {
-			name: definition.tagName,
-			attributes: []
+			name:       definition.tagName,
+			attributes: [],
 		};
 	}
 
@@ -50,45 +51,44 @@ function definitionToHtmlDataTag(definition: ComponentDefinition, checker: TypeC
 	const customElementAttributes = arrayDefined(declaration.members.map(d => componentMemberToVscodeAttr(d, checker)));
 	const eventAttributes = arrayDefined(declaration.events.map(e => componentEventToVscodeAttr(e, checker)));
 
-	const attributes = [...customElementAttributes, ...eventAttributes];
+	const attributes = [ ...customElementAttributes, ...eventAttributes ];
 
 	return {
-		name: definition.tagName,
+		name:        definition.tagName,
 		description: formatMetadata(declaration.jsDoc, {
 			Events: declaration.events.map(e => formatEntryRow(e.name, e.jsDoc, e.type?.(), checker)),
-			Slots: declaration.slots.map(s =>
-				formatEntryRow(s.name || " ", s.jsDoc, s.permittedTagNames && s.permittedTagNames.map(n => `"${markdownHighlight(n)}"`).join(" | "), checker)
-			),
+			Slots:  declaration.slots.map(s =>
+				formatEntryRow(s.name || ' ', s.jsDoc, s.permittedTagNames && s.permittedTagNames.map(n => `"${ markdownHighlight(n) }"`).join(' | '), checker)),
 			Attributes: declaration.members
-				.map(m => ("attrName" in m && m.attrName != null ? formatEntryRow(m.attrName, m.jsDoc, m.typeHint || m.type?.(), checker) : undefined))
+				.map(m => ('attrName' in m && m.attrName != null ? formatEntryRow(m.attrName, m.jsDoc, m.typeHint || m.type?.(), checker) : undefined))
 				.filter(m => m != null),
 			Properties: declaration.members
-				.map(m => ("propName" in m && m.propName != null ? formatEntryRow(m.propName, m.jsDoc, m.typeHint || m.type?.(), checker) : undefined))
-				.filter(m => m != null)
+				.map(m => ('propName' in m && m.propName != null ? formatEntryRow(m.propName, m.jsDoc, m.typeHint || m.type?.(), checker) : undefined))
+				.filter(m => m != null),
 		}),
-		attributes
+		attributes,
 	};
 }
 
 function componentEventToVscodeAttr(event: ComponentEvent, checker: TypeChecker): HtmlDataAttr | undefined {
 	return {
-		name: `on${event.name}`,
-		description: formatEntryRow(event.name, event.jsDoc, event.type?.(), checker)
+		name:        `on${ event.name }`,
+		description: formatEntryRow(event.name, event.jsDoc, event.type?.(), checker),
 	};
 }
 
 function componentMemberToVscodeAttr(member: ComponentMember, checker: TypeChecker): HtmlDataAttr | undefined {
-	if (member.attrName == null) {
+	if (member.attrName == null)
 		return undefined;
-	}
+
 
 	return {
-		name: member.attrName,
+		name:        member.attrName,
 		description: formatMetadata(formatEntryRow(member.attrName, member.jsDoc, member.typeHint || member.type?.(), checker), {
-			Property: "propName" in member ? member.propName : undefined,
-			Default: member.default === undefined ? undefined : String(member.default)
+			Property: 'propName' in member ? member.propName : undefined,
+			Default:  member.default === undefined ? undefined : String(member.default),
 		}),
-		...((member.type && typeToVscodeValuePart(member.type?.(), checker)) || {})
+		...((member.type && typeToVscodeValuePart(member.type?.(), checker)) || {}),
 	};
 }
 
@@ -97,18 +97,18 @@ function componentMemberToVscodeAttr(member: ComponentMember, checker: TypeCheck
  * @param type
  * @param checker
  */
-function typeToVscodeValuePart(type: SimpleType | Type, checker: TypeChecker): { valueSet: "v" } | { values: HtmlDataAttrValue[] } | undefined {
+function typeToVscodeValuePart(type: SimpleType | Type, checker: TypeChecker): { valueSet: 'v'; } | { values: HtmlDataAttrValue[]; } | undefined {
 	const simpleType = isSimpleType(type) ? type : toSimpleType(type, checker);
 
 	switch (simpleType.kind) {
-		case "BOOLEAN":
-			return { valueSet: "v" };
-		case "STRING_LITERAL":
-			return { values: [{ name: simpleType.value }] };
-		case "ENUM":
-			return { values: typesToStringUnion(simpleType.types.map(({ type }) => type)) };
-		case "UNION":
-			return { values: typesToStringUnion(simpleType.types) };
+	case 'BOOLEAN':
+		return { valueSet: 'v' };
+	case 'STRING_LITERAL':
+		return { values: [ { name: simpleType.value } ] };
+	case 'ENUM':
+		return { values: typesToStringUnion(simpleType.types.map(({ type }) => type)) };
+	case 'UNION':
+		return { values: typesToStringUnion(simpleType.types) };
 	}
 
 	return undefined;
@@ -123,13 +123,13 @@ function typesToStringUnion(types: SimpleType[]): HtmlDataAttrValue[] {
 	return arrayDefined(
 		types.map(t => {
 			switch (t.kind) {
-				case "STRING_LITERAL":
-				case "NUMBER_LITERAL":
-					return { name: t.value.toString() };
-				default:
-					return undefined;
+			case 'STRING_LITERAL':
+			case 'NUMBER_LITERAL':
+				return { name: t.value.toString() };
+			default:
+				return undefined;
 			}
-		})
+		}),
 	);
 }
 
@@ -140,26 +140,29 @@ function typesToStringUnion(types: SimpleType[]): HtmlDataAttrValue[] {
  */
 function formatMetadata(
 	doc: string | undefined | JsDoc,
-	metadata: { [key: string]: string | undefined | (string | undefined)[] }
+	metadata: { [key: string]: string | undefined | (string | undefined)[]; },
 ): string | undefined {
 	const metaText = arrayDefined(
-		Object.entries(metadata).map(([key, value]) => {
+		Object.entries(metadata).map(([ key, value ]) => {
 			if (value == null) {
 				return undefined;
-			} else if (Array.isArray(value)) {
-				const filtered = arrayDefined(value);
-				if (filtered.length === 0) return undefined;
-
-				return `${key}:\n\n${filtered.map(v => `  * ${v}`).join(`\n\n`)}`;
-			} else {
-				return `${key}: ${value}`;
 			}
-		})
+			else if (Array.isArray(value)) {
+				const filtered = arrayDefined(value);
+				if (filtered.length === 0)
+					return undefined;
+
+				return `${ key }:\n\n${ filtered.map(v => `  * ${ v }`).join(`\n\n`) }`;
+			}
+			else {
+				return `${ key }: ${ value }`;
+			}
+		}),
 	).join(`\n\n`);
 
-	const comment = typeof doc === "string" ? doc : doc?.description || "";
+	const comment = typeof doc === 'string' ? doc : doc?.description || '';
 
-	return `${comment || ""}${metadata ? `${comment ? `\n\n` : ""}${metaText}` : ""}` || undefined;
+	return `${ comment || '' }${ metadata ? `${ comment ? `\n\n` : '' }${ metaText }` : '' }` || undefined;
 }
 
 /**
@@ -170,10 +173,10 @@ function formatMetadata(
  * @param checker
  */
 function formatEntryRow(name: string, doc: JsDoc | string | undefined, type: Type | SimpleType | string | undefined, checker: TypeChecker): string {
-	const comment = typeof doc === "string" ? doc : doc?.description || "";
-	const typeText = typeof type === "string" ? type : type == null ? "" : formatType(type, checker);
+	const comment = typeof doc === 'string' ? doc : doc?.description || '';
+	const typeText = typeof type === 'string' ? type : type == null ? '' : formatType(type, checker);
 
-	return `${markdownHighlight(name)}${typeText == null ? "" : ` {${typeText}}`}${comment == null ? "" : " - "}${comment || ""}`;
+	return `${ markdownHighlight(name) }${ typeText == null ? '' : ` {${ typeText }}` }${ comment == null ? '' : ' - ' }${ comment || '' }`;
 }
 
 /**
@@ -182,5 +185,5 @@ function formatEntryRow(name: string, doc: JsDoc | string | undefined, type: Typ
  * @param checker
  */
 function formatType(type: Type | SimpleType, checker: TypeChecker): string | undefined {
-	return !isAssignableToSimpleTypeKind(type, "ANY", checker) ? markdownHighlight(typeToString(type, checker)) : undefined;
+	return !isAssignableToSimpleTypeKind(type, 'ANY', checker) ? markdownHighlight(typeToString(type, checker)) : undefined;
 }

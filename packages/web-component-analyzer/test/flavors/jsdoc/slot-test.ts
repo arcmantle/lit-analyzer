@@ -1,5 +1,5 @@
-import { analyzeTextWithCurrentTsModule } from "../../helpers/analyze-text-with-current-ts-module";
-import { tsTest } from "../../helpers/ts-test";
+import { analyzeTextWithCurrentTsModule } from "../../helpers/analyze-text-with-current-ts-module.js";
+import { tsTest } from "../../helpers/ts-test.js";
 
 tsTest("jsdoc: Discovers slots with @slots", t => {
 	const {
@@ -9,7 +9,7 @@ tsTest("jsdoc: Discovers slots with @slots", t => {
 	 * @element
 	 * @slot myslot - This is a comment
 	 */
-	 class MyElement extends HTMLElement { 
+	 class MyElement extends HTMLElement {
 	 }
 	 `);
 
@@ -28,7 +28,7 @@ tsTest("jsdoc: Discovers unnamed slots with @slots", t => {
 	 * @element
 	 * @slot - This is a comment
 	 */
-	 class MyElement extends HTMLElement { 
+	 class MyElement extends HTMLElement {
 	 }
 	 `);
 
@@ -49,7 +49,7 @@ tsTest("jsdoc: Discovers permitted tag names on @slot", t => {
 	 * @slot {"div"|"span"} myslot1
 	 * @slot {"li"} myslot2
 	 */
-	 class MyElement extends HTMLElement { 
+	 class MyElement extends HTMLElement {
 	 }
 	 `);
 

@@ -1,5 +1,5 @@
-import { analyzeTextWithCurrentTsModule } from "../../helpers/analyze-text-with-current-ts-module";
-import { tsTest } from "../../helpers/ts-test";
+import { analyzeTextWithCurrentTsModule } from "../../helpers/analyze-text-with-current-ts-module.js";
+import { tsTest } from "../../helpers/ts-test.js";
 
 tsTest("Discovers elements defined using customElements.define", t => {
 	const {
@@ -116,7 +116,7 @@ tsTest("Discovers declaration in other file", t => {
 			analyze: true,
 			fileName: "def.ts",
 			text: `
-				import {MyElement} from "./decl";
+				import {MyElement} from "./decl.js";
 				customElements.define("my-element", MyElement);
 			`
 		},

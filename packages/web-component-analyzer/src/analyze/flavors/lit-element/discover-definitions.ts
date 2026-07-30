@@ -1,8 +1,9 @@
-import { Node } from "typescript";
-import { AnalyzerVisitContext } from "../../analyzer-visit-context.js";
-import { getDecorators, getNodeIdentifier } from "../../util/ast-util.js";
-import { resolveNodeValue } from "../../util/resolve-node-value.js";
-import { DefinitionNodeResult } from "../analyzer-flavor.js";
+import { Node } from 'typescript';
+
+import { AnalyzerVisitContext } from '../../analyzer-visit-context.js';
+import { getDecorators, getNodeIdentifier } from '../../util/ast-util.js';
+import { resolveNodeValue } from '../../util/resolve-node-value.js';
+import { DefinitionNodeResult } from '../analyzer-flavor.js';
 
 /**
  * Visits lit-element related definitions.
@@ -24,19 +25,19 @@ export function discoverDefinitions(node: Node, context: AnalyzerVisitContext): 
 				const decoratorIdentifierName = callExpression.expression.escapedText;
 
 				// Decorators called "customElement"
-				if (decoratorIdentifierName === "customElement") {
+				if (decoratorIdentifierName === 'customElement') {
 					// Resolve the value of the first argument. This is the tag name.
 					const unresolvedTagNameNode = callExpression.arguments[0];
 					const resolvedTagNameNode = resolveNodeValue(unresolvedTagNameNode, { ts, checker, strict: true });
 					const identifier = getNodeIdentifier(node, context);
 
-					if (resolvedTagNameNode != null && typeof resolvedTagNameNode.value === "string") {
+					if (resolvedTagNameNode != null && typeof resolvedTagNameNode.value === 'string') {
 						return [
 							{
-								tagName: resolvedTagNameNode.value,
-								tagNameNode: resolvedTagNameNode.node,
-								identifierNode: identifier
-							}
+								tagName:        resolvedTagNameNode.value,
+								tagNameNode:    resolvedTagNameNode.node,
+								identifierNode: identifier,
+							},
 						];
 					}
 				}

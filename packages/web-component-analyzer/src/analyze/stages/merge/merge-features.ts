@@ -1,8 +1,8 @@
-import { arrayFlat } from "../../../util/array-util.js";
-import { AnalyzerVisitContext } from "../../analyzer-visit-context.js";
-import { ComponentFeatureCollection } from "../../flavors/analyzer-flavor.js";
-import { mergeCssParts, mergeCssProperties, mergeEvents, mergeMethods, mergeSlots } from "./merge-feature.js";
-import { mergeMembers } from "./merge-members.js";
+import { arrayFlat } from '../../../util/array-util.js';
+import { AnalyzerVisitContext } from '../../analyzer-visit-context.js';
+import { ComponentFeatureCollection } from '../../flavors/analyzer-flavor.js';
+import { mergeCssParts, mergeCssProperties, mergeEvents, mergeMethods, mergeSlots } from './merge-feature.js';
+import { mergeMembers } from './merge-members.js';
 
 /**
  * Merges all features in collections of features
@@ -11,31 +11,31 @@ import { mergeMembers } from "./merge-members.js";
  */
 export function mergeFeatures(
 	collection: ComponentFeatureCollection | ComponentFeatureCollection[],
-	context: AnalyzerVisitContext
+	context: AnalyzerVisitContext,
 ): ComponentFeatureCollection {
 	if (Array.isArray(collection)) {
-		if (collection.length === 1) {
+		if (collection.length === 1)
 			return collection[0];
-		}
+
 
 		collection = {
-			cssParts: arrayFlat(collection.map(c => c.cssParts)),
+			cssParts:      arrayFlat(collection.map(c => c.cssParts)),
 			cssProperties: arrayFlat(collection.map(c => c.cssProperties)),
-			events: arrayFlat(collection.map(c => c.events)),
-			members: arrayFlat(collection.map(c => c.members)),
-			methods: arrayFlat(collection.map(c => c.methods)),
-			slots: arrayFlat(collection.map(c => c.slots))
+			events:        arrayFlat(collection.map(c => c.events)),
+			members:       arrayFlat(collection.map(c => c.members)),
+			methods:       arrayFlat(collection.map(c => c.methods)),
+			slots:         arrayFlat(collection.map(c => c.slots)),
 		};
 
 		return mergeFeatures(collection, context);
 	}
 
 	return {
-		cssParts: mergeCssParts(collection.cssParts),
+		cssParts:      mergeCssParts(collection.cssParts),
 		cssProperties: mergeCssProperties(collection.cssProperties),
-		events: mergeEvents(collection.events),
-		members: mergeMembers(collection.members, context),
-		methods: mergeMethods(collection.methods),
-		slots: mergeSlots(collection.slots)
+		events:        mergeEvents(collection.events),
+		members:       mergeMembers(collection.members, context),
+		methods:       mergeMethods(collection.methods),
+		slots:         mergeSlots(collection.slots),
 	};
 }

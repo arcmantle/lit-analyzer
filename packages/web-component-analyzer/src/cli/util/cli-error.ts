@@ -1,4 +1,4 @@
-const ERROR_NAME = "CLIError";
+const ERROR_NAME = 'CLIError';
 
 /**
  * Make an error of kind "CLIError"
@@ -8,6 +8,7 @@ const ERROR_NAME = "CLIError";
 export function makeCliError(message: string): Error {
 	const error = new Error(message);
 	error.name = ERROR_NAME;
+
 	return error;
 }
 

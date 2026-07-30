@@ -1,9 +1,9 @@
-import { VisibilityKind } from "../analyze/types/visibility-kind.js";
+import { VisibilityKind } from '../analyze/types/visibility-kind.js';
 
 const VISIBILITY_NUMBER_MAP: Record<VisibilityKind, number> = {
-	private: 1,
+	private:   1,
 	protected: 2,
-	public: 3
+	public:    3,
 };
 
 /**
@@ -11,7 +11,11 @@ const VISIBILITY_NUMBER_MAP: Record<VisibilityKind, number> = {
  * @param visibility
  * @param array
  */
-export function filterVisibility<T extends { visibility?: VisibilityKind }>(visibility: VisibilityKind = "public", array: T[]): T[] {
+export function filterVisibility<T extends { visibility?: VisibilityKind; }>(
+	visibility: VisibilityKind = 'public',
+	array: T[],
+): T[] {
 	const target = VISIBILITY_NUMBER_MAP[visibility];
-	return array.filter(item => VISIBILITY_NUMBER_MAP[item.visibility || "public"] >= target);
+
+	return array.filter(item => VISIBILITY_NUMBER_MAP[item.visibility || 'public'] >= target);
 }

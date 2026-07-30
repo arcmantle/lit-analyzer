@@ -1,4 +1,4 @@
-import { TransformerConfig } from "../transformer-config.js";
+import { TransformerConfig } from '../transformer-config.js';
 
 /**
  * Returns a markdown header with a specific level taking global start title level into account.
@@ -8,7 +8,8 @@ import { TransformerConfig } from "../transformer-config.js";
  */
 export function markdownHeader(title: string, level: number, config: TransformerConfig): string {
 	level = level - 1 + (config.markdown?.headerLevel || config.markdown?.titleLevel || 1);
-	return `${"#".repeat(level)} ${title}`;
+
+	return `${ '#'.repeat(level) } ${ title }`;
 }
 
 /**
@@ -49,16 +50,16 @@ export function markdownTable(rows: string[][], { removeEmptyColumns } = { remov
 	// This is done by taking the largest width of all cells in each column.
 	const columnWidths = Array(columnCount)
 		.fill(0)
-		.map((c, i) => Math.min(MAX_CELL_WIDTH, Math.max(MIN_CELL_WIDTH, ...rows.map(r => (r[i] || "").length)) + CELL_PADDING * 2));
+		.map((c, i) => Math.min(MAX_CELL_WIDTH, Math.max(MIN_CELL_WIDTH, ...rows.map(r => (r[i] || '').length)) + CELL_PADDING * 2));
 
 	// Build up the table
 	return `
-|${rows[0].map((r, i) => fillWidth(r, columnWidths[i], CELL_PADDING)).join("|")}|
-|${columnWidths.map(c => "-".repeat(c)).join("|")}|
-${rows
+|${ rows[0].map((r, i) => fillWidth(r, columnWidths[i], CELL_PADDING)).join('|') }|
+|${ columnWidths.map(c => '-'.repeat(c)).join('|') }|
+${ rows
 	.slice(1)
-	.map(r => `|${r.map((r, i) => fillWidth(r, columnWidths[i], CELL_PADDING)).join("|")}|`)
-	.join("\n")}
+	.map(r => `|${ r.map((r, i) => fillWidth(r, columnWidths[i], CELL_PADDING)).join('|') }|`)
+	.join('\n') }
 `;
 }
 
@@ -67,7 +68,7 @@ ${rows
  * @param text
  */
 export function markdownEscapeTableCell(text: string): string {
-	return text.replace(/\n/g, "<br />").replace(/\|/g, "\\|");
+	return text.replace(/\n/g, '<br />').replace(/\|/g, '\\|');
 }
 
 /**
@@ -75,8 +76,10 @@ export function markdownEscapeTableCell(text: string): string {
  * @param text
  */
 export function markdownHighlight(text: string | undefined): string {
-	if (text == null || text.length === 0) return "";
-	return `\`${text}\``;
+	if (text == null || text.length === 0)
+		return '';
+
+	return `\`${ text }\``;
 }
 
 /**
@@ -86,5 +89,5 @@ export function markdownHighlight(text: string | undefined): string {
  * @param paddingStart
  */
 export function fillWidth(text: string, width: number, paddingStart: number): string {
-	return " ".repeat(paddingStart) + text + " ".repeat(Math.max(1, width - text.length - paddingStart));
+	return ' '.repeat(paddingStart) + text + ' '.repeat(Math.max(1, width - text.length - paddingStart));
 }

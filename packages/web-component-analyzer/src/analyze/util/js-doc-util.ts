@@ -1,11 +1,12 @@
-import { SimpleType, SimpleTypeStringLiteral } from "ts-simple-type";
-import * as tsModule from "typescript";
-import { JSDoc, JSDocParameterTag, JSDocTypeTag, Node, Program } from "typescript";
-import { arrayDefined } from "../../util/array-util.js";
-import { JsDoc, JsDocTag, JsDocTagParsed } from "../types/js-doc.js";
-import { getLeadingCommentForNode } from "./ast-util.js";
-import { lazy } from "./lazy.js";
-import { getLibTypeWithName } from "./type-util.js";
+import { SimpleType, SimpleTypeStringLiteral } from 'ts-simple-type';
+import type tsModule from 'typescript';
+import { JSDoc, JSDocParameterTag, JSDocTypeTag, Node, Program } from 'typescript';
+
+import { arrayDefined } from '../../util/array-util.js';
+import { JsDoc, JsDocTag, JsDocTagParsed } from '../types/js-doc.js';
+import { getLeadingCommentForNode } from './ast-util.js';
+import { lazy } from './lazy.js';
+import { getLibTypeWithName } from './type-util.js';
 
 /**
  * Returns typescript jsdoc node for a given node
@@ -14,9 +15,9 @@ import { getLibTypeWithName } from "./type-util.js";
  */
 function getJSDocNode(node: Node, ts: typeof tsModule): JSDoc | undefined {
 	const parent = ts.getJSDocTags(node)?.[0]?.parent;
-	if (parent != null && ts.isJSDoc(parent)) {
+	if (parent != null && ts.isJSDoc(parent))
 		return parent;
-	}
+
 
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	return ((node as any).jsDoc as Node[])?.find((n): n is JSDoc => ts.isJSDoc(n));
@@ -39,13 +40,13 @@ export function getJsDoc(node: Node, ts: typeof tsModule, tagNames?: string[]): 
 			const jsDoc = parseJsDocString(leadingComment);
 
 			// Return this jsdoc if we don't have to filter by tag name
-			if (jsDoc == null || tagNames == null || tagNames.length === 0) {
+			if (jsDoc == null || tagNames == null || tagNames.length === 0)
 				return jsDoc;
-			}
+
 
 			return {
 				...jsDoc,
-				tags: jsDoc.tags?.filter(t => tagNames.includes(t.tag))
+				tags: jsDoc.tags?.filter(t => tagNames.includes(t.tag)),
 			};
 		}
 
@@ -56,44 +57,44 @@ export function getJsDoc(node: Node, ts: typeof tsModule, tagNames?: string[]): 
 	// Typescript removes some information after parsing jsdoc tags, so unfortunately we will have to parse.
 	return {
 		description: jsDocNode.comment == null ? undefined : unescapeJSDoc(String(jsDocNode.comment)),
-		node: jsDocNode,
+		node:        jsDocNode,
 		tags:
 			jsDocNode.tags == null
 				? []
 				: arrayDefined(
-						jsDocNode.tags.map(node => {
-							const tag = String(node.tagName.escapedText);
+					jsDocNode.tags.map(node => {
+						const tag = String(node.tagName.escapedText);
 
-							// Filter by tag name
-							if (tagNames != null && tagNames.length > 0 && !tagNames.includes(tag.toLowerCase())) {
-								return undefined;
-							}
+						// Filter by tag name
+						if (tagNames != null && tagNames.length > 0 && !tagNames.includes(tag.toLowerCase()))
+							return undefined;
 
-							// If Typescript generated a "type expression" or "name", comment will not include those.
-							// We can't just use what typescript parsed because it doesn't include things like optional jsdoc: name notation [...]
-							// Therefore we need to manually get the text and remove newlines/*
-							const typeExpressionPart = "typeExpression" in node ? (node as JSDocTypeTag).typeExpression?.getText() : undefined;
-							const namePart = "name" in node ? (node as JSDocParameterTag).name?.getText() : undefined;
 
-							const fullComment = typeExpressionPart?.startsWith("@")
-								? // To make matters worse, if Typescript can't parse a certain jsdoc, it will include the rest of the jsdocs tag from there in "typeExpressionPart"
-								  // Therefore we check if there are multiple jsdoc tags in the string to only take the first one
-								  // This will discard the following jsdocs, but at least we don't crash :-)
-								  typeExpressionPart.split(/\n\s*\*\s?@/)[0] || ""
-								: `@${tag}${typeExpressionPart != null ? ` ${typeExpressionPart} ` : ""}${namePart != null ? ` ${namePart} ` : ""} ${
-										node.comment || ""
+						// If Typescript generated a "type expression" or "name", comment will not include those.
+						// We can't just use what typescript parsed because it doesn't include things like optional jsdoc: name notation [...]
+						// Therefore we need to manually get the text and remove newlines/*
+						const typeExpressionPart = 'typeExpression' in node ? (node as JSDocTypeTag).typeExpression?.getText() : undefined;
+						const namePart = 'name' in node ? (node as JSDocParameterTag).name?.getText() : undefined;
+
+						const fullComment = typeExpressionPart?.startsWith('@')
+							? // To make matters worse, if Typescript can't parse a certain jsdoc, it will include the rest of the jsdocs tag from there in "typeExpressionPart"
+						// Therefore we check if there are multiple jsdoc tags in the string to only take the first one
+						// This will discard the following jsdocs, but at least we don't crash :-)
+							typeExpressionPart.split(/\n\s*\*\s?@/)[0] || ''
+							: `@${ tag }${ typeExpressionPart != null ? ` ${ typeExpressionPart } ` : '' }${ namePart != null ? ` ${ namePart } ` : '' } ${
+										node.comment || ''
 								  }`;
 
-							const comment = typeof node.comment === "string" ? node.comment.replace(/^\s*-\s*/, "").trim() : "";
+						const comment = typeof node.comment === 'string' ? node.comment.replace(/^\s*-\s*/, '').trim() : '';
 
-							return {
-								node,
-								tag,
-								comment,
-								parsed: lazy(() => parseJsDocTagString(fullComment))
-							};
-						})
-				  )
+						return {
+							node,
+							tag,
+							comment,
+							parsed: lazy(() => parseJsDocTagString(fullComment)),
+						};
+					}),
+				),
 	};
 }
 
@@ -104,57 +105,57 @@ export function getJsDoc(node: Node, ts: typeof tsModule, tagNames?: string[]): 
  * @param str
  * @param context
  */
-export function parseSimpleJsDocTypeExpression(str: string, context: { program: Program; ts: typeof tsModule }): SimpleType {
+export function parseSimpleJsDocTypeExpression(str: string, context: { program: Program; ts: typeof tsModule; }): SimpleType {
 	// Fail safe if "str" is somehow undefined
-	if (str == null) {
-		return { kind: "ANY" };
-	}
+	if (str == null)
+		return { kind: 'ANY' };
+
 
 	// Parse normal types
 	switch (str.toLowerCase()) {
-		case "undefined":
-			return { kind: "UNDEFINED" };
-		case "null":
-			return { kind: "NULL" };
-		case "string":
-			return { kind: "STRING" };
-		case "number":
-			return { kind: "NUMBER" };
-		case "boolean":
-			return { kind: "BOOLEAN" };
-		case "array":
-			return { kind: "ARRAY", type: { kind: "ANY" } };
-		case "object":
-			return { kind: "OBJECT", members: [] };
-		case "any":
-		case "*":
-			return { kind: "ANY" };
+	case 'undefined':
+		return { kind: 'UNDEFINED' };
+	case 'null':
+		return { kind: 'NULL' };
+	case 'string':
+		return { kind: 'STRING' };
+	case 'number':
+		return { kind: 'NUMBER' };
+	case 'boolean':
+		return { kind: 'BOOLEAN' };
+	case 'array':
+		return { kind: 'ARRAY', type: { kind: 'ANY' } };
+	case 'object':
+		return { kind: 'OBJECT', members: [] };
+	case 'any':
+	case '*':
+		return { kind: 'ANY' };
 	}
 
 	// Match
 	//  {  string  }
-	if (str.startsWith(" ") || str.endsWith(" ")) {
+	if (str.startsWith(' ') || str.endsWith(' '))
 		return parseSimpleJsDocTypeExpression(str.trim(), context);
-	}
+
 
 	// Match:
 	//   {string|number}
-	if (str.includes("|")) {
+	if (str.includes('|')) {
 		return {
-			kind: "UNION",
-			types: str.split("|").map(str => {
+			kind:  'UNION',
+			types: str.split('|').map(str => {
 				const childType = parseSimpleJsDocTypeExpression(str, context);
 
 				// Convert ANY types to string literals so that {on|off} is "on"|"off" and not ANY|ANY
-				if (childType.kind === "ANY") {
+				if (childType.kind === 'ANY') {
 					return {
-						kind: "STRING_LITERAL",
-						value: str
+						kind:  'STRING_LITERAL',
+						value: str,
 					} as SimpleTypeStringLiteral;
 				}
 
 				return childType;
-			})
+			}),
 		};
 	}
 
@@ -168,40 +169,40 @@ export function parseSimpleJsDocTypeExpression(str: string, context: { program: 
 		const modifier = prefixMatch[1];
 		const type = parseSimpleJsDocTypeExpression(prefixMatch[3], context);
 		switch (modifier) {
-			case "?":
-				return {
-					kind: "UNION",
-					types: [
-						{
-							kind: "NULL"
-						},
-						type
-					]
-				};
-			case "!":
-				return type;
-			case "...":
-				return {
-					kind: "ARRAY",
-					type
-				};
+		case '?':
+			return {
+				kind:  'UNION',
+				types: [
+					{
+						kind: 'NULL',
+					},
+					type,
+				],
+			};
+		case '!':
+			return type;
+		case '...':
+			return {
+				kind: 'ARRAY',
+				type,
+			};
 		}
 	}
 
 	// Match:
 	//  {(......)}
 	const parenMatch = str.match(/^\((.+)\)$/);
-	if (parenMatch != null) {
+	if (parenMatch != null)
 		return parseSimpleJsDocTypeExpression(parenMatch[1], context);
-	}
+
 
 	// Match
 	//   {"red"}
 	const stringLiteralMatch = str.match(/^["'](.+)["']$/);
 	if (stringLiteralMatch != null) {
 		return {
-			kind: "STRING_LITERAL",
-			value: stringLiteralMatch[1]
+			kind:  'STRING_LITERAL',
+			value: stringLiteralMatch[1],
 		};
 	}
 
@@ -210,8 +211,8 @@ export function parseSimpleJsDocTypeExpression(str: string, context: { program: 
 	const arrayMatch = str.match(/^\[(.+)]$/);
 	if (arrayMatch != null) {
 		return {
-			kind: "ARRAY",
-			type: parseSimpleJsDocTypeExpression(arrayMatch[1], context)
+			kind: 'ARRAY',
+			type: parseSimpleJsDocTypeExpression(arrayMatch[1], context),
 		};
 	}
 
@@ -228,22 +229,21 @@ export function parseSimpleJsDocTypeExpression(str: string, context: { program: 
 		// The correct way to improve "parseSimpleJsDocTypeExpression" is to build a custom lexer/parser.
 		const typeArgStrings: string[] = [];
 		for (const part of genericArgsMatch[2].split(/\s*,\s*/)) {
-			if (part.match(/[}:]/) != null && typeArgStrings.length > 0) {
-				typeArgStrings[typeArgStrings.length - 1] += `, ${part}`;
-			} else {
+			if (part.match(/[}:]/) != null && typeArgStrings.length > 0)
+				typeArgStrings[typeArgStrings.length - 1] += `, ${ part }`;
+			else
 				typeArgStrings.push(part);
-			}
 		}
 
 		return {
-			kind: "GENERIC_ARGUMENTS",
-			target: parseSimpleJsDocTypeExpression(genericArgsMatch[1], context),
-			typeArguments: typeArgStrings.map(typeArg => parseSimpleJsDocTypeExpression(typeArg, context))
+			kind:          'GENERIC_ARGUMENTS',
+			target:        parseSimpleJsDocTypeExpression(genericArgsMatch[1], context),
+			typeArguments: typeArgStrings.map(typeArg => parseSimpleJsDocTypeExpression(typeArg, context)),
 		};
 	}
 
 	// If nothing else, try to find the type in Typescript global lib or else return "any"
-	return getLibTypeWithName(str, context) || { kind: "ANY" };
+	return getLibTypeWithName(str, context) || { kind: 'ANY' };
 }
 
 /**
@@ -251,54 +251,53 @@ export function parseSimpleJsDocTypeExpression(str: string, context: { program: 
  * @param jsDoc
  * @param context
  */
-export function getJsDocType(jsDoc: JsDoc, context: { program: Program; ts: typeof tsModule }): SimpleType | undefined {
+export function getJsDocType(jsDoc: JsDoc, context: { program: Program; ts: typeof tsModule; }): SimpleType | undefined {
 	if (jsDoc.tags != null) {
-		const typeJsDocTag = jsDoc.tags.find(t => t.tag === "type");
+		const typeJsDocTag = jsDoc.tags.find(t => t.tag === 'type');
 
 		if (typeJsDocTag != null) {
 			// We get the text of the node because typescript strips the type jsdoc tag under certain circumstances
-			const parsedJsDoc = parseJsDocTagString(typeJsDocTag.node?.getText() || "");
+			const parsedJsDoc = parseJsDocTagString(typeJsDocTag.node?.getText() || '');
 
-			if (parsedJsDoc.type != null) {
+			if (parsedJsDoc.type != null)
 				return parseSimpleJsDocTypeExpression(parsedJsDoc.type, context);
-			}
 		}
 	}
 }
 
-const JSDOC_TAGS_WITH_REQUIRED_NAME: string[] = ["param", "fires", "@element", "@customElement"];
+const JSDOC_TAGS_WITH_REQUIRED_NAME: string[] = [ 'param', 'fires', '@element', '@customElement' ];
 
 /**
  * Takes a string that represents a value in jsdoc and transforms it to a javascript value
  * @param value
  */
 function parseJsDocValue(value: string | undefined): unknown {
-	if (value == null) {
+	if (value == null)
 		return value;
-	}
+
 
 	// Parse quoted strings
 	const quotedMatch = value.match(/^["'`](.*)["'`]$/);
-	if (quotedMatch != null) {
+	if (quotedMatch != null)
 		return quotedMatch[1];
-	}
+
 
 	// Parse keywords
 	switch (value) {
-		case "false":
-			return false;
-		case "true":
-			return true;
-		case "undefined":
-			return undefined;
-		case "null":
-			return null;
+	case 'false':
+		return false;
+	case 'true':
+		return true;
+	case 'undefined':
+		return undefined;
+	case 'null':
+		return null;
 	}
 
 	// Parse number
-	if (!isNaN(Number(value))) {
+	if (!isNaN(Number(value)))
 		return Number(value);
-	}
+
 
 	return value;
 }
@@ -309,15 +308,15 @@ function parseJsDocValue(value: string | undefined): unknown {
  */
 function parseJsDocTagString(str: string): JsDocTagParsed {
 	const jsDocTag: JsDocTagParsed = {
-		tag: ""
+		tag: '',
 	};
 
-	if (str[0] !== "@") {
+	if (str[0] !== '@')
 		return jsDocTag;
-	}
+
 
 	const moveStr = (byLength: string | number) => {
-		str = str.substring(typeof byLength === "number" ? byLength : byLength.length);
+		str = str.substring(typeof byLength === 'number' ? byLength : byLength.length);
 	};
 
 	const unqouteStr = (quotedStr: string) => {
@@ -330,7 +329,8 @@ function parseJsDocTagString(str: string): JsDocTagParsed {
 		const tagResult = str.match(/^(\s*@(\S+))/);
 		if (tagResult == null) {
 			return jsDocTag;
-		} else {
+		}
+		else {
 			// Move string to the end of the match
 			// Example: "  @mytag|"
 			moveStr(tagResult[1]);
@@ -364,16 +364,18 @@ function parseJsDocTagString(str: string): JsDocTagParsed {
 
 			// Split the inner content between [...] into parts
 			// Example:  "myname=mydefault" => "myname", "mydefault"
-			const parts = defaultNameResult[2].split("=");
+			const parts = defaultNameResult[2].split('=');
 			if (parts.length === 2) {
 				// Both name and default were given
 				jsDocTag.name = unqouteStr(parts[0]);
 				jsDocTag.default = parseJsDocValue(parts[1]);
-			} else if (parts.length !== 0) {
+			}
+			else if (parts.length !== 0) {
 				// No default was given
 				jsDocTag.name = unqouteStr(parts[0]);
 			}
-		} else {
+		}
+		else {
 			// else, match required name
 			// Example: "   myname"
 
@@ -394,7 +396,7 @@ function parseJsDocTagString(str: string): JsDocTagParsed {
 		// Match comment
 		if (str.length > 0) {
 			// The rest of the string is parsed as comment. Remove "-" if needed.
-			jsDocTag.description = str.replace(/^\s*-\s*/, "").trim() || undefined;
+			jsDocTag.description = str.replace(/^\s*-\s*/, '').trim() || undefined;
 		}
 
 		// Expand the name based on namespace and classname
@@ -418,9 +420,9 @@ function parseJsDocTagString(str: string): JsDocTagParsed {
 	matchName();
 
 	// Type can come both before and after "name"
-	if (jsDocTag.type == null) {
+	if (jsDocTag.type == null)
 		matchType();
-	}
+
 
 	matchComment();
 
@@ -433,10 +435,10 @@ function parseJsDocTagString(str: string): JsDocTagParsed {
  */
 function parseJsDocString(doc: string): JsDoc | undefined {
 	// Prepare lines
-	const lines = doc.split("\n").map(line => line.trim());
-	let description = "";
+	const lines = doc.split('\n').map(line => line.trim());
+	let description = '';
 	let readDescription = true;
-	let currentTag = "";
+	let currentTag = '';
 	const tags: JsDocTag[] = [];
 
 	/**
@@ -450,22 +452,23 @@ function parseJsDocString(doc: string): JsDoc | undefined {
 
 			if (tagMatch != null) {
 				tags.push({
-					parsed: lazy(() => parseJsDocTagString(tagToCommit)),
-					node: undefined,
-					tag: tagMatch[1],
-					comment: tagToCommit.substr(tagMatch[0].length)
+					parsed:  lazy(() => parseJsDocTagString(tagToCommit)),
+					node:    undefined,
+					tag:     tagMatch[1],
+					comment: tagToCommit.substr(tagMatch[0].length),
 				});
 			}
-			currentTag = "";
+
+			currentTag = '';
 		}
 	};
 
 	// Parse all lines one by one
 	for (const line of lines) {
 		// Don't parse the last line ("*/")
-		if (line.match(/\*\//)) {
+		if (line.match(/\*\//))
 			continue;
-		}
+
 
 		// Match a line like: "* @mytag description"
 		const tagCommentMatch = line.match(/(^\s*\*\s*)@\s*/);
@@ -476,27 +479,28 @@ function parseJsDocString(doc: string): JsDoc | undefined {
 			currentTag += line.substr(tagCommentMatch[1].length);
 			// We hit a jsdoc tag, so don't read description anymore
 			readDescription = false;
-		} else if (!readDescription) {
+		}
+		else if (!readDescription) {
 			// If we are not reading the description, we are currently reading a multiline tag
 			const commentMatch = line.match(/^\s*\*\s*/);
-			if (commentMatch != null) {
-				currentTag += "\n" + line.substr(commentMatch[0].length);
-			}
-		} else {
+			if (commentMatch != null)
+				currentTag += '\n' + line.substr(commentMatch[0].length);
+		}
+		else {
 			// Read everything after "*" into the description if we are currently reading the description
 
 			// If we are on the first line, add everything after "/*"
 			const startLineMatch = line.match(/^\s*\/\*\*/);
-			if (startLineMatch != null) {
+			if (startLineMatch != null)
 				description += line.substr(startLineMatch[0].length);
-			}
+
 
 			// Add everything after "*" into the current description
 			const commentMatch = line.match(/^\s*\*\s*/);
 			if (commentMatch != null) {
-				if (description.length > 0) {
-					description += "\n";
-				}
+				if (description.length > 0)
+					description += '\n';
+
 				description += line.substr(commentMatch[0].length);
 			}
 		}
@@ -505,13 +509,13 @@ function parseJsDocString(doc: string): JsDoc | undefined {
 	// Commit a tag if we were currently parsing one
 	commitCurrentTag();
 
-	if (description.length === 0 && tags.length === 0) {
+	if (description.length === 0 && tags.length === 0)
 		return undefined;
-	}
+
 
 	return {
 		description: unescapeJSDoc(description),
-		tags
+		tags,
 	};
 }
 
@@ -521,5 +525,5 @@ function parseJsDocString(doc: string): JsDoc | undefined {
  * @param str
  */
 function unescapeJSDoc(str: string): string {
-	return str.replace(/\\@/, "@");
+	return str.replace(/\\@/, '@');
 }

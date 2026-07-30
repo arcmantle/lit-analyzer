@@ -1,6 +1,6 @@
-import { AnalyzerVisitContext } from "../../analyzer-visit-context.js";
-import { AnalyzerDeclarationVisitContext, FeatureVisitReturnTypeMap } from "../../flavors/analyzer-flavor.js";
-import { ComponentFeature, ComponentFeatureBase } from "../../types/features/component-feature.js";
+import { AnalyzerVisitContext } from '../../analyzer-visit-context.js';
+import { AnalyzerDeclarationVisitContext, FeatureVisitReturnTypeMap } from '../../flavors/analyzer-flavor.js';
+import { ComponentFeature, ComponentFeatureBase } from '../../types/features/component-feature.js';
 
 export type RefineFeatureEmitMap = { [K in ComponentFeature]: (result: FeatureVisitReturnTypeMap[K]) => void };
 
@@ -16,7 +16,7 @@ export function refineFeature<FeatureKind extends ComponentFeature, ValueType ex
 	featureKind: FeatureKind,
 	value: ValueType | ValueType[],
 	context: AnalyzerVisitContext | AnalyzerDeclarationVisitContext,
-	emitMap: Partial<RefineFeatureEmitMap>
+	emitMap: Partial<RefineFeatureEmitMap>,
 ): void {
 	/*if (Array.isArray(value)) {
 		value.forEach(v => refineComponentFeature(featureKind, v, context, emitMap));
@@ -26,16 +26,16 @@ export function refineFeature<FeatureKind extends ComponentFeature, ValueType ex
 	let refinedValue: undefined | ComponentFeatureBase | ComponentFeatureBase[] = value;
 
 	// Add "declaration" to the feature if necessary
-	if ("getDeclaration" in context && refinedValue != null) {
+	if ('getDeclaration' in context && refinedValue != null) {
 		const decl = context.getDeclaration();
 
 		if (Array.isArray(refinedValue)) {
 			for (const val of refinedValue) {
-				if (val.declaration == null) {
+				if (val.declaration == null)
 					val.declaration = decl;
-				}
 			}
-		} else if (refinedValue.declaration == null) {
+		}
+		else if (refinedValue.declaration == null) {
 			refinedValue.declaration = decl;
 		}
 	}
@@ -45,17 +45,18 @@ export function refineFeature<FeatureKind extends ComponentFeature, ValueType ex
 		if (refineFunc != null) {
 			if (refinedValue == null) {
 				return;
-			} else if (Array.isArray(refinedValue)) {
+			}
+			else if (Array.isArray(refinedValue)) {
 				const newValue: ValueType[] = [];
 				for (const val of refinedValue) {
 					// eslint-disable-next-line @typescript-eslint/no-explicit-any
 					const refined = refineFunc(val as any, context);
-					if (refined != null) {
-						newValue.push(...((Array.isArray(refined) ? refined : [refined]) as unknown as ValueType[]));
-					}
+					if (refined != null)
+						newValue.push(...((Array.isArray(refined) ? refined : [ refined ]) as unknown as ValueType[]));
 				}
 				refinedValue = newValue.length === 0 ? undefined : newValue;
-			} else {
+			}
+			else {
 				// eslint-disable-next-line @typescript-eslint/no-explicit-any
 				refinedValue = refineFunc(refinedValue as any, context) as unknown as typeof refinedValue;
 			}
@@ -64,6 +65,6 @@ export function refineFeature<FeatureKind extends ComponentFeature, ValueType ex
 
 	if (refinedValue != null) {
 		// eslint-disable-next-line @typescript-eslint/no-explicit-any
-		(Array.isArray(refinedValue) ? refinedValue : [refinedValue]).forEach(v => emitMap?.[featureKind]?.(v as any));
+		(Array.isArray(refinedValue) ? refinedValue : [ refinedValue ]).forEach(v => emitMap?.[featureKind]?.(v as any));
 	}
 }

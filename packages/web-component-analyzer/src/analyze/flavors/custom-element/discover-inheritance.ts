@@ -1,8 +1,9 @@
-import { ConstructSignatureDeclaration, HeritageClause, Node } from "typescript";
-import { AnalyzerVisitContext } from "../../analyzer-visit-context.js";
-import { ComponentDeclarationKind, ComponentHeritageClause, ComponentHeritageClauseKind } from "../../types/component-declaration.js";
-import { findChild, findChildren, resolveDeclarationsDeep } from "../../util/ast-util.js";
-import { InheritanceResult } from "../analyzer-flavor.js";
+import { ConstructSignatureDeclaration, HeritageClause, Node } from 'typescript';
+
+import { AnalyzerVisitContext } from '../../analyzer-visit-context.js';
+import { ComponentDeclarationKind, ComponentHeritageClause, ComponentHeritageClauseKind } from '../../types/component-declaration.js';
+import { findChild, findChildren, resolveDeclarationsDeep } from '../../util/ast-util.js';
+import { InheritanceResult } from '../analyzer-flavor.js';
 
 /**
  * Discovers inheritance from a node by looking at "extends" and "implements"
@@ -12,14 +13,14 @@ import { InheritanceResult } from "../analyzer-flavor.js";
 export function discoverInheritance(node: Node, baseContext: AnalyzerVisitContext): InheritanceResult | undefined {
 	let declarationKind: ComponentDeclarationKind | undefined = undefined;
 	const heritageClauses: ComponentHeritageClause[] = [];
-	const declarationNodes = new Set<Node>();
+	const declarationNodes: Set<Node> = new Set();
 
 	const context: InheritanceAnalyzerVisitContext = {
 		...baseContext,
-		emitDeclaration: decl => declarationNodes.add(decl),
-		emitInheritance: (kind, identifier) => heritageClauses.push({ kind, identifier, declaration: undefined }),
+		emitDeclaration:     decl => declarationNodes.add(decl),
+		emitInheritance:     (kind, identifier) => heritageClauses.push({ kind, identifier, declaration: undefined }),
 		emitDeclarationKind: kind => (declarationKind = declarationKind || kind),
-		visitedNodes: new Set<Node>()
+		visitedNodes:        new Set<Node>(),
 	};
 
 	// Resolve the structure of the node
@@ -31,67 +32,67 @@ export function discoverInheritance(node: Node, baseContext: AnalyzerVisitContex
 	return {
 		declarationNodes: Array.from(declarationNodes),
 		heritageClauses,
-		declarationKind
+		declarationKind,
 	};
 }
 
 interface InheritanceAnalyzerVisitContext extends AnalyzerVisitContext {
-	emitDeclaration: (node: Node) => void;
+	emitDeclaration:     (node: Node) => void;
 	emitDeclarationKind: (kind: ComponentDeclarationKind) => void;
-	emitInheritance: (kind: ComponentHeritageClauseKind, identifier: Node) => void;
-	visitedNodes: Set<Node>;
+	emitInheritance:     (kind: ComponentHeritageClauseKind, identifier: Node) => void;
+	visitedNodes:        Set<Node>;
 }
 
 function resolveStructure(node: Node, context: InheritanceAnalyzerVisitContext) {
 	const { ts } = context;
 
-	if (context.visitedNodes.has(node)) {
+	if (context.visitedNodes.has(node))
 		return;
-	}
+
 
 	context.visitedNodes.add(node);
 
 	// Call this function recursively if this node is an identifier
 	if (ts.isIdentifier(node)) {
-		for (const decl of resolveDeclarationsDeep(node, context)) {
+		for (const decl of resolveDeclarationsDeep(node, context))
 			resolveStructure(decl, context);
-		}
 	}
 
 	// Emit declaration node if we've found a class of interface
 	else if (ts.isClassLike(node) || ts.isInterfaceDeclaration(node)) {
-		context.emitDeclarationKind(ts.isClassLike(node) ? "class" : "interface");
+		context.emitDeclarationKind(ts.isClassLike(node) ? 'class' : 'interface');
 		context.emitDeclaration(node);
 
 		// Resolve inheritance
 		for (const heritage of node.heritageClauses || []) {
-			for (const type of heritage.types || []) {
+			for (const type of heritage.types || [])
 				resolveHeritage(heritage, type.expression, context);
-			}
 		}
 	}
 
 	// Emit a declaration node if this node is a type literal
 	else if (ts.isTypeLiteralNode(node) || ts.isObjectLiteralExpression(node)) {
-		context.emitDeclarationKind("interface");
+		context.emitDeclarationKind('interface');
 		context.emitDeclaration(node);
 	}
 
 	// Emit a mixin if this node is a function
 	else if (ts.isFunctionLike(node) || ts.isCallLikeExpression(node)) {
-		context.emitDeclarationKind("mixin");
+		context.emitDeclarationKind('mixin');
 
 		if (ts.isFunctionLike(node) && node.getSourceFile().isDeclarationFile) {
 			// Find any identifiers if the node is in a declaration file
 			findChildren(node.type, ts.isIdentifier, identifier => {
 				resolveStructure(identifier, context);
 			});
-		} else {
+		}
+		else {
 			// Else find the first class declaration in the block
 			// Note that we don't look for a return statement because this would complicate things
 			const clzDecl = findChild(node, ts.isClassLike);
 			if (clzDecl != null) {
 				resolveStructure(clzDecl, context);
+
 				return;
 			}
 
@@ -104,9 +105,9 @@ function resolveStructure(node: Node, context: InheritanceAnalyzerVisitContext) 
 				// If a function call is returned, this function call expression is followed, and the arguments are treated as heritage
 				//    Example: return MyFirstMixin(MySecondMixin(Base))   -->   MyFirstMixin is followed, and MySecondMixin + Base are inherited
 				if (ts.isCallExpression(returnNodeExp) && returnNodeExp.expression != null) {
-					for (const arg of returnNodeExp.arguments) {
+					for (const arg of returnNodeExp.arguments)
 						resolveHeritage(undefined, arg, context);
-					}
+
 
 					resolveStructure(returnNodeExp.expression, context);
 				}
@@ -114,9 +115,11 @@ function resolveStructure(node: Node, context: InheritanceAnalyzerVisitContext) 
 				return;
 			}
 		}
-	} else if (ts.isVariableDeclaration(node) && (node.initializer != null || node.type != null)) {
+	}
+	else if (ts.isVariableDeclaration(node) && (node.initializer != null || node.type != null)) {
 		resolveStructure((node.initializer || node.type)!, context);
-	} else if (ts.isIntersectionTypeNode(node)) {
+	}
+	else if (ts.isIntersectionTypeNode(node)) {
 		emitTypeLiteralsDeclarations(node, context);
 	}
 }
@@ -124,7 +127,7 @@ function resolveStructure(node: Node, context: InheritanceAnalyzerVisitContext) 
 function resolveHeritage(
 	heritage: HeritageClause | ComponentHeritageClauseKind | undefined,
 	node: Node,
-	context: InheritanceAnalyzerVisitContext
+	context: InheritanceAnalyzerVisitContext,
 ): void {
 	const { ts } = context;
 
@@ -138,16 +141,16 @@ function resolveHeritage(
 		// Extend classes given to the mixin
 		// Example: class MyElement extends MyMixin(MyBase) --> MyBase
 		// Example: class MyElement extends MyMixin(MyBase1, MyBase2) --> MyBase1, MyBase2
-		for (const arg of args) {
+		for (const arg of args)
 			resolveHeritage(heritage, arg, context);
-		}
+
 
 		// Resolve and traverse the mixin function
 		// Example: class MyElement extends MyMixin(MyBase) --> MyMixin
-		if (identifier != null && ts.isIdentifier(identifier)) {
-			resolveHeritage("mixin", identifier, context);
-		}
-	} else if (ts.isIdentifier(node)) {
+		if (identifier != null && ts.isIdentifier(identifier))
+			resolveHeritage('mixin', identifier, context);
+	}
+	else if (ts.isIdentifier(node)) {
 		// Try to handle situation like this, by resolving the variable in between
 		//    const Base = ExtraMixin(base);
 		//    class MixinClass extends Base { }
@@ -164,11 +167,11 @@ function resolveHeritage(
 					let hasDeclaration = false;
 					resolveStructure(decl, {
 						...context,
-						emitInheritance: () => {},
+						emitInheritance:     () => {},
 						emitDeclarationKind: () => {},
-						emitDeclaration: () => {
+						emitDeclaration:     () => {
 							hasDeclaration = true;
-						}
+						},
 					});
 
 					if (!hasDeclaration) {
@@ -188,12 +191,12 @@ function resolveHeritage(
 		if (!dontEmitHeritageClause) {
 			// This is an "implements" clause if implement keyword is used or if all the resolved declarations are interfaces
 			const kind: ComponentHeritageClauseKind =
-				heritage != null && typeof heritage === "string"
+				heritage != null && typeof heritage === 'string'
 					? heritage
 					: heritage?.token === ts.SyntaxKind.ImplementsKeyword ||
 					  (declarations.length > 0 && !declarations.some(decl => !context.ts.isInterfaceDeclaration(decl)))
-					? "implements"
-					: "extends";
+						? 'implements'
+						: 'extends';
 
 			context.emitInheritance(kind, node);
 		}
@@ -210,12 +213,14 @@ function emitTypeLiteralsDeclarations(node: Node, context: InheritanceAnalyzerVi
 		// If we encounter a construct signature, follow the type
 		const construct = node.members?.find((member): member is ConstructSignatureDeclaration => context.ts.isConstructSignatureDeclaration(member));
 		if (construct != null && construct.type != null) {
-			context.emitDeclarationKind("mixin");
+			context.emitDeclarationKind('mixin');
 			emitTypeLiteralsDeclarations(construct.type, context);
-		} else {
+		}
+		else {
 			context.emitDeclaration(node);
 		}
-	} else {
+	}
+	else {
 		node.forEachChild(n => emitTypeLiteralsDeclarations(n, context));
 	}
 }

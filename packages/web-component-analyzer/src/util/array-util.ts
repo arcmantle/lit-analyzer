@@ -5,19 +5,19 @@
  */
 export function arrayFlat<T>(items: (T[] | T)[]): T[] {
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	if ("flat" in (items as any)) {
+	if ('flat' in (items as any)) {
 		// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		return (items as any).flat();
 	}
 
 	const flattenArray: T[] = [];
 	for (const item of items) {
-		if (Array.isArray(item)) {
+		if (Array.isArray(item))
 			flattenArray.push(...item);
-		} else {
+		else
 			flattenArray.push(item);
-		}
 	}
+
 	return flattenArray;
 }
 
@@ -37,9 +37,8 @@ export function arrayDedupe<T>(array: T[]): T[] {
 	const uniqueItems: T[] = [];
 
 	for (const item of array) {
-		if (uniqueItems.indexOf(item) === -1) {
+		if (uniqueItems.indexOf(item) === -1)
 			uniqueItems.push(item);
-		}
 	}
 
 	return uniqueItems;

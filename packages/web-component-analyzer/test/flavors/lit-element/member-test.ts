@@ -1,6 +1,6 @@
-import { analyzeTextWithCurrentTsModule } from "../../helpers/analyze-text-with-current-ts-module";
-import { tsTest } from "../../helpers/ts-test";
-import { assertHasMembers } from "../../helpers/util";
+import { analyzeTextWithCurrentTsModule } from "../../helpers/analyze-text-with-current-ts-module.js";
+import { tsTest } from "../../helpers/ts-test.js";
+import { assertHasMembers } from "../../helpers/util.js";
 
 tsTest("LitElement: Discovers properties from 'static get properties'", t => {
 	const {
@@ -10,7 +10,7 @@ tsTest("LitElement: Discovers properties from 'static get properties'", t => {
 	/**
 	 * @element
 	 */
-	 class MyElement extends HTMLElement { 
+	 class MyElement extends HTMLElement {
 	    static get properties () {
 	        return {
 	            /**
@@ -59,14 +59,14 @@ tsTest("LitElement: Discovers properties from '@property'", t => {
 	/**
 	 * @element
 	 */
-	 class MyElement extends HTMLElement { 
+	 class MyElement extends HTMLElement {
 	    /**
 	     * This is a comment
 	     */
 	    @property({type: String, attribute: "my-prop"}) myProp: string = "hello";
-	    
+
 	    @property({attribute: false}) protected myProp2!: number;
-	    
+
 	    @property() myProp3;
 
 			@property(configVariable) myProp4;
@@ -146,12 +146,12 @@ tsTest("LitElement: Discovers properties from '@internalProperty'", t => {
 	/**
 	 * @element
 	 */
-	 class MyElement extends HTMLElement { 
+	 class MyElement extends HTMLElement {
 	    /**
 	     * This is a comment
 	     */
 	    @internalProperty() myProp: string = "hello";
-	    
+
 	    @internalProperty() private myProp2: number!;
 	 }
 	 `);

@@ -1,26 +1,27 @@
-import * as tsModule from "typescript";
-import { ComponentFeature } from "../analyze/types/features/component-feature.js";
-import { VisibilityKind } from "../analyze/types/visibility-kind.js";
-import { TransformerKind } from "../transformers/transformer-kind.js";
+import type tsModule from 'typescript';
+
+import { ComponentFeature } from '../analyze/types/features/component-feature.js';
+import { VisibilityKind } from '../analyze/types/visibility-kind.js';
+import { TransformerKind } from '../transformers/transformer-kind.js';
 
 export interface AnalyzerCliConfig {
 	glob?: string[];
 
-	dry?: boolean;
-	verbose?: boolean;
-	silent?: boolean;
-	outFile?: string;
+	dry?:      boolean;
+	verbose?:  boolean;
+	silent?:   boolean;
+	outFile?:  string;
 	outFiles?: string;
-	outDir?: string;
+	outDir?:   string;
 
-	format?: TransformerKind;
+	format?:     TransformerKind;
 	visibility?: VisibilityKind;
 
-	features?: ComponentFeature[];
+	features?:              ComponentFeature[];
 	analyzeGlobalFeatures?: boolean;
-	analyzeDependencies?: boolean;
+	analyzeDependencies?:   boolean;
 	analyzeDefaultLibrary?: boolean;
-	discoverNodeModules?: boolean;
+	discoverNodeModules?:   boolean;
 
 	markdown?: {
 		headerLevel?: number;
@@ -28,6 +29,6 @@ export interface AnalyzerCliConfig {
 
 	inlineTypes?: boolean;
 
-	ts?: typeof tsModule;
+	ts?:  typeof tsModule;
 	cwd?: string;
 }

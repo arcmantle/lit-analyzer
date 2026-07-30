@@ -1,4 +1,4 @@
-import { ComponentDeclaration, ComponentHeritageClause } from "../types/component-declaration.js";
+import { ComponentDeclaration, ComponentHeritageClause } from '../types/component-declaration.js';
 
 /**
  * Returns the superclass heritage clause
@@ -6,8 +6,8 @@ import { ComponentDeclaration, ComponentHeritageClause } from "../types/componen
  */
 export function getSuperclassHeritageClause(declaration: ComponentDeclaration): ComponentHeritageClause | undefined {
 	return (
-		declaration.heritageClauses.find(clause => clause.kind === "extends" && clause.declaration?.kind === "class") ||
-		declaration.heritageClauses.find(clause => clause.kind === "extends" && clause.declaration == null)
+		declaration.heritageClauses.find(clause => clause.kind === 'extends' && clause.declaration?.kind === 'class') ||
+		declaration.heritageClauses.find(clause => clause.kind === 'extends' && clause.declaration == null)
 	);
 }
 
@@ -16,7 +16,7 @@ export function getSuperclassHeritageClause(declaration: ComponentDeclaration): 
  * @param declaration
  */
 export function getMixinHeritageClauses(declaration: ComponentDeclaration): ComponentHeritageClause[] {
-	return declaration.heritageClauses.filter(clause => clause.kind === "mixin" || clause.declaration?.kind === "mixin");
+	return declaration.heritageClauses.filter(clause => clause.kind === 'mixin' || clause.declaration?.kind === 'mixin');
 }
 
 /**
@@ -24,7 +24,7 @@ export function getMixinHeritageClauses(declaration: ComponentDeclaration): Comp
  * @param declaration
  */
 export function getExtendsHeritageClauses(declaration: ComponentDeclaration): ComponentHeritageClause[] {
-	return declaration.heritageClauses.filter(clause => clause.kind === "extends");
+	return declaration.heritageClauses.filter(clause => clause.kind === 'extends');
 }
 
 /**
@@ -34,10 +34,10 @@ export function getExtendsHeritageClauses(declaration: ComponentDeclaration): Co
 export function getMixinHeritageClausesInChain(declaration: ComponentDeclaration): ComponentHeritageClause[] {
 	const clauses: ComponentHeritageClause[] = [];
 	visitAllHeritageClauses(declaration, clause => {
-		if (clause.kind === "mixin") {
+		if (clause.kind === 'mixin')
 			clauses.push(clause);
-		}
 	});
+
 	return clauses;
 }
 
@@ -48,10 +48,10 @@ export function getMixinHeritageClausesInChain(declaration: ComponentDeclaration
 export function getExtendsHeritageClausesInChain(declaration: ComponentDeclaration): ComponentHeritageClause[] {
 	const clauses: ComponentHeritageClause[] = [];
 	visitAllHeritageClauses(declaration, clause => {
-		if (clause.kind === "extends") {
+		if (clause.kind === 'extends')
 			clauses.push(clause);
-		}
 	});
+
 	return clauses;
 }
 
@@ -63,8 +63,7 @@ export function getExtendsHeritageClausesInChain(declaration: ComponentDeclarati
 export function visitAllHeritageClauses(declaration: ComponentDeclaration, emit: (clause: ComponentHeritageClause) => void): void {
 	for (const clause of declaration.heritageClauses) {
 		emit(clause);
-		if (clause.declaration != null) {
+		if (clause.declaration != null)
 			visitAllHeritageClauses(clause.declaration, emit);
-		}
 	}
 }

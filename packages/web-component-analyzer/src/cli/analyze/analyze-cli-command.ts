@@ -1,19 +1,20 @@
-import { writeFileSync } from "fs";
-import { basename, dirname, extname, relative, resolve } from "path";
-import { Program } from "typescript";
-import { AnalyzerResult } from "../../analyze/types/analyzer-result.js";
-import { transformAnalyzerResult } from "../../transformers/transform-analyzer-result.js";
-import { TransformerConfig } from "../../transformers/transformer-config.js";
-import { TransformerKind } from "../../transformers/transformer-kind.js";
-import { arrayFlat } from "../../util/array-util.js";
-import { AnalyzerCliConfig } from "../analyzer-cli-config.js";
-import { CliCommand } from "../cli-command.js";
-import { analyzeGlobs, AnalyzeGlobsContext } from "../util/analyze-globs.js";
-import { makeCliError } from "../util/cli-error.js";
-import { ensureDirSync } from "../util/file-util.js";
-import { log } from "../util/log.js";
+import { writeFileSync } from 'fs';
+import { basename, dirname, extname, relative, resolve } from 'path';
+import { Program } from 'typescript';
 
-type OutStrategy = "file" | "console_stream" | "console_bulk";
+import { AnalyzerResult } from '../../analyze/types/analyzer-result.js';
+import { transformAnalyzerResult } from '../../transformers/transform-analyzer-result.js';
+import { TransformerConfig } from '../../transformers/transformer-config.js';
+import { TransformerKind } from '../../transformers/transformer-kind.js';
+import { arrayFlat } from '../../util/array-util.js';
+import { AnalyzerCliConfig } from '../analyzer-cli-config.js';
+import { CliCommand } from '../cli-command.js';
+import { analyzeGlobs, AnalyzeGlobsContext } from '../util/analyze-globs.js';
+import { makeCliError } from '../util/cli-error.js';
+import { ensureDirSync } from '../util/file-util.js';
+import { log } from '../util/log.js';
+
+type OutStrategy = 'file' | 'console_stream' | 'console_bulk';
 
 /**
  * Runs the analyze cli command.
@@ -23,7 +24,7 @@ export const analyzeCliCommand: CliCommand = async (config: AnalyzerCliConfig): 
 	const inputGlobs = config.glob || [];
 
 	// Log warning for experimental json format
-	if (config.format === "json" || config.format === "json2" || config.outFile?.endsWith(".json")) {
+	if (config.format === 'json' || config.format === 'json2' || config.outFile?.endsWith('.json')) {
 		log(
 			`
 !!!!!!!!!!!!!  WARNING !!!!!!!!!!!!!
@@ -33,7 +34,7 @@ Please follow and contribute to the discussion at:
   - https://github.com/w3c/webcomponents/issues/776
 !!!!!!!!!!!!!  WARNING !!!!!!!!!!!!!
 `,
-			config
+			config,
 		);
 	}
 
@@ -41,62 +42,63 @@ Please follow and contribute to the discussion at:
 	const outStrategy: OutStrategy = (() => {
 		if (config.outDir == null && config.outFile == null && config.outFiles == null) {
 			switch (config.format) {
-				case "json2":
-					// "json2" will need to output everything at once
-					return "console_bulk";
-				default:
-					return "console_stream";
+			case 'json2':
+				// "json2" will need to output everything at once
+				return 'console_bulk';
+			default:
+				return 'console_stream';
 			}
 		}
 
-		return "file";
+		return 'file';
 	})();
 
 	// Give this context to the analyzer
 	const context: AnalyzeGlobsContext = {
 		didExpandGlobs(filePaths: string[]): void {
-			if (filePaths.length === 0) {
+			if (filePaths.length === 0)
 				throw makeCliError(`Couldn't find any files to analyze.`);
-			}
 		},
 		willAnalyzeFiles(filePaths: string[]): void {
-			log(`Web Component Analyzer analyzing ${filePaths.length} file${filePaths.length === 1 ? "" : "s"}...`, config);
+			log(`Web Component Analyzer analyzing ${ filePaths.length } file${ filePaths.length === 1 ? '' : 's' }...`, config);
 		},
 		emitAnalyzedFile(file, result, { program }): Promise<void> | void {
 			// Emit the transformed results as soon as possible if "outConsole" is on
-			if (outStrategy === "console_stream") {
+			if (outStrategy === 'console_stream') {
 				if (result.componentDefinitions.length > 0) {
 					// Always use "console.log" when outputting the results
 					/* eslint-disable-next-line no-console */
 					console.log(transformResults(result, program, { ...config, cwd: config.cwd || process.cwd() }));
 				}
 			}
-		}
+		},
 	};
 
 	// Analyze, - all the magic happens in here
 	const { results, program } = await analyzeGlobs(inputGlobs, config, context);
 
 	const filteredResults = results.filter(
-		result => result.componentDefinitions.length > 0 || result.globalFeatures != null || (result.declarations?.length || 0) > 0
+		result => result.componentDefinitions.length > 0 || result.globalFeatures != null || (result.declarations?.length || 0) > 0,
 	);
 
 	// Write files to the file system
-	if (outStrategy === "console_bulk") {
+	if (outStrategy === 'console_bulk') {
 		// Always use "console.log" when outputting the results
 		/* eslint-disable-next-line no-console */
 		console.log(transformResults(filteredResults, program, { ...config, cwd: config.cwd || process.cwd() }));
-	} else if (outStrategy === "file") {
+	}
+	else if (outStrategy === 'file') {
 		// Build up a map of "filePath => result[]"
 		const outputResultMap = await distributeResultsIntoFiles(filteredResults, config);
 
 		// Write all results to corresponding paths
-		for (const [outputPath, results] of outputResultMap) {
+		for (const [ outputPath, results ] of outputResultMap) {
 			if (outputPath != null) {
 				if (config.dry) {
 					const tagNames = arrayFlat(results.map(result => result.componentDefinitions.map(d => d.tagName)));
-					log(`[dry] Intending to write ${tagNames} to ./${relative(process.cwd(), outputPath)}`, config);
-				} else {
+					log(`[dry] Intending to write ${ tagNames } to ./${ relative(process.cwd(), outputPath) }`, config);
+				}
+				else {
 					const content = transformResults(results, program, { ...config, cwd: config.cwd || dirname(outputPath) });
 					ensureDirSync(dirname(outputPath));
 					writeFileSync(outputPath, content);
@@ -113,16 +115,16 @@ Please follow and contribute to the discussion at:
  * @param config
  */
 function transformResults(results: AnalyzerResult[] | AnalyzerResult, program: Program, config: AnalyzerCliConfig): string {
-	results = Array.isArray(results) ? results : [results];
+	results = Array.isArray(results) ? results : [ results ];
 
 	// Default format is "markdown"
-	const format = config.format || "markdown";
+	const format = config.format || 'markdown';
 
 	const transformerConfig: TransformerConfig = {
 		inlineTypes: config.inlineTypes ?? false,
-		visibility: config.visibility ?? "public",
-		markdown: config.markdown,
-		cwd: config.cwd
+		visibility:  config.visibility ?? 'public',
+		markdown:    config.markdown,
+		cwd:         config.cwd,
 	};
 
 	return transformAnalyzerResult(format, results, program, transformerConfig);
@@ -134,7 +136,8 @@ function transformResults(results: AnalyzerResult[] | AnalyzerResult, program: P
  * @param config
  */
 export async function analyzeAndTransformGlobs(inputGlobs: string | string[], config: AnalyzerCliConfig): Promise<string> {
-	const { results, program } = await analyzeGlobs(Array.isArray(inputGlobs) ? inputGlobs : [inputGlobs], config);
+	const { results, program } = await analyzeGlobs(Array.isArray(inputGlobs) ? inputGlobs : [ inputGlobs ], config);
+
 	return transformResults(results, program, config);
 }
 
@@ -144,7 +147,7 @@ export async function analyzeAndTransformGlobs(inputGlobs: string | string[], co
  * @param config
  */
 async function distributeResultsIntoFiles(results: AnalyzerResult[], config: AnalyzerCliConfig): Promise<Map<string | null, AnalyzerResult[]>> {
-	const outputPathToResultMap = new Map<string | null, AnalyzerResult[]>();
+	const outputPathToResultMap: Map<string | null, AnalyzerResult[]> = new Map();
 
 	// Helper function to add a result to a path. It will merge into existing results.
 	const addToOutputPath = (path: string, result: AnalyzerResult) => {
@@ -156,15 +159,16 @@ async function distributeResultsIntoFiles(results: AnalyzerResult[], config: Ana
 	// Output files into directory
 	if (config.outDir != null) {
 		// Get extension name based on the specified format.
-		const extName = formatToExtension(config.format || "markdown");
+		const extName = formatToExtension(config.format || 'markdown');
 
 		for (const result of results) {
 			// Write file to disc for each analyzed file
 			const definition = result.componentDefinitions[0];
-			if (definition == null) continue;
+			if (definition == null)
+				continue;
 
 			// The name of the file becomes the tagName of the first component definition in the file.
-			const path = resolve(process.cwd(), config.outDir!, `${definition.tagName}${extName}`);
+			const path = resolve(process.cwd(), config.outDir!, `${ definition.tagName }${ extName }`);
 			addToOutputPath(path, result);
 		}
 	}
@@ -177,9 +181,8 @@ async function distributeResultsIntoFiles(results: AnalyzerResult[], config: Ana
 
 		const path = resolve(process.cwd(), config.outFile);
 
-		for (const result of results) {
+		for (const result of results)
 			addToOutputPath(path, result);
-		}
 	}
 
 	// Output all results into multiple files
@@ -199,13 +202,13 @@ async function distributeResultsIntoFiles(results: AnalyzerResult[], config: Ana
 					config
 						.outFiles!.replace(/{dir}/g, dir)
 						.replace(/{filename}/g, filename)
-						.replace(/{tagname}/g, definition.tagName)
+						.replace(/{tagname}/g, definition.tagName),
 				);
 
 				//const path = resolve(process.cwd(), config.outFiles!, definition.tagName);
 				addToOutputPath(path, {
-					sourceFile: result.sourceFile,
-					componentDefinitions: [definition]
+					sourceFile:           result.sourceFile,
+					componentDefinitions: [ definition ],
 				});
 			}
 		}
@@ -225,14 +228,14 @@ async function distributeResultsIntoFiles(results: AnalyzerResult[], config: Ana
  */
 function formatToExtension(kind: TransformerKind): string {
 	switch (kind) {
-		case "json":
-		case "vscode":
-			return ".json";
-		case "md":
-		case "markdown":
-			return ".md";
-		default:
-			return ".txt";
+	case 'json':
+	case 'vscode':
+		return '.json';
+	case 'md':
+	case 'markdown':
+		return '.md';
+	default:
+		return '.txt';
 	}
 }
 
@@ -244,11 +247,11 @@ function extensionToFormat(path: string): TransformerKind {
 	const extName = extname(path);
 
 	switch (extName) {
-		case ".json":
-			return "json";
-		case ".md":
-			return "markdown";
-		default:
-			return "markdown";
+	case '.json':
+		return 'json';
+	case '.md':
+		return 'markdown';
+	default:
+		return 'markdown';
 	}
 }

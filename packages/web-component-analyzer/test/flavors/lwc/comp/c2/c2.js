@@ -1,4 +1,4 @@
-import { OtherElement } from "lwc";
+import { OtherElement } from "lwc.js";
 
 /**
  * Simple component.

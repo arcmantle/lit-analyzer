@@ -1,1 +1,1 @@
-export type ModifierKind = "readonly" | "static";
+export type ModifierKind = 'readonly' | 'static';

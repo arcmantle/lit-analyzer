@@ -1,14 +1,14 @@
-import test from "ava";
 import * as ts from "typescript";
-import { analyzeText } from "../../src/analyze/analyze-text";
-import { findChildren } from "../../src/analyze/util/ast-util";
-import { resolveNodeValue } from "../../src/analyze/util/resolve-node-value";
+import { analyzeText } from "../../src/analyze/analyze-text.js";
+import { findChildren } from "../../src/analyze/util/ast-util.js";
+import { resolveNodeValue } from "../../src/analyze/util/resolve-node-value.js";
+import { tsTest } from "../helpers/ts-test.js";
 
-test("resolveNodeValue util returns correct values", t => {
+tsTest("resolveNodeValue util returns correct values", t => {
 	const {
 		analyzedSourceFiles: [sourceFile],
 		program
-	} = analyzeText(` 
+	} = analyzeText(`
 const a = [1,2,3, -1, -2, -3];
 const b = -1;
 const c = +1;
@@ -36,7 +36,7 @@ const g = a;
 	});
 });
 
-test("resolveNodeValue resolves type literals", t => {
+tsTest("resolveNodeValue resolves type literals", t => {
 	const {
 		analyzedSourceFiles: [sourceFile],
 		program

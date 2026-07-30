@@ -1,12 +1,13 @@
-import type { GetAccessorDeclaration, Node, PropertyDeclaration, PropertySignature, SetAccessorDeclaration } from "typescript";
-import { ComponentMember } from "../../types/features/component-member.js";
-import { getMemberVisibilityFromNode, getModifiersFromNode } from "../../util/ast-util.js";
-import { getJsDoc } from "../../util/js-doc-util.js";
-import { lazy } from "../../util/lazy.js";
-import { resolveNodeValue } from "../../util/resolve-node-value.js";
-import { camelToDashCase } from "../../util/text-util.js";
-import { AnalyzerDeclarationVisitContext } from "../analyzer-flavor.js";
-import { hasLwcApiPropertyDecorator } from "./utils.js";
+import type { GetAccessorDeclaration, Node, PropertyDeclaration, PropertySignature, SetAccessorDeclaration } from 'typescript';
+
+import { ComponentMember } from '../../types/features/component-member.js';
+import { getMemberVisibilityFromNode, getModifiersFromNode } from '../../util/ast-util.js';
+import { getJsDoc } from '../../util/js-doc-util.js';
+import { lazy } from '../../util/lazy.js';
+import { resolveNodeValue } from '../../util/resolve-node-value.js';
+import { camelToDashCase } from '../../util/text-util.js';
+import { AnalyzerDeclarationVisitContext } from '../analyzer-flavor.js';
+import { hasLwcApiPropertyDecorator } from './utils.js';
 
 /**
  * Parses LWC related declaration members.
@@ -18,13 +19,12 @@ export function discoverMembers(node: Node, context: AnalyzerDeclarationVisitCon
 	const { ts } = context;
 
 	// Never pick up members not declared directly on the declaration node being traversed
-	if (node.parent !== context.declarationNode) {
+	if (node.parent !== context.declarationNode)
 		return undefined;
-	}
+
 	// @api myProp = "hello";
-	if (ts.isSetAccessor(node) || ts.isGetAccessor(node) || ts.isPropertyDeclaration(node) || ts.isPropertySignature(node)) {
+	if (ts.isSetAccessor(node) || ts.isGetAccessor(node) || ts.isPropertyDeclaration(node) || ts.isPropertySignature(node))
 		return parsePropertyDecorator(node, context);
-	}
 }
 
 /**
@@ -34,7 +34,7 @@ export function discoverMembers(node: Node, context: AnalyzerDeclarationVisitCon
  */
 function parsePropertyDecorator(
 	node: SetAccessorDeclaration | GetAccessorDeclaration | PropertyDeclaration | PropertySignature,
-	context: AnalyzerDeclarationVisitContext
+	context: AnalyzerDeclarationVisitContext,
 ): ComponentMember[] | undefined {
 	const { ts, checker } = context;
 
@@ -49,7 +49,7 @@ function parsePropertyDecorator(
 		const attrName = lwcAttrName(propName);
 
 		// Find the default value for this property
-		const initializer = "initializer" in node ? node.initializer : undefined;
+		const initializer = 'initializer' in node ? node.initializer : undefined;
 		const resolvedDefaultValue = initializer != null ? resolveNodeValue(initializer, context) : undefined;
 		const def = resolvedDefaultValue != null ? resolvedDefaultValue.value : initializer?.getText();
 
@@ -62,45 +62,46 @@ function parsePropertyDecorator(
 		// Emit a property with "attrName"
 		return [
 			{
-				priority: "high",
-				kind: "property",
+				priority: 'high',
+				kind:     'property',
 				propName,
 				attrName,
-				type: lazy(() => {
+				type:     lazy(() => {
 					const propType = checker.getTypeAtLocation(node);
+
 					return propType;
 				}),
 				node,
-				default: def,
+				default:    def,
 				required,
 				jsDoc,
 				visibility: getMemberVisibilityFromNode(node, ts),
-				reflect: undefined,
-				modifiers: getModifiersFromNode(node, ts)
-			}
+				reflect:    undefined,
+				modifiers:  getModifiersFromNode(node, ts),
+			},
 		];
 	}
 
 	return undefined;
 }
 
-const HTMLAttrs: { [name: string]: string } = {
-	accessKey: "accesskey",
-	bgColor: "bgcolor",
-	colSpan: "colspan",
-	contentEditable: "contenteditable",
-	crossOrigin: "crossorigin",
-	dateTime: "datetime",
-	htmlFor: "for",
-	formAction: "formaction",
-	isMap: "ismap",
-	maxLength: "maxlength",
-	minLength: "minlength",
-	noValidate: "novalidate",
-	readOnly: "readonly",
-	rowSpan: "rowspan",
-	tabIndex: "tabindex",
-	useMap: "usemap"
+const HTMLAttrs: { [name: string]: string; } = {
+	accessKey:       'accesskey',
+	bgColor:         'bgcolor',
+	colSpan:         'colspan',
+	contentEditable: 'contenteditable',
+	crossOrigin:     'crossorigin',
+	dateTime:        'datetime',
+	htmlFor:         'for',
+	formAction:      'formaction',
+	isMap:           'ismap',
+	maxLength:       'maxlength',
+	minLength:       'minlength',
+	noValidate:      'novalidate',
+	readOnly:        'readonly',
+	rowSpan:         'rowspan',
+	tabIndex:        'tabindex',
+	useMap:          'usemap',
 };
 
 // LWC attribute names
@@ -108,9 +109,9 @@ const HTMLAttrs: { [name: string]: string } = {
 function lwcAttrName(propName: string) {
 	// Look for a global HTML name
 	const htmlAttr: string = HTMLAttrs[propName];
-	if (htmlAttr) {
+	if (htmlAttr)
 		return htmlAttr;
-	}
+
 	// Calculate the attribute name from the property
 	return camelToDashCase(propName).toLowerCase();
 }

@@ -1,20 +1,22 @@
-import { basename, relative } from "path";
-import { isSimpleType, toSimpleType } from "ts-simple-type";
-import * as tsModule from "typescript";
-import { Node, Program, SourceFile, Type, TypeChecker } from "typescript";
-import { AnalyzerResult } from "../../analyze/types/analyzer-result.js";
-import { ComponentDeclaration, ComponentHeritageClause } from "../../analyze/types/component-declaration.js";
-import { ComponentFeatureBase } from "../../analyze/types/features/component-feature.js";
-import { JsDoc } from "../../analyze/types/js-doc.js";
-import { findParent, getNodeName, resolveDeclarations } from "../../analyze/util/ast-util.js";
-import { getMixinHeritageClauses, getSuperclassHeritageClause, visitAllHeritageClauses } from "../../analyze/util/component-declaration-util.js";
-import { getJsDoc } from "../../analyze/util/js-doc-util.js";
-import { arrayDefined } from "../../util/array-util.js";
-import { getTypeHintFromMethod } from "../../util/get-type-hint-from-method.js";
-import { getTypeHintFromType } from "../../util/get-type-hint-from-type.js";
-import { filterVisibility } from "../../util/model-util.js";
-import { TransformerConfig } from "../transformer-config.js";
-import { TransformerFunction } from "../transformer-function.js";
+import { basename, relative } from 'path';
+import { getGenericTarget, isSimpleType, toSimpleType } from 'ts-simple-type';
+import * as tsModule from 'typescript';
+import { Node, Program, SourceFile, Type, TypeChecker } from 'typescript';
+
+import { AnalyzerResult } from '../../analyze/types/analyzer-result.js';
+import { ComponentDeclaration, ComponentHeritageClause } from '../../analyze/types/component-declaration.js';
+import { ComponentFeatureBase } from '../../analyze/types/features/component-feature.js';
+import { JsDoc } from '../../analyze/types/js-doc.js';
+import type { TsModule } from '../../analyze/types/ts-module.js';
+import { findParent, getNodeName, resolveDeclarations } from '../../analyze/util/ast-util.js';
+import { getMixinHeritageClauses, getSuperclassHeritageClause, visitAllHeritageClauses } from '../../analyze/util/component-declaration-util.js';
+import { getJsDoc } from '../../analyze/util/js-doc-util.js';
+import { arrayDefined } from '../../util/array-util.js';
+import { getTypeHintFromMethod } from '../../util/get-type-hint-from-method.js';
+import { getTypeHintFromType } from '../../util/get-type-hint-from-type.js';
+import { filterVisibility } from '../../util/model-util.js';
+import { TransformerConfig } from '../transformer-config.js';
+import { TransformerFunction } from '../transformer-function.js';
 import {
 	AttributeDoc,
 	ClassDoc,
@@ -34,14 +36,14 @@ import {
 	Parameter,
 	Reference,
 	SlotDoc,
-	VariableDoc
-} from "./schema.js";
+	VariableDoc,
+} from './schema.js';
 
 interface TransformerContext {
-	config: TransformerConfig;
+	config:  TransformerConfig;
 	checker: TypeChecker;
 	program: Program;
-	ts: typeof tsModule;
+	ts:      TsModule;
 }
 
 /**
@@ -55,7 +57,7 @@ export const json2Transformer: TransformerFunction = (results: AnalyzerResult[],
 		config,
 		checker: program.getTypeChecker(),
 		program,
-		ts: tsModule
+		ts:      tsModule,
 	};
 
 	// Flatten analyzer results expanding inherited declarations into the declaration array.
@@ -65,8 +67,8 @@ export const json2Transformer: TransformerFunction = (results: AnalyzerResult[],
 	const modules = flattenedAnalyzerResults.map(result => analyzerResultToModuleDoc(result, context));
 
 	const htmlData: PackageDoc = {
-		version: "experimental",
-		modules
+		version: 'experimental',
+		modules,
 	};
 
 	return JSON.stringify(htmlData, null, 2);
@@ -82,8 +84,8 @@ function analyzerResultToModuleDoc(result: AnalyzerResult, context: TransformerC
 	const exports = getExportsDocsFromAnalyzerResult(result, context);
 
 	return {
-		path: getRelativePath(result.sourceFile.fileName, context),
-		exports: exports.length === 0 ? undefined : exports
+		path:    getRelativePath(result.sourceFile.fileName, context),
+		exports: exports.length === 0 ? undefined : exports,
 	};
 }
 
@@ -98,7 +100,7 @@ function getExportsDocsFromAnalyzerResult(result: AnalyzerResult, context: Trans
 		...getDefinitionDocsFromAnalyzerResult(result, context),
 		...getClassDocsFromAnalyzerResult(result, context),
 		...getVariableDocsFromAnalyzerResult(result, context),
-		...getFunctionDocsFromAnalyzerResult(result, context)
+		...getFunctionDocsFromAnalyzerResult(result, context),
 	];
 }
 
@@ -117,16 +119,16 @@ function getDefinitionDocsFromAnalyzerResult(result: AnalyzerResult, context: Tr
 		result.componentDefinitions.map(definition => {
 			// It's not possible right now to model a tag name where the
 			//   declaration couldn't be resolved because the "declaration" is required
-			if (definition.declaration == null) {
+			if (definition.declaration == null)
 				return undefined;
-			}
+
 
 			return {
-				kind: "definition",
-				name: definition.tagName,
-				declaration: getReferenceForNode(definition.declaration.node, context)
+				kind:        'definition',
+				name:        definition.tagName,
+				declaration: getReferenceForNode(definition.declaration.node, context),
 			};
-		})
+		}),
 	);
 }
 
@@ -140,34 +142,35 @@ function getVariableDocsFromAnalyzerResult(result: AnalyzerResult, context: Tran
 
 	// Get all export symbols in the source file
 	const symbol = context.checker.getSymbolAtLocation(result.sourceFile)!;
-	if (symbol == null) {
+	if (symbol == null)
 		return [];
-	}
+
 
 	const exports = context.checker.getExportsOfModule(symbol);
 
 	// Convert all export variables to VariableDocs
 	for (const exp of exports) {
 		switch (exp.flags) {
-			case tsModule.SymbolFlags.BlockScopedVariable:
-			case tsModule.SymbolFlags.Variable: {
-				const node = exp.valueDeclaration;
+		case tsModule.SymbolFlags.BlockScopedVariable:
+		case tsModule.SymbolFlags.Variable: {
+			const node = exp.valueDeclaration;
 
-				if (node && tsModule.isVariableDeclaration(node)) {
-					// Get the nearest variable statement in order to read the jsdoc
-					const variableStatement = findParent(node, tsModule.isVariableStatement) || node;
-					const jsDoc = getJsDoc(variableStatement, tsModule);
+			if (node && tsModule.isVariableDeclaration(node)) {
+				// Get the nearest variable statement in order to read the jsdoc
+				const variableStatement = findParent(node, tsModule.isVariableStatement) || node;
+				const jsDoc = getJsDoc(variableStatement, tsModule);
 
-					varDocs.push({
-						kind: "variable",
-						name: node.name.getText(),
-						description: jsDoc?.description,
-						type: getTypeHintFromType(context.checker.getTypeAtLocation(node), context.checker, context.config),
-						summary: getSummaryFromJsDoc(jsDoc)
-					});
-				}
-				break;
+				varDocs.push({
+					kind:        'variable',
+					name:        node.name.getText(),
+					description: jsDoc?.description,
+					type:        getTypeHintFromType(context.checker.getTypeAtLocation(node), context.checker, context.config),
+					summary:     getSummaryFromJsDoc(jsDoc),
+				});
 			}
+
+			break;
+		}
 		}
 	}
 
@@ -185,9 +188,8 @@ function getClassDocsFromAnalyzerResult(result: AnalyzerResult, context: Transfo
 	// Convert all declarations to class docs
 	for (const decl of result.declarations || []) {
 		const doc = getExportsDocFromDeclaration(decl, result, context);
-		if (doc != null) {
+		if (doc != null)
 			classDocs.push(doc);
-		}
 	}
 
 	return classDocs;
@@ -202,12 +204,12 @@ function getClassDocsFromAnalyzerResult(result: AnalyzerResult, context: Transfo
 function getExportsDocFromDeclaration(
 	declaration: ComponentDeclaration,
 	result: AnalyzerResult,
-	context: TransformerContext
+	context: TransformerContext,
 ): ClassDoc | CustomElementDoc | MixinDoc | undefined {
 	// Only include "mixin" and "class" in the output. Interfaces are not outputted..
-	if (declaration.kind === "interface") {
+	if (declaration.kind === 'interface')
 		return undefined;
-	}
+
 
 	// Get the superclass of this declaration
 	const superclassHeritage = getSuperclassHeritageClause(declaration);
@@ -220,13 +222,13 @@ function getExportsDocFromDeclaration(
 	const members = getClassMemberDocsFromDeclaration(declaration, context);
 
 	const classDoc: ClassDoc | MixinDoc = {
-		kind: "class",
-		superclass: superclassRef,
-		mixins: mixinRefs.length > 0 ? mixinRefs : undefined,
+		kind:        'class',
+		superclass:  superclassRef,
+		mixins:      mixinRefs.length > 0 ? mixinRefs : undefined,
 		description: declaration.jsDoc?.description,
-		name: declaration.symbol?.name || getNodeName(declaration.node, { ts: tsModule }) || "",
-		members: members.length > 0 ? members : undefined,
-		summary: getSummaryFromJsDoc(declaration.jsDoc)
+		name:        declaration.symbol?.name || getNodeName(declaration.node, { ts: tsModule }) || '',
+		members:     members.length > 0 ? members : undefined,
+		summary:     getSummaryFromJsDoc(declaration.jsDoc),
 	};
 
 	// Find the first corresponding custom element definition for this declaration
@@ -242,12 +244,12 @@ function getExportsDocFromDeclaration(
 		// Return a custom element doc if a definition was found
 		const customElementDoc: CustomElementDoc = {
 			...classDoc,
-			tagName: definition.tagName,
-			events: events.length > 0 ? events : undefined,
-			slots: slots.length > 0 ? slots : undefined,
-			attributes: attributes.length > 0 ? attributes : undefined,
+			tagName:       definition.tagName,
+			events:        events.length > 0 ? events : undefined,
+			slots:         slots.length > 0 ? slots : undefined,
+			attributes:    attributes.length > 0 ? attributes : undefined,
 			cssProperties: cssProperties.length > 0 ? cssProperties : undefined,
-			cssParts: cssParts.length > 0 ? cssParts : undefined
+			cssParts:      cssParts.length > 0 ? cssParts : undefined,
 		};
 
 		return customElementDoc;
@@ -263,18 +265,18 @@ function getExportsDocFromDeclaration(
  */
 function getEventDocsFromDeclaration(declaration: ComponentDeclaration, context: TransformerContext): EventDoc[] {
 	return filterVisibility(context.config.visibility, declaration.events).map(event => {
-		const type = event.type?.() || { kind: "ANY" };
+		const type = event.type?.() || { kind: 'ANY' };
 		const simpleType = isSimpleType(type) ? type : toSimpleType(type, context.checker);
 
-		const typeName = simpleType.kind === "GENERIC_ARGUMENTS" ? simpleType.target.name : simpleType.name;
-		const customEventDetailType = typeName === "CustomEvent" && simpleType.kind === "GENERIC_ARGUMENTS" ? simpleType.typeArguments[0] : undefined;
+		const typeName = simpleType.kind === 'GENERIC_ARGUMENTS' ? getGenericTarget(simpleType).name : simpleType.name;
+		const customEventDetailType = typeName === 'CustomEvent' && simpleType.kind === 'GENERIC_ARGUMENTS' ? simpleType.typeArguments[0] : undefined;
 
 		return {
-			description: event.jsDoc?.description,
-			name: event.name,
+			description:   event.jsDoc?.description,
+			name:          event.name,
 			inheritedFrom: getInheritedFromReference(declaration, event, context),
-			type: typeName == null || simpleType.kind === "ANY" ? "Event" : typeName,
-			detailType: customEventDetailType != null ? getTypeHintFromType(customEventDetailType, context.checker, context.config) : undefined
+			type:          typeName == null || simpleType.kind === 'ANY' ? 'Event' : typeName,
+			detailType:    customEventDetailType != null ? getTypeHintFromType(customEventDetailType, context.checker, context.config) : undefined,
 		};
 	});
 }
@@ -286,9 +288,9 @@ function getEventDocsFromDeclaration(declaration: ComponentDeclaration, context:
  */
 function getSlotDocsFromDeclaration(declaration: ComponentDeclaration, context: TransformerContext): SlotDoc[] {
 	return declaration.slots.map(slot => ({
-		description: slot.jsDoc?.description,
-		name: slot.name || "",
-		inheritedFrom: getInheritedFromReference(declaration, slot, context)
+		description:   slot.jsDoc?.description,
+		name:          slot.name || '',
+		inheritedFrom: getInheritedFromReference(declaration, slot, context),
 	}));
 }
 
@@ -299,11 +301,11 @@ function getSlotDocsFromDeclaration(declaration: ComponentDeclaration, context: 
  */
 function getCSSPropertyDocsFromDeclaration(declaration: ComponentDeclaration, context: TransformerContext): CSSPropertyDoc[] {
 	return declaration.cssProperties.map(cssProperty => ({
-		name: cssProperty.name,
-		description: cssProperty.jsDoc?.description,
-		type: cssProperty.typeHint,
-		default: cssProperty.default != null ? JSON.stringify(cssProperty.default) : undefined,
-		inheritedFrom: getInheritedFromReference(declaration, cssProperty, context)
+		name:          cssProperty.name,
+		description:   cssProperty.jsDoc?.description,
+		type:          cssProperty.typeHint,
+		default:       cssProperty.default != null ? JSON.stringify(cssProperty.default) : undefined,
+		inheritedFrom: getInheritedFromReference(declaration, cssProperty, context),
 	}));
 }
 
@@ -314,9 +316,9 @@ function getCSSPropertyDocsFromDeclaration(declaration: ComponentDeclaration, co
  */
 function getCSSPartDocsFromDeclaration(declaration: ComponentDeclaration, context: TransformerContext): CSSPartDoc[] {
 	return declaration.cssParts.map(cssPart => ({
-		name: cssPart.name,
-		description: cssPart.jsDoc?.description,
-		inheritedFrom: getInheritedFromReference(declaration, cssPart, context)
+		name:          cssPart.name,
+		description:   cssPart.jsDoc?.description,
+		inheritedFrom: getInheritedFromReference(declaration, cssPart, context),
 	}));
 }
 
@@ -331,12 +333,12 @@ function getAttributeDocsFromDeclaration(declaration: ComponentDeclaration, cont
 	for (const member of filterVisibility(context.config.visibility, declaration.members)) {
 		if (member.attrName != null) {
 			attributeDocs.push({
-				name: member.attrName,
-				fieldName: member.propName,
-				defaultValue: member.default != null ? JSON.stringify(member.default) : undefined,
-				description: member.jsDoc?.description,
-				type: getTypeHintFromType(member.typeHint || member.type?.(), context.checker, context.config),
-				inheritedFrom: getInheritedFromReference(declaration, member, context)
+				name:          member.attrName,
+				fieldName:     member.propName,
+				defaultValue:  member.default != null ? JSON.stringify(member.default) : undefined,
+				description:   member.jsDoc?.description,
+				type:          getTypeHintFromType(member.typeHint || member.type?.(), context.checker, context.config),
+				inheritedFrom: getInheritedFromReference(declaration, member, context),
 			});
 		}
 	}
@@ -350,7 +352,7 @@ function getAttributeDocsFromDeclaration(declaration: ComponentDeclaration, cont
  * @param context
  */
 function getClassMemberDocsFromDeclaration(declaration: ComponentDeclaration, context: TransformerContext): ClassMember[] {
-	return [...getFieldDocsFromDeclaration(declaration, context), ...getMethodDocsFromDeclaration(declaration, context)];
+	return [ ...getFieldDocsFromDeclaration(declaration, context), ...getMethodDocsFromDeclaration(declaration, context) ];
 }
 
 /**
@@ -378,35 +380,34 @@ function getMethodDocsFromDeclaration(declaration: ComponentDeclaration, context
 					type: getTypeHintFromType(
 						typeHint || (param.type != null ? context.checker.getTypeAtLocation(param.type) : undefined),
 						context.checker,
-						context.config
+						context.config,
 					),
-					description: description
+					description: description,
 				});
 			}
 
 			// Get return type
 			const signature = context.checker.getSignatureFromDeclaration(node);
-			if (signature != null) {
+			if (signature != null)
 				returnType = context.checker.getReturnTypeOfSignature(signature);
-			}
 		}
 
 		// Get return info from jsdoc
 		const { description: returnDescription, typeHint: returnTypeHint } = getReturnFromJsDoc(method.jsDoc);
 
 		methodDocs.push({
-			kind: "method",
-			name: method.name,
-			privacy: method.visibility,
-			type: getTypeHintFromMethod(method, context.checker),
+			kind:        'method',
+			name:        method.name,
+			privacy:     method.visibility,
+			type:        getTypeHintFromMethod(method, context.checker),
 			description: method.jsDoc?.description,
 			parameters,
-			return: {
+			return:      {
 				description: returnDescription,
-				type: getTypeHintFromType(returnTypeHint || returnType, context.checker, context.config)
+				type:        getTypeHintFromType(returnTypeHint || returnType, context.checker, context.config),
 			},
 			inheritedFrom: getInheritedFromReference(declaration, method, context),
-			summary: getSummaryFromJsDoc(method.jsDoc)
+			summary:       getSummaryFromJsDoc(method.jsDoc),
 			// TODO: "static"
 		});
 	}
@@ -425,14 +426,14 @@ function getFieldDocsFromDeclaration(declaration: ComponentDeclaration, context:
 	for (const member of filterVisibility(context.config.visibility, declaration.members)) {
 		if (member.propName != null) {
 			fieldDocs.push({
-				kind: "field",
-				name: member.propName,
-				privacy: member.visibility,
-				description: member.jsDoc?.description,
-				type: getTypeHintFromType(member.typeHint || member.type?.(), context.checker, context.config),
-				default: member.default != null ? JSON.stringify(member.default) : undefined,
+				kind:          'field',
+				name:          member.propName,
+				privacy:       member.visibility,
+				description:   member.jsDoc?.description,
+				type:          getTypeHintFromType(member.typeHint || member.type?.(), context.checker, context.config),
+				default:       member.default != null ? JSON.stringify(member.default) : undefined,
 				inheritedFrom: getInheritedFromReference(declaration, member, context),
-				summary: getSummaryFromJsDoc(member.jsDoc)
+				summary:       getSummaryFromJsDoc(member.jsDoc),
 				// TODO: "static"
 			});
 		}
@@ -444,11 +445,11 @@ function getFieldDocsFromDeclaration(declaration: ComponentDeclaration, context:
 function getInheritedFromReference(
 	onDeclaration: ComponentDeclaration,
 	feature: ComponentFeatureBase,
-	context: TransformerContext
+	context: TransformerContext,
 ): Reference | undefined {
-	if (feature.declaration != null && feature.declaration !== onDeclaration) {
+	if (feature.declaration != null && feature.declaration !== onDeclaration)
 		return getReferenceForNode(feature.declaration.node, context);
-	}
+
 
 	return undefined;
 }
@@ -468,7 +469,7 @@ function getReferenceForNode(node: Node, context: TransformerContext): Reference
 	if (isLib) {
 		// Only return the name of the declaration if it's from lib
 		return {
-			name
+			name,
 		};
 	}
 
@@ -477,15 +478,16 @@ function getReferenceForNode(node: Node, context: TransformerContext): Reference
 	if (packageName != null) {
 		return {
 			name,
-			package: packageName
+			package: packageName,
 		};
 	}
 
 	// Get the module path name
 	const module = getRelativePath(sourceFile.fileName, context);
+
 	return {
 		name,
-		module
+		module,
 	};
 }
 
@@ -499,9 +501,9 @@ function getPackageName(sourceFile: SourceFile): string | undefined {
 	//  The following approach is very, very naive and is only temporary.
 	const match = sourceFile.fileName.match(/node_modules\/(.*?)\//);
 
-	if (match != null) {
+	if (match != null)
 		return match[1];
-	}
+
 
 	return undefined;
 }
@@ -512,7 +514,7 @@ function getPackageName(sourceFile: SourceFile): string | undefined {
  * @param context
  */
 function getRelativePath(fullPath: string, context: TransformerContext) {
-	return context.config.cwd != null ? `./${relative(context.config.cwd, fullPath)}` : basename(fullPath);
+	return context.config.cwd != null ? `./${ relative(context.config.cwd, fullPath) }` : basename(fullPath);
 }
 
 /**
@@ -520,17 +522,16 @@ function getRelativePath(fullPath: string, context: TransformerContext) {
  * @param name
  * @param jsDoc
  */
-function getParameterFromJsDoc(name: string, jsDoc: JsDoc | undefined): { description?: string; typeHint?: string } {
-	if (jsDoc?.tags == undefined) {
+function getParameterFromJsDoc(name: string, jsDoc: JsDoc | undefined): { description?: string; typeHint?: string; } {
+	if (jsDoc?.tags == undefined)
 		return {};
-	}
+
 
 	for (const tag of jsDoc.tags) {
 		const parsed = tag.parsed();
 
-		if (parsed.tag === "param" && parsed.name === name) {
+		if (parsed.tag === 'param' && parsed.name === name)
 			return { description: parsed.description, typeHint: parsed.type };
-		}
 	}
 
 	return {};
@@ -540,14 +541,15 @@ function getParameterFromJsDoc(name: string, jsDoc: JsDoc | undefined): { descri
  * Get return description and return typeHint from jsdoc
  * @param jsDoc
  */
-function getReturnFromJsDoc(jsDoc: JsDoc | undefined): { description?: string; typeHint?: string } {
-	const tag = jsDoc?.tags?.find(tag => ["returns", "return"].includes(tag.tag));
+function getReturnFromJsDoc(jsDoc: JsDoc | undefined): { description?: string; typeHint?: string; } {
+	const tag = jsDoc?.tags?.find(tag => [ 'returns', 'return' ].includes(tag.tag));
 
-	if (tag == null) {
+	if (tag == null)
 		return {};
-	}
+
 
 	const parsed = tag.parsed();
+
 	return { description: parsed.description, typeHint: parsed.type };
 }
 
@@ -556,26 +558,26 @@ function getReturnFromJsDoc(jsDoc: JsDoc | undefined): { description?: string; t
  * @param heritage
  * @param context
  */
-function getReferenceFromHeritageClause(heritage: ComponentHeritageClause, context: TransformerContext): Reference | { name: string } | undefined {
+function getReferenceFromHeritageClause(heritage: ComponentHeritageClause, context: TransformerContext): Reference | { name: string; } | undefined {
 	const node = heritage.declaration?.node;
 	const identifier = heritage.identifier;
 
 	// Return a reference for this node if any
-	if (node != null) {
+	if (node != null)
 		return getReferenceForNode(node, context);
-	}
+
 
 	// Try to get declaration of the identifier if no node was found
-	const [declaration] = resolveDeclarations(identifier, context);
-	if (declaration != null) {
+	const [ declaration ] = resolveDeclarations(identifier, context);
+	if (declaration != null)
 		return getReferenceForNode(declaration, context);
-	}
+
 
 	// Just return the name of the reference if nothing could be resolved
 	const name = getNodeName(identifier, context);
-	if (name != null) {
+	if (name != null)
 		return { name };
-	}
+
 
 	return undefined;
 }
@@ -586,7 +588,7 @@ function getReferenceFromHeritageClause(heritage: ComponentHeritageClause, conte
  */
 function flattenAnalyzerResults(results: AnalyzerResult[]): AnalyzerResult[] {
 	// Keep track of declarations in each source file
-	const declarationMap = new Map<SourceFile, Set<ComponentDeclaration>>();
+	const declarationMap: Map<SourceFile, Set<ComponentDeclaration>> = new Map();
 
 	/**
 	 * Add a declaration to the declaration map
@@ -597,9 +599,9 @@ function flattenAnalyzerResults(results: AnalyzerResult[]): AnalyzerResult[] {
 
 		const exportDocs = declarationMap.get(sourceFile) || new Set();
 
-		if (!declarationMap.has(sourceFile)) {
+		if (!declarationMap.has(sourceFile))
 			declarationMap.set(sourceFile, exportDocs);
-		}
+
 
 		exportDocs.add(declaration);
 	}
@@ -611,9 +613,8 @@ function flattenAnalyzerResults(results: AnalyzerResult[]): AnalyzerResult[] {
 
 			visitAllHeritageClauses(decl, clause => {
 				// Flatten all component declarations
-				if (clause.declaration != null) {
+				if (clause.declaration != null)
 					addDeclarationToMap(clause.declaration);
-				}
 			});
 		}
 	}
@@ -624,7 +625,7 @@ function flattenAnalyzerResults(results: AnalyzerResult[]): AnalyzerResult[] {
 
 		return {
 			...result,
-			declarations: declarations != null ? Array.from(declarations) : result.declarations
+			declarations: declarations != null ? Array.from(declarations) : result.declarations,
 		};
 	});
 }
@@ -634,11 +635,11 @@ function flattenAnalyzerResults(results: AnalyzerResult[]): AnalyzerResult[] {
  * @param jsDoc
  */
 function getSummaryFromJsDoc(jsDoc: JsDoc | undefined): string | undefined {
-	const summaryTag = jsDoc?.tags?.find(tag => tag.tag === "summary");
+	const summaryTag = jsDoc?.tags?.find(tag => tag.tag === 'summary');
 
-	if (summaryTag == null) {
+	if (summaryTag == null)
 		return undefined;
-	}
+
 
 	return summaryTag.comment;
 }

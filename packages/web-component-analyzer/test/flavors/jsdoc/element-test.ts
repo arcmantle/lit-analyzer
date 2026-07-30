@@ -1,5 +1,5 @@
-import { analyzeTextWithCurrentTsModule } from "../../helpers/analyze-text-with-current-ts-module";
-import { tsTest } from "../../helpers/ts-test";
+import { analyzeTextWithCurrentTsModule } from "../../helpers/analyze-text-with-current-ts-module.js";
+import { tsTest } from "../../helpers/ts-test.js";
 
 tsTest("jsdoc: Discovers custom elements with @element", t => {
 	const {
@@ -8,7 +8,7 @@ tsTest("jsdoc: Discovers custom elements with @element", t => {
 	/**
 	 * @element my-element
 	 */
-	 class MyElement extends HTMLElement { 
+	 class MyElement extends HTMLElement {
 	 }
 	 `);
 
@@ -23,7 +23,7 @@ tsTest("jsdoc: Discovers custom elements with @element but without tag name", t 
 	/**
 	 * @element
 	 */
-	 class MyElement extends HTMLElement { 
+	 class MyElement extends HTMLElement {
 	 }
 	 `);
 
@@ -39,7 +39,7 @@ tsTest("jsdoc: Discovers custom elements with multiline @element", t => {
 	 * @element my-element
 	 * \`This is a multiline element\`
 	 */
-	 class MyElement extends HTMLElement { 
+	 class MyElement extends HTMLElement {
 	 }
 	 `);
 

@@ -1,16 +1,18 @@
-import test, { ExecutionContext, ImplementationResult } from "ava";
 import { Program } from "typescript";
-import { AnalyzerResult } from "../../src/analyze/types/analyzer-result";
-import { getExtendsHeritageClausesInChain, getMixinHeritageClausesInChain } from "../../src/analyze/util/component-declaration-util";
-import { analyzeGlobs } from "../../src/cli/util/analyze-globs";
-import { arrayFlat } from "../../src/util/array-util";
+import { test } from "vitest";
+import { AnalyzerResult } from "../../src/analyze/types/analyzer-result.js";
+import { getExtendsHeritageClausesInChain, getMixinHeritageClausesInChain } from "../../src/analyze/util/component-declaration-util.js";
+import { analyzeGlobs } from "../../src/cli/util/analyze-globs.js";
+import { arrayFlat } from "../../src/util/array-util.js";
+import { TestContext, testContext } from "./ts-test.js";
 
 function testResult(
 	testName: string,
 	globs: string[],
-	callback: (result: AnalyzerResult[], program: Program, t: ExecutionContext) => ImplementationResult
+	callback: (result: AnalyzerResult[], program: Program, t: TestContext) => void | Promise<void>
 ): void {
-	test(testName, async t => {
+	test(testName, async () => {
+		const t = testContext;
 		const { results, program } = await analyzeGlobs(globs, {
 			discoverNodeModules: true,
 			analyzeGlobalFeatures: true
@@ -41,16 +43,16 @@ export function testResultSnapshot(globs: string[]): void {
 			tagNames: arrayFlat(results.map(result => result.componentDefinitions))
 				.map(def => def.tagName)
 				.join(", "),
-			members: declarations.reduce((acc, decl) => acc + decl.members.length, 0),
-			cssParts: declarations.reduce((acc, decl) => acc + decl.cssParts.length, 0),
-			cssProps: declarations.reduce((acc, decl) => acc + decl.cssProperties.length, 0),
-			events: declarations.reduce((acc, decl) => acc + decl.events.length, 0),
-			slots: declarations.reduce((acc, decl) => acc + decl.slots.length, 0),
-			methods: declarations.reduce((acc, decl) => acc + decl.methods.length, 0),
+			members: declarations.reduce((acc, decl) => acc + decl!.members.length, 0),
+			cssParts: declarations.reduce((acc, decl) => acc + decl!.cssParts.length, 0),
+			cssProps: declarations.reduce((acc, decl) => acc + decl!.cssProperties.length, 0),
+			events: declarations.reduce((acc, decl) => acc + decl!.events.length, 0),
+			slots: declarations.reduce((acc, decl) => acc + decl!.slots.length, 0),
+			methods: declarations.reduce((acc, decl) => acc + decl!.methods.length, 0),
 			mixins: declarations
 				.map(
 					decl =>
-						`[${getMixinHeritageClausesInChain(decl)
+						`[${getMixinHeritageClausesInChain(decl!)
 							.map(clause => clause.identifier.getText())
 							.join(", ")}]`
 				)
@@ -58,7 +60,7 @@ export function testResultSnapshot(globs: string[]): void {
 			extends: declarations
 				.map(
 					decl =>
-						`[${getExtendsHeritageClausesInChain(decl)
+						`[${getExtendsHeritageClausesInChain(decl!)
 							.map(clause => clause.identifier.getText())
 							.join(", ")}]`
 				)

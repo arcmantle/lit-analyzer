@@ -1,8 +1,9 @@
-import { Node } from "typescript";
-import { AnalyzerVisitContext } from "../analyzer-visit-context.js";
-import { InheritanceResult } from "../flavors/analyzer-flavor.js";
-import { ComponentDeclarationKind, ComponentHeritageClause } from "../types/component-declaration.js";
-import { visitInheritance } from "./flavor/visit-inheritance.js";
+import { Node } from 'typescript';
+
+import { AnalyzerVisitContext } from '../analyzer-visit-context.js';
+import { InheritanceResult } from '../flavors/analyzer-flavor.js';
+import { ComponentDeclarationKind, ComponentHeritageClause } from '../types/component-declaration.js';
+import { visitInheritance } from './flavor/visit-inheritance.js';
 
 /**
  * Uses flavors in order to discover inheritance from one of more nodes.
@@ -11,11 +12,11 @@ import { visitInheritance } from "./flavor/visit-inheritance.js";
  * @param context
  */
 export function discoverInheritance(startNode: Node | Node[], visitedNodes: Set<Node>, context: AnalyzerVisitContext): Required<InheritanceResult> {
-	const nodes = Array.isArray(startNode) ? startNode : [startNode];
+	const nodes = Array.isArray(startNode) ? startNode : [ startNode ];
 
 	let declarationKind: ComponentDeclarationKind | undefined = undefined;
 	const heritageClauses: ComponentHeritageClause[] = [];
-	const declarationNodes = new Set<Node>();
+	const declarationNodes: Set<Node> = new Set();
 
 	for (const node of nodes) {
 		visitedNodes.add(node);
@@ -26,20 +27,18 @@ export function discoverInheritance(startNode: Node | Node[], visitedNodes: Set<
 			declarationKind = declarationKind || result.declarationKind;
 
 			if (result.declarationNodes != null) {
-				for (const node of result.declarationNodes) {
+				for (const node of result.declarationNodes)
 					declarationNodes.add(node);
-				}
 			}
 
-			if (result.heritageClauses != null) {
+			if (result.heritageClauses != null)
 				heritageClauses.push(...result.heritageClauses);
-			}
 		});
 	}
 
 	return {
 		declarationNodes: Array.from(declarationNodes),
 		heritageClauses,
-		declarationKind: declarationKind || "class"
+		declarationKind:  declarationKind || 'class',
 	};
 }

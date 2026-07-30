@@ -1,31 +1,31 @@
 export interface HtmlDataAttrValue {
-	name: string;
+	name:         string;
 	description?: string;
 }
 
 export interface HtmlDataAttr {
-	name: string;
+	name:         string;
 	description?: string;
-	values?: HtmlDataAttrValue[];
-	valueSet?: string;
+	values?:      HtmlDataAttrValue[];
+	valueSet?:    string;
 }
 
 export interface HtmlDataTag {
-	name: string;
+	name:         string;
 	description?: string;
-	attributes: HtmlDataAttr[];
+	attributes:   HtmlDataAttr[];
 }
 
 export interface HtmlDataValueSet {
-	name: string;
+	name:   string;
 	values: HtmlDataAttrValue[];
 }
 
 export interface HtmlDataV1 {
-	version: 1;
-	tags?: HtmlDataTag[];
+	version:           1;
+	tags?:             HtmlDataTag[];
 	globalAttributes?: HtmlDataAttr[];
-	valueSets?: HtmlDataValueSet[];
+	valueSets?:        HtmlDataValueSet[];
 }
 
 export type VscodeHtmlData = HtmlDataV1;

@@ -1,8 +1,9 @@
-import { Node } from "typescript";
-import { AnalyzerVisitContext } from "../../analyzer-visit-context.js";
-import { getInterfaceKeys } from "../../util/ast-util.js";
-import { resolveNodeValue } from "../../util/resolve-node-value.js";
-import { DefinitionNodeResult } from "../analyzer-flavor.js";
+import { Node } from 'typescript';
+
+import { AnalyzerVisitContext } from '../../analyzer-visit-context.js';
+import { getInterfaceKeys } from '../../util/ast-util.js';
+import { resolveNodeValue } from '../../util/resolve-node-value.js';
+import { DefinitionNodeResult } from '../analyzer-flavor.js';
 
 /**
  * Visits custom element definitions.
@@ -13,33 +14,33 @@ import { DefinitionNodeResult } from "../analyzer-flavor.js";
 export function discoverDefinitions(node: Node, { ts, checker }: AnalyzerVisitContext): DefinitionNodeResult[] | undefined {
 	// customElements.define("my-element", MyElement)
 	if (ts.isCallExpression(node)) {
-		if (ts.isPropertyAccessExpression(node.expression) && node.expression.name.escapedText === "define") {
+		if (ts.isPropertyAccessExpression(node.expression) && node.expression.name.escapedText === 'define') {
 			let leftExpression: Node = node.expression.expression;
 
 			// Take "window.customElements" into account and return the "customElements" part
 			if (
 				ts.isPropertyAccessExpression(leftExpression) &&
 				ts.isIdentifier(leftExpression.expression) &&
-				leftExpression.expression.escapedText === "window"
-			) {
+				leftExpression.expression.escapedText === 'window'
+			)
 				leftExpression = leftExpression.name;
-			}
+
 
 			// Check if the "left expression" is called "customElements"
 			if (
 				ts.isIdentifier(leftExpression) &&
-				leftExpression.escapedText === "customElements" &&
+				leftExpression.escapedText === 'customElements' &&
 				node.expression.name != null &&
 				ts.isIdentifier(node.expression.name)
 			) {
 				// Find the arguments of: define("my-element", MyElement)
-				const [unresolvedTagNameNode, identifierNode] = node.arguments;
+				const [ unresolvedTagNameNode, identifierNode ] = node.arguments;
 
 				// Resolve the tag name node
 				// ("my-element", MyElement)
 				const resolvedTagNameNode = resolveNodeValue(unresolvedTagNameNode, { ts, checker, strict: true });
 
-				if (resolvedTagNameNode != null && identifierNode != null && typeof resolvedTagNameNode.value === "string") {
+				if (resolvedTagNameNode != null && identifierNode != null && typeof resolvedTagNameNode.value === 'string') {
 					const tagName = resolvedTagNameNode.value;
 					const tagNameNode = resolvedTagNameNode.node;
 
@@ -49,8 +50,8 @@ export function discoverDefinitions(node: Node, { ts, checker }: AnalyzerVisitCo
 							{
 								tagName,
 								identifierNode,
-								tagNameNode
-							}
+								tagNameNode,
+							},
 						];
 					}
 
@@ -60,8 +61,8 @@ export function discoverDefinitions(node: Node, { ts, checker }: AnalyzerVisitCo
 							{
 								tagName,
 								tagNameNode,
-								declarationNode: identifierNode
-							}
+								declarationNode: identifierNode,
+							},
 						];
 					}
 				}
@@ -72,13 +73,14 @@ export function discoverDefinitions(node: Node, { ts, checker }: AnalyzerVisitCo
 	}
 
 	// interface HTMLElementTagNameMap { "my-button": MyButton; }
-	if (ts.isInterfaceDeclaration(node) && ["HTMLElementTagNameMap", "ElementTagNameMap"].includes(node.name.text)) {
+	if (ts.isInterfaceDeclaration(node) && [ 'HTMLElementTagNameMap', 'ElementTagNameMap' ].includes(node.name.text)) {
 		const extensions = getInterfaceKeys(node, { ts, checker });
+
 		return extensions.map(({ key, keyNode, identifier, declaration }) => ({
-			tagName: key,
-			tagNameNode: keyNode,
-			identifierNode: identifier,
-			declarationNode: declaration
+			tagName:         key,
+			tagNameNode:     keyNode,
+			identifierNode:  identifier,
+			declarationNode: declaration,
 		}));
 	}
 

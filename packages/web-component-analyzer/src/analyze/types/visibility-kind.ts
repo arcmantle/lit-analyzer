@@ -1,1 +1,1 @@
-export type VisibilityKind = "public" | "protected" | "private";
+export type VisibilityKind = 'public' | 'protected' | 'private';

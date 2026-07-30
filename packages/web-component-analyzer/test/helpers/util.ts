@@ -1,13 +1,13 @@
-import { ExecutionContext } from "ava";
 import { isAssignableToType, typeToString } from "ts-simple-type";
 import { TypeChecker } from "typescript";
-import { ComponentMember, ComponentMemberProperty } from "../../src/analyze/types/features/component-member";
-import { arrayDefined } from "../../src/util/array-util";
+import { ComponentMember, ComponentMemberProperty } from "../../src/analyze/types/features/component-member.js";
+import { arrayDefined } from "../../src/util/array-util.js";
+import { TestContext } from "./ts-test.js";
 
 export function assertHasMembers(
 	actualMembers: ComponentMember[],
 	expectedMembers: Partial<ComponentMember>[],
-	t: ExecutionContext,
+	t: TestContext,
 	checker?: TypeChecker
 ): void {
 	t.log(actualMembers);

@@ -1,6 +1,6 @@
 import { join } from "path";
-import { analyzeSourceFile } from "../../../src/analyze/analyze-source-file";
-import { getCurrentTsModule, getCurrentTsModuleDirectory, tsTest } from "../../helpers/ts-test";
+import { analyzeSourceFile } from "../../../src/analyze/analyze-source-file.js";
+import { getCurrentTsModule, getCurrentTsModuleDirectory, tsTest } from "../../helpers/ts-test.js";
 
 tsTest("analyzeSourceFile on lib.dom.ts returns correct result", t => {
 	const tsModule = getCurrentTsModule();

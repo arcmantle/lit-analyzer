@@ -1,5 +1,6 @@
-import { JsDoc } from "../../types/js-doc.js";
-import { ModifierKind } from "../../types/modifier-kind.js";
+import { JsDoc } from '../../types/js-doc.js';
+import { ModifierKind } from '../../types/modifier-kind.js';
+
 /**
  * Merges based on a name
  * @param entries
@@ -8,18 +9,17 @@ import { ModifierKind } from "../../types/modifier-kind.js";
  * @param merge
  */
 export function mergeNamedEntries<T>(entries: T[], getName: (entry: T) => string, merge?: (left: T, right: T) => T): T[] {
-	const merged = new Map<string, T>();
+	const merged: Map<string, T> = new Map();
 
 	for (const entry of entries) {
 		const name = getName(entry);
 
 		const existing = merged.get(name);
 
-		if (existing == null) {
+		if (existing == null)
 			merged.set(name, entry);
-		} else if (merge != null) {
+		else if (merge != null)
 			merged.set(name, merge(existing, entry));
-		}
 	}
 
 	return Array.from(merged.values());
@@ -31,15 +31,15 @@ export function mergeNamedEntries<T>(entries: T[], getName: (entry: T) => string
  * @param rightJsDoc
  */
 export function mergeJsDoc(leftJsDoc: JsDoc | undefined, rightJsDoc: JsDoc | undefined): JsDoc | undefined {
-	if (leftJsDoc == null) {
+	if (leftJsDoc == null)
 		return rightJsDoc;
-	} else if (rightJsDoc == null) {
+	else if (rightJsDoc == null)
 		return leftJsDoc;
-	}
+
 
 	return {
 		...(leftJsDoc ?? rightJsDoc),
-		description: leftJsDoc.description ?? rightJsDoc.description
+		description: leftJsDoc.description ?? rightJsDoc.description,
 	};
 }
 
@@ -50,21 +50,21 @@ export function mergeJsDoc(leftJsDoc: JsDoc | undefined, rightJsDoc: JsDoc | und
  */
 export function mergeModifiers(
 	leftModifiers: Set<ModifierKind> | undefined,
-	rightModifiers: Set<ModifierKind> | undefined
+	rightModifiers: Set<ModifierKind> | undefined,
 ): Set<ModifierKind> | undefined {
-	const newSet = new Set<ModifierKind>();
+	const newSet: Set<ModifierKind> = new Set();
 
-	if (leftModifiers?.has("static") && rightModifiers?.has("static")) {
-		newSet.add("static");
-	}
+	if (leftModifiers?.has('static') && rightModifiers?.has('static'))
+		newSet.add('static');
 
-	if (leftModifiers?.has("readonly") && rightModifiers?.has("readonly")) {
-		newSet.add("readonly");
-	}
 
-	if (newSet.size === 0) {
+	if (leftModifiers?.has('readonly') && rightModifiers?.has('readonly'))
+		newSet.add('readonly');
+
+
+	if (newSet.size === 0)
 		return undefined;
-	}
+
 
 	return newSet;
 }

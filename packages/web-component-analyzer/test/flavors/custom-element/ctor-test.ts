@@ -1,6 +1,6 @@
-import { analyzeTextWithCurrentTsModule } from "../../helpers/analyze-text-with-current-ts-module";
-import { tsTest } from "../../helpers/ts-test";
-import { assertHasMembers } from "../../helpers/util";
+import { analyzeTextWithCurrentTsModule } from "../../helpers/analyze-text-with-current-ts-module.js";
+import { tsTest } from "../../helpers/ts-test.js";
+import { assertHasMembers } from "../../helpers/util.js";
 
 tsTest("Property assignments in the constructor are picked up", t => {
 	const {
@@ -12,25 +12,25 @@ tsTest("Property assignments in the constructor are picked up", t => {
 		class MyElement extends HTMLElement {
 			constructor () {
 				super();
-				
+
 				/**
 				 * This is a property
 				 */
 				this.title = "My title";
-				
+
 				/**
 				 * This property also has an attribute
 				 * @attribute
 				 */
 				this.darkMode = false;
-				
+
 				this.item = { title: "foo", description: "bar" };
-				
+
 				this._formatter = null;
 				this._timeout = setTimeout(console.log, 1000);
 			}
 		}
-		
+
 		customElements.define("my-element", MyElement);
 	 `
 	});
@@ -127,10 +127,10 @@ tsTest("Property assignments in the constructor are correctly merged", t => {
 	     */
 		class MyElement extends HTMLElement {
 			foo;
-			
+
 			constructor () {
 				super();
-				
+
 				/**
 				 * This is a property
 				 * @attribute my-attr
@@ -138,7 +138,7 @@ tsTest("Property assignments in the constructor are correctly merged", t => {
 				this.foo = "Bar";
 			}
 		}
-		
+
 		customElements.define("my-element", MyElement);
 	 `
 	});
@@ -178,13 +178,13 @@ tsTest("Property assignments in the constructor don't overwrite Typescript modif
 		text: `
 		class MyElement extends HTMLElement {
 			private foo;
-			
+
 			constructor () {
 				super();
 				this.foo = "Bar";
 			}
 		}
-		
+
 		customElements.define("my-element", MyElement);
 	 `
 	});

@@ -1,14 +1,15 @@
-import { SimpleType } from "ts-simple-type";
-import * as tsModule from "typescript";
-import { CallExpression, Node, PropertyAssignment } from "typescript";
-import { AnalyzerVisitContext } from "../../analyzer-visit-context.js";
-import { LitElementPropertyConfig } from "../../types/features/lit-element-property-config.js";
-import { getDecorators } from "../../util/ast-util.js";
-import { resolveNodeValue } from "../../util/resolve-node-value.js";
+import { SimpleType } from 'ts-simple-type';
+import type tsModule from 'typescript';
+import { CallExpression, Node, PropertyAssignment } from 'typescript';
 
-export type LitElementPropertyDecoratorKind = "property" | "internalProperty" | "state";
+import { AnalyzerVisitContext } from '../../analyzer-visit-context.js';
+import { LitElementPropertyConfig } from '../../types/features/lit-element-property-config.js';
+import { getDecorators } from '../../util/ast-util.js';
+import { resolveNodeValue } from '../../util/resolve-node-value.js';
 
-export const LIT_ELEMENT_PROPERTY_DECORATOR_KINDS: LitElementPropertyDecoratorKind[] = ["property", "internalProperty", "state"];
+export type LitElementPropertyDecoratorKind = 'property' | 'internalProperty' | 'state';
+
+export const LIT_ELEMENT_PROPERTY_DECORATOR_KINDS: LitElementPropertyDecoratorKind[] = [ 'property', 'internalProperty', 'state' ];
 
 /**
  * Returns a potential lit element property decorator.
@@ -17,8 +18,8 @@ export const LIT_ELEMENT_PROPERTY_DECORATOR_KINDS: LitElementPropertyDecoratorKi
  */
 export function getLitElementPropertyDecorator(
 	node: Node,
-	context: AnalyzerVisitContext
-): { expression: CallExpression; kind: LitElementPropertyDecoratorKind } | undefined {
+	context: AnalyzerVisitContext,
+): { expression: CallExpression; kind: LitElementPropertyDecoratorKind; } | undefined {
 	const { ts } = context;
 
 	// Find a decorator with "property" name.
@@ -29,9 +30,8 @@ export function getLitElementPropertyDecorator(
 		if (ts.isCallExpression(expression) && ts.isIdentifier(expression.expression)) {
 			const identifier = expression.expression;
 			const kind = identifier.text as LitElementPropertyDecoratorKind;
-			if (LIT_ELEMENT_PROPERTY_DECORATOR_KINDS.includes(kind)) {
+			if (LIT_ELEMENT_PROPERTY_DECORATOR_KINDS.includes(kind))
 				return { expression, kind };
-			}
 		}
 	}
 
@@ -56,16 +56,16 @@ export function getLitElementPropertyDecoratorConfig(node: Node, context: Analyz
 
 		// Apply specific config based on the decorator kind
 		switch (decorator.kind) {
-			case "internalProperty":
-			case "state":
-				config.attribute = false;
-				config.state = true;
-				break;
+		case 'internalProperty':
+		case 'state':
+			config.attribute = false;
+			config.state = true;
+			break;
 		}
 
-		if (configNode == null) {
+		if (configNode == null)
 			return config;
-		}
+
 
 		const resolved = resolveNodeValue(configNode, context);
 
@@ -95,24 +95,24 @@ export function getLitPropertyType(ts: typeof tsModule, node: Node): SimpleType 
 	const value = ts.isIdentifier(node) ? node.text : undefined;
 
 	switch (value) {
-		case "String":
-		case "StringConstructor":
-			return { kind: "STRING" };
-		case "Number":
-		case "NumberConstructor":
-			return { kind: "NUMBER" };
-		case "Boolean":
-		case "BooleanConstructor":
-			return { kind: "BOOLEAN" };
-		case "Array":
-		case "ArrayConstructor":
-			return { kind: "ARRAY", type: { kind: "ANY" } };
-		case "Object":
-		case "ObjectConstructor":
-			return { kind: "OBJECT", members: [] };
-		default:
-			// This is an unknown type, so set the name as a string
-			return node.getText();
+	case 'String':
+	case 'StringConstructor':
+		return { kind: 'STRING' };
+	case 'Number':
+	case 'NumberConstructor':
+		return { kind: 'NUMBER' };
+	case 'Boolean':
+	case 'BooleanConstructor':
+		return { kind: 'BOOLEAN' };
+	case 'Array':
+	case 'ArrayConstructor':
+		return { kind: 'ARRAY', type: { kind: 'ANY' } };
+	case 'Object':
+	case 'ObjectConstructor':
+		return { kind: 'OBJECT', members: [] };
+	default:
+		// This is an unknown type, so set the name as a string
+		return node.getText();
 	}
 }
 
@@ -126,47 +126,46 @@ export function getLitPropertyOptions(
 	node: Node,
 	object: unknown,
 	context: AnalyzerVisitContext,
-	existingConfig: LitElementPropertyConfig = {}
+	existingConfig: LitElementPropertyConfig = {},
 ): LitElementPropertyConfig {
 	const { ts } = context;
 	const result: LitElementPropertyConfig = { ...existingConfig };
 	let attributeInitializer: Node | undefined;
 	let typeInitializer: Node | undefined;
 
-	if (typeof object === "object" && object !== null && !Array.isArray(object)) {
-		if (hasOwnProperty(object, "converter") && object.converter !== undefined) {
+	if (typeof object === 'object' && object !== null && !Array.isArray(object)) {
+		if (hasOwnProperty(object, 'converter') && object.converter !== undefined)
 			result.hasConverter = true;
-		}
 
-		if (hasOwnProperty(object, "reflect") && object.reflect !== undefined) {
+
+		if (hasOwnProperty(object, 'reflect') && object.reflect !== undefined)
 			result.reflect = object.reflect === true;
-		}
 
-		if (hasOwnProperty(object, "state") && object.state !== undefined) {
+
+		if (hasOwnProperty(object, 'state') && object.state !== undefined)
 			result.state = object.state === true;
-		}
 
-		if (hasOwnProperty(object, "value")) {
+
+		if (hasOwnProperty(object, 'value'))
 			result.default = object.value;
-		}
 
-		if (hasOwnProperty(object, "attribute") && (typeof object.attribute === "boolean" || typeof object.attribute === "string")) {
+
+		if (hasOwnProperty(object, 'attribute') && (typeof object.attribute === 'boolean' || typeof object.attribute === 'string')) {
 			result.attribute = object.attribute;
 
 			if (ts.isObjectLiteralExpression(node)) {
 				const prop = node.properties.find(
-					(p): p is PropertyAssignment => ts.isPropertyAssignment(p) && ts.isIdentifier(p.name) && p.name.text === "attribute"
+					(p): p is PropertyAssignment => ts.isPropertyAssignment(p) && ts.isIdentifier(p.name) && p.name.text === 'attribute',
 				);
-				if (prop) {
+				if (prop)
 					attributeInitializer = prop.initializer;
-				}
 			}
 		}
 	}
 
 	if (ts.isObjectLiteralExpression(node)) {
 		const typeProp = node.properties.find(
-			(p): p is PropertyAssignment => ts.isPropertyAssignment(p) && ts.isIdentifier(p.name) && p.name.text === "type"
+			(p): p is PropertyAssignment => ts.isPropertyAssignment(p) && ts.isIdentifier(p.name) && p.name.text === 'type',
 		);
 
 		if (typeProp) {
@@ -180,7 +179,7 @@ export function getLitPropertyOptions(
 		node: {
 			...(result.node || {}),
 			attribute: attributeInitializer,
-			type: typeInitializer
-		}
+			type:      typeInitializer,
+		},
 	};
 }

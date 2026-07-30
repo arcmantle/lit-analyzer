@@ -45,13 +45,13 @@ export type ExportDoc = ClassDoc | FunctionDoc | VariableDoc | CustomElementDefi
  * representation of a refernce it the export it's available from.
  */
 export interface Reference {
-	name: string;
+	name:     string;
 	package?: string;
-	module?: string;
+	module?:  string;
 }
 
 export interface CustomElementDoc extends ClassDoc {
-	tagName: string;
+	tagName:     string;
 	/**
 	 * The attributes that this element is known to understand.
 	 */
@@ -73,7 +73,7 @@ export interface CustomElementDoc extends ClassDoc {
 }
 
 export interface CustomElementDefinitionDoc {
-	kind: "definition";
+	kind: 'definition';
 
 	name: string;
 
@@ -158,10 +158,10 @@ export interface SlotDoc {
 }
 
 export interface CSSPropertyDoc {
-	name: string;
+	name:         string;
 	description?: string;
-	type?: string;
-	default?: string;
+	type?:        string;
+	default?:     string;
 
 	/**
 	 * A reference to the class or mixin that declared this property.
@@ -170,7 +170,7 @@ export interface CSSPropertyDoc {
 }
 
 export interface CSSPartDoc {
-	name: string;
+	name:         string;
 	description?: string;
 
 	/**
@@ -180,7 +180,7 @@ export interface CSSPartDoc {
 }
 
 export interface ClassDoc {
-	kind: "class";
+	kind: 'class';
 
 	/**
 	 * The class name, or `undefined` if the class is anonymous.
@@ -198,16 +198,16 @@ export interface ClassDoc {
 	 * A markdown description of the class.
 	 */
 	description?: string;
-	superclass?: Reference;
-	mixins?: Reference[];
-	members?: ClassMember[];
+	superclass?:  Reference;
+	mixins?:      Reference[];
+	members?:     ClassMember[];
 }
 
 export type ClassMember = FieldDoc | MethodDoc;
 
 export interface FieldDoc {
-	kind: "field";
-	name: string;
+	kind:    'field';
+	name:    string;
 	static?: boolean;
 
 	/**
@@ -221,9 +221,9 @@ export interface FieldDoc {
 	 * A markdown description of the field.
 	 */
 	description?: string;
-	default?: string; // TODO: make this a Type type or a Reference
-	privacy?: Privacy;
-	type?: string;
+	default?:     string; // TODO: make this a Type type or a Reference
+	privacy?:     Privacy;
+	type?:        string;
 
 	/**
 	 * A reference to the class or mixin that declared this property.
@@ -232,7 +232,7 @@ export interface FieldDoc {
 }
 
 export interface MethodDoc extends FunctionLike {
-	kind: "method";
+	kind: 'method';
 
 	static?: boolean;
 
@@ -251,7 +251,7 @@ export interface MethodDoc extends FunctionLike {
 export interface MixinDoc extends ClassDoc {}
 
 export interface VariableDoc {
-	kind: "variable";
+	kind: 'variable';
 
 	name: string;
 
@@ -264,16 +264,16 @@ export interface VariableDoc {
 	 * A markdown description of the class.
 	 */
 	description?: string;
-	type?: string;
+	type?:        string;
 }
 
 export interface FunctionDoc extends FunctionLike {
-	kind: "function";
+	kind: 'function';
 }
 
 export interface Parameter {
-	name: string;
-	type?: string;
+	name:         string;
+	type?:        string;
 	description?: string;
 }
 
@@ -293,15 +293,15 @@ export interface FunctionLike {
 	parameters?: Parameter[];
 
 	return?: {
-		type?: string;
+		type?:        string;
 		description?: string;
 	};
 
 	privacy?: Privacy;
-	type?: string;
+	type?:    string;
 }
 
-export type Privacy = "public" | "private" | "protected";
+export type Privacy = 'public' | 'private' | 'protected';
 
 export interface Demo {
 	/**

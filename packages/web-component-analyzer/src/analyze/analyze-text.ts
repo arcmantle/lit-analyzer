@@ -1,26 +1,27 @@
-import { existsSync, readFileSync } from "fs";
-import { dirname, join } from "path";
-import * as tsModule from "typescript";
-import { CompilerOptions, Program, ScriptKind, ScriptTarget, SourceFile, System, TypeChecker } from "typescript";
+import { existsSync, readFileSync } from 'fs';
+import { dirname, join } from 'path';
+import * as tsModule from 'typescript';
+import { CompilerOptions, Program, ScriptKind, ScriptTarget, SourceFile, System, TypeChecker } from 'typescript';
+
 //import * as ts from "typescript";
-import { arrayDefined } from "../util/array-util.js";
-import { analyzeSourceFile } from "./analyze-source-file.js";
-import { AnalyzerOptions } from "./types/analyzer-options.js";
-import { AnalyzerResult } from "./types/analyzer-result.js";
+import { arrayDefined } from '../util/array-util.js';
+import { analyzeSourceFile } from './analyze-source-file.js';
+import { AnalyzerOptions } from './types/analyzer-options.js';
+import { AnalyzerResult } from './types/analyzer-result.js';
 
 export interface IVirtualSourceFile {
-	fileName: string;
-	text?: string;
-	analyze?: boolean;
+	fileName:    string;
+	text?:       string;
+	analyze?:    boolean;
 	includeLib?: boolean;
 }
 
 export type VirtualSourceFile = IVirtualSourceFile | string;
 
 export interface AnalyzeTextResult {
-	results: AnalyzerResult[];
-	checker: TypeChecker;
-	program: Program;
+	results:             AnalyzerResult[];
+	checker:             TypeChecker;
+	program:             Program;
 	analyzedSourceFiles: SourceFile[];
 }
 
@@ -36,34 +37,33 @@ export function analyzeText(inputFiles: VirtualSourceFile[] | VirtualSourceFile,
 	const system: System | undefined = ts.sys;
 
 	// Convert arguments into virtual source files
-	const files: IVirtualSourceFile[] = (Array.isArray(inputFiles) ? inputFiles : [inputFiles])
+	const files: IVirtualSourceFile[] = (Array.isArray(inputFiles) ? inputFiles : [ inputFiles ])
 		.map(file =>
-			typeof file === "string"
+			typeof file === 'string'
 				? {
-						text: file,
-						fileName: `auto-generated-${Math.floor(Math.random() * 100000)}.ts`,
-						entry: true
-				  }
-				: file
-		)
+					text:     file,
+					fileName: `auto-generated-${ Math.floor(Math.random() * 100000) }.ts`,
+					entry:    true,
+				}
+				: file)
 		.map(file => ({ ...file, fileName: file.fileName }));
 
 	const includeLib = files.some(file => file.includeLib);
 
 	const readFile = (fileName: string): string | undefined => {
 		const matchedFile = files.find(currentFile => currentFile.fileName === fileName);
-		if (matchedFile != null) {
+		if (matchedFile != null)
 			return matchedFile.text;
-		}
+
 
 		if (includeLib) {
 			// TODO: find better method of finding the current typescript module path
-			fileName = fileName.match(/[/\\]/) ? fileName : join(dirname(require.resolve("typescript")), fileName);
+			fileName = fileName.match(/[/\\]/) ? fileName : join(dirname(require.resolve('typescript')), fileName);
 		}
 
-		if (existsSync(fileName)) {
-			return readFileSync(fileName, "utf8").toString();
-		}
+		if (existsSync(fileName))
+			return readFileSync(fileName, 'utf8').toString();
+
 
 		return undefined;
 	};
@@ -73,29 +73,30 @@ export function analyzeText(inputFiles: VirtualSourceFile[] | VirtualSourceFile,
 	};
 
 	const compilerOptions: CompilerOptions = {
-		module: ts.ModuleKind.ESNext,
-		target: ts.ScriptTarget.ESNext,
-		allowJs: true,
-		sourceMap: false,
-		strictNullChecks: true
+		module:           ts.ModuleKind.ESNext,
+		target:           ts.ScriptTarget.ESNext,
+		allowJs:          true,
+		sourceMap:        false,
+		strictNullChecks: true,
 	};
 
 	const program = ts.createProgram({
 		rootNames: files.map(file => file.fileName),
-		options: compilerOptions,
-		host: {
+		options:   compilerOptions,
+		host:      {
 			writeFile: () => {},
 			readFile,
 			fileExists,
 			getSourceFile(fileName: string, languageVersion: ScriptTarget): SourceFile | undefined {
 				const sourceText = this.readFile(fileName);
-				if (sourceText == null) return undefined;
+				if (sourceText == null)
+					return undefined;
 
-				return ts.createSourceFile(fileName, sourceText, languageVersion, true, fileName.endsWith(".js") ? ScriptKind.JS : ScriptKind.TS);
+				return ts.createSourceFile(fileName, sourceText, languageVersion, true, fileName.endsWith('.js') ? ScriptKind.JS : ScriptKind.TS);
 			},
 
 			getCurrentDirectory() {
-				return ".";
+				return '.';
 			},
 
 			getDirectories(directoryName: string) {
@@ -111,13 +112,13 @@ export function analyzeText(inputFiles: VirtualSourceFile[] | VirtualSourceFile,
 			},
 
 			getNewLine(): string {
-				return system?.newLine ?? "\n";
+				return system?.newLine ?? '\n';
 			},
 
 			useCaseSensitiveFileNames() {
 				return system?.useCaseSensitiveFileNames ?? false;
-			}
-		}
+			},
+		},
 	});
 
 	const checker = program.getTypeChecker();

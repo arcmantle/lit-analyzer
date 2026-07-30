@@ -1,6 +1,6 @@
-import { analyzeTextWithCurrentTsModule } from "../../helpers/analyze-text-with-current-ts-module";
-import { tsTest } from "../../helpers/ts-test";
-import { assertHasMembers } from "../../helpers/util";
+import { analyzeTextWithCurrentTsModule } from "../../helpers/analyze-text-with-current-ts-module.js";
+import { tsTest } from "../../helpers/ts-test.js";
+import { assertHasMembers } from "../../helpers/util.js";
 
 tsTest("jsdoc: Discovers properties with @prop", t => {
 	const {
@@ -15,7 +15,7 @@ tsTest("jsdoc: Discovers properties with @prop", t => {
 	 * @attr [size=123]
 	 * @prop {MyType} this is a prop with no name
 	 */
-	 class MyElement extends HTMLElement { 
+	 class MyElement extends HTMLElement {
 	 }
 	 `);
 
@@ -79,7 +79,7 @@ tsTest("jsdoc: Discovers attributes defined on getters with @attr", t => {
 	/**
 	 * @element
 	 */
-	 class MyElement extends HTMLElement { 
+	 class MyElement extends HTMLElement {
 		/**
 		 * This is a comment
 		 * @attr {boolean} [auto-reload=false]

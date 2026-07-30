@@ -1,5 +1,5 @@
-import { analyzeTextWithCurrentTsModule } from "../../helpers/analyze-text-with-current-ts-module";
-import { tsTest } from "../../helpers/ts-test";
+import { analyzeTextWithCurrentTsModule } from "../../helpers/analyze-text-with-current-ts-module.js";
+import { tsTest } from "../../helpers/ts-test.js";
 
 tsTest("jsdoc: Discovers css parts with @csspart", t => {
 	const {
@@ -9,7 +9,7 @@ tsTest("jsdoc: Discovers css parts with @csspart", t => {
 	 * @element
 	 * @csspart thumb - This is a comment
 	 */
-	 class MyElement extends HTMLElement { 
+	 class MyElement extends HTMLElement {
 	 }
 	 `);
 

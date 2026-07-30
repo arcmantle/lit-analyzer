@@ -1,6 +1,7 @@
-import { isSimpleType, SimpleType, SimpleTypeAlias, typeToString } from "ts-simple-type";
-import { Type, TypeChecker, TypeFormatFlags } from "typescript";
-import { TransformerConfig } from "../transformers/transformer-config.js";
+import { getGenericTarget, isSimpleType, SimpleType, SimpleTypeAlias, typeToString } from 'ts-simple-type';
+import { Type, TypeChecker, TypeFormatFlags } from 'typescript';
+
+import { TransformerConfig } from '../transformers/transformer-config.js';
 
 /**
  * Returns a "type hint" from a type
@@ -12,10 +13,12 @@ import { TransformerConfig } from "../transformers/transformer-config.js";
 export function getTypeHintFromType(
 	type: string | Type | SimpleType | undefined,
 	checker: TypeChecker,
-	config: TransformerConfig
+	config: TransformerConfig,
 ): string | undefined {
-	if (type == null) return undefined;
-	if (typeof type === "string") return type;
+	if (type == null)
+		return undefined;
+	if (typeof type === 'string')
+		return type;
 
 	let typeHint: string;
 
@@ -23,28 +26,34 @@ export function getTypeHintFromType(
 		// Inline aliased types
 		if (isSimpleType(type)) {
 			// Expand a possible alias
-			if (isUnionTypeAlias(type)) {
-				type = type.target;
-			}
+			if (isUnionTypeAlias(type))
+				type = getGenericTarget(type);
+
 
 			typeHint = typeToString(type);
-		} else {
+		}
+		else {
 			// Transform using Typescript natively, to avoid transforming all types to simple types (overhead).
 			// The "InTypeAlias" flag expands the type.
 			typeHint = checker.typeToString(type, undefined, TypeFormatFlags.InTypeAlias);
 		}
-	} else {
+	}
+	else {
 		// Transform types to string
 		typeHint = typeToString(type, checker);
 	}
 
 	// Replace "anys" and "{}" with more human friendly representations
-	if (typeHint === "any") return undefined;
-	if (typeHint === "any[]") return "array";
-	if (typeHint === "{}") return "object";
+	if (typeHint === 'any')
+		return undefined;
+	if (typeHint === 'any[]')
+		return 'array';
+	if (typeHint === '{}')
+		return 'object';
 
 	// "CustomEvent<unknown>" and "Event" of no interest
-	if (typeHint === "CustomEvent<unknown>" || typeHint === "Event") return undefined;
+	if (typeHint === 'CustomEvent<unknown>' || typeHint === 'Event')
+		return undefined;
 
 	return typeHint;
 }
@@ -54,5 +63,5 @@ export function getTypeHintFromType(
  * @param simpleType
  */
 function isUnionTypeAlias(simpleType: SimpleType): simpleType is SimpleTypeAlias {
-	return simpleType.kind === "ALIAS" && simpleType.target.kind === "UNION";
+	return simpleType.kind === 'ALIAS' && getGenericTarget(simpleType).kind === 'UNION';
 }

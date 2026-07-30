@@ -1,6 +1,6 @@
-import { analyzeTextWithCurrentTsModule } from "../../helpers/analyze-text-with-current-ts-module";
-import { tsTest } from "../../helpers/ts-test";
-import { getComponentProp } from "../../helpers/util";
+import { analyzeTextWithCurrentTsModule } from "../../helpers/analyze-text-with-current-ts-module.js";
+import { tsTest } from "../../helpers/ts-test.js";
+import { getComponentProp } from "../../helpers/util.js";
 
 tsTest("jsDoc: Handles visibility modifier on internal event", t => {
 	const {
@@ -43,7 +43,7 @@ tsTest("jsDoc: Handles visibility modifier on constructor assignment", t => {
 				 * @protected
 			     */
 				this.foo = "bar";
-			}	
+			}
 		}
 	 `
 	});

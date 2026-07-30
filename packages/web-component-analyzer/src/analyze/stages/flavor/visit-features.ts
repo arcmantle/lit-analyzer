@@ -1,8 +1,9 @@
-import { Node } from "typescript";
-import { arrayDefined } from "../../../util/array-util.js";
-import { AnalyzerVisitContext } from "../../analyzer-visit-context.js";
-import { AnalyzerDeclarationVisitContext, AnalyzerFlavor, FeatureVisitReturnTypeMap } from "../../flavors/analyzer-flavor.js";
-import { ComponentFeature } from "../../types/features/component-feature.js";
+import { Node } from 'typescript';
+
+import { arrayDefined } from '../../../util/array-util.js';
+import { AnalyzerVisitContext } from '../../analyzer-visit-context.js';
+import { AnalyzerDeclarationVisitContext, AnalyzerFlavor, FeatureVisitReturnTypeMap } from '../../flavors/analyzer-flavor.js';
+import { ComponentFeature } from '../../types/features/component-feature.js';
 
 export type VisitFeatureEmitMap = { [K in ComponentFeature]: (result: FeatureVisitReturnTypeMap[K][]) => void };
 
@@ -28,8 +29,8 @@ export function visitFeatures<ReturnType>(node: Node, context: AnalyzerDeclarati
 export function visitFeaturesWithVisitMaps<ReturnType>(
 	node: Node,
 	context: AnalyzerVisitContext,
-	visitMaps: NonNullable<AnalyzerFlavor["discoverFeatures"]>[],
-	emitMap: Partial<VisitFeatureEmitMap>
+	visitMaps: NonNullable<AnalyzerFlavor['discoverFeatures']>[],
+	emitMap: Partial<VisitFeatureEmitMap>,
 ): void {
 	for (const feature of context.config.features || []) {
 		// Visit all features: always "continue"

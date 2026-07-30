@@ -1,5 +1,5 @@
-import { analyzeTextWithCurrentTsModule } from "../../helpers/analyze-text-with-current-ts-module";
-import { tsTest } from "../../helpers/ts-test";
+import { analyzeTextWithCurrentTsModule } from "../../helpers/analyze-text-with-current-ts-module.js";
+import { tsTest } from "../../helpers/ts-test.js";
 
 tsTest("jsDoc: Handles @ignore jsdoc tag", t => {
 	const {
@@ -18,7 +18,7 @@ tsTest("jsDoc: Handles @ignore jsdoc tag", t => {
 				 */
 				this.dispatchEvent(new CustomEvent("my-event"));
 			}
-			
+
 			/**
 			 * @ignore
 			 */

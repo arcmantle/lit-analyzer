@@ -1,7 +1,8 @@
-import { Node } from "typescript";
-import { AnalyzerVisitContext } from "../../analyzer-visit-context.js";
-import { getInterfaceKeys } from "../../util/ast-util.js";
-import { DefinitionNodeResult } from "../analyzer-flavor.js";
+import { Node } from 'typescript';
+
+import { AnalyzerVisitContext } from '../../analyzer-visit-context.js';
+import { getInterfaceKeys } from '../../util/ast-util.js';
+import { DefinitionNodeResult } from '../analyzer-flavor.js';
 
 /**
  * Discovers element definitions in "IntrinsicElements"
@@ -12,13 +13,14 @@ export function discoverDefinitions(node: Node, context: AnalyzerVisitContext): 
 	const { ts } = context;
 
 	if (ts.isInterfaceDeclaration(node)) {
-		if (node.name.text === "IntrinsicElements") {
+		if (node.name.text === 'IntrinsicElements') {
 			const extensions = getInterfaceKeys(node, context);
+
 			return extensions.map(({ key, keyNode, identifier, declaration }) => ({
-				tagName: key,
-				tagNameNode: keyNode,
-				identifierNode: identifier,
-				declarationNode: declaration
+				tagName:         key,
+				tagNameNode:     keyNode,
+				identifierNode:  identifier,
+				declarationNode: declaration,
 			}));
 		}
 	}

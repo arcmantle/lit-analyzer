@@ -1,5 +1,6 @@
-import { Node } from "typescript";
-import { AnalyzerVisitContext } from "../../analyzer-visit-context.js";
+import { Node } from 'typescript';
+
+import { AnalyzerVisitContext } from '../../analyzer-visit-context.js';
 
 /**
  * Excludes nodes from "lib.dom.d.ts" if analyzeLibDom is false
@@ -7,13 +8,13 @@ import { AnalyzerVisitContext } from "../../analyzer-visit-context.js";
  * @param context
  */
 export function excludeNode(node: Node, context: AnalyzerVisitContext): boolean | undefined {
-	if (context.config.analyzeDefaultLib) {
+	if (context.config.analyzeDefaultLib)
 		return undefined;
-	}
+
 
 	return isLibDom(node);
 }
 
 function isLibDom(node: Node) {
-	return node.getSourceFile().fileName.endsWith("lib.dom.d.ts");
+	return node.getSourceFile().fileName.endsWith('lib.dom.d.ts');
 }

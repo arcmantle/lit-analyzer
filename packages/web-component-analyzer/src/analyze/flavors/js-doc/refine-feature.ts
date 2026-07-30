@@ -1,10 +1,10 @@
-import { AnalyzerVisitContext } from "../../analyzer-visit-context.js";
-import { ComponentMember, ComponentMemberReflectKind } from "../../types/features/component-member.js";
-import { JsDoc } from "../../types/js-doc.js";
-import { VisibilityKind } from "../../types/visibility-kind.js";
-import { parseSimpleJsDocTypeExpression } from "../../util/js-doc-util.js";
-import { lazy } from "../../util/lazy.js";
-import { AnalyzerFlavor } from "../analyzer-flavor.js";
+import { AnalyzerVisitContext } from '../../analyzer-visit-context.js';
+import { ComponentMember, ComponentMemberReflectKind } from '../../types/features/component-member.js';
+import { JsDoc } from '../../types/js-doc.js';
+import { VisibilityKind } from '../../types/visibility-kind.js';
+import { parseSimpleJsDocTypeExpression } from '../../util/js-doc-util.js';
+import { lazy } from '../../util/lazy.js';
+import { AnalyzerFlavor } from '../analyzer-flavor.js';
 
 /**
  * The call shape every `applyJsDoc*` helper below shares. Each helper is generic
@@ -17,43 +17,46 @@ type ApplyJsDocTag<T> = (feature: T, jsDoc: JsDoc | undefined, context: Analyzer
 /**
  * Refines features by looking at the jsdoc tags on the feature
  */
-export const refineFeature: AnalyzerFlavor["refineFeature"] = {
+export const refineFeature: AnalyzerFlavor['refineFeature'] = {
 	event: (event, context) => {
-		if (event.jsDoc == null || event.jsDoc.tags == null) return event;
+		if (event.jsDoc == null || event.jsDoc.tags == null)
+			return event;
 
 		// Check if the feature has "@ignore" jsdoc tag
-		if (hasIgnoreJsDocTag(event.jsDoc)) {
+		if (hasIgnoreJsDocTag(event.jsDoc))
 			return undefined;
-		}
 
-		return [applyJsDocDeprecated, applyJsDocVisibility, applyJsDocType].reduce(
+
+		return [ applyJsDocDeprecated, applyJsDocVisibility, applyJsDocType ].reduce(
 			(event, applyFunc) => (applyFunc as ApplyJsDocTag<typeof event>)(event, event.jsDoc, context),
-			event
+			event,
 		);
 	},
 	method: (method, context) => {
-		if (method.jsDoc == null || method.jsDoc.tags == null) return method;
+		if (method.jsDoc == null || method.jsDoc.tags == null)
+			return method;
 
 		// Check if the feature has "@ignore" jsdoc tag
-		if (hasIgnoreJsDocTag(method.jsDoc)) {
+		if (hasIgnoreJsDocTag(method.jsDoc))
 			return undefined;
-		}
 
-		method = [applyJsDocDeprecated, applyJsDocVisibility].reduce(
+
+		method = [ applyJsDocDeprecated, applyJsDocVisibility ].reduce(
 			(method, applyFunc) => (applyFunc as ApplyJsDocTag<typeof method>)(method, method.jsDoc, context),
-			method
+			method,
 		);
 
 		return method;
 	},
 	member: (member, context) => {
 		// Return right away if the member doesn't have jsdoc
-		if (member.jsDoc == null || member.jsDoc.tags == null) return member;
+		if (member.jsDoc == null || member.jsDoc.tags == null)
+			return member;
 
 		// Check if the feature has "@ignore" jsdoc tag
-		if (hasIgnoreJsDocTag(member.jsDoc)) {
+		if (hasIgnoreJsDocTag(member.jsDoc))
 			return undefined;
-		}
+
 
 		return [
 			applyJsDocDeprecated,
@@ -63,9 +66,9 @@ export const refineFeature: AnalyzerFlavor["refineFeature"] = {
 			applyJsDocReflect,
 			applyJsDocType,
 			applyJsDocAttribute,
-			applyJsDocModifiers
+			applyJsDocModifiers,
 		].reduce((member, applyFunc) => (applyFunc as ApplyJsDocTag<typeof member>)(member, member.jsDoc, context), member);
-	}
+	},
 };
 
 /**
@@ -73,13 +76,13 @@ export const refineFeature: AnalyzerFlavor["refineFeature"] = {
  * @param feature
  * @param jsDoc
  */
-function applyJsDocDeprecated<T extends Partial<Pick<ComponentMember, "deprecated">>>(feature: T, jsDoc: JsDoc): T {
-	const deprecatedTag = jsDoc.tags?.find(tag => tag.tag === "deprecated");
+function applyJsDocDeprecated<T extends Partial<Pick<ComponentMember, 'deprecated'>>>(feature: T, jsDoc: JsDoc): T {
+	const deprecatedTag = jsDoc.tags?.find(tag => tag.tag === 'deprecated');
 
 	if (deprecatedTag != null) {
 		return {
 			...feature,
-			deprecated: deprecatedTag.comment || true
+			deprecated: deprecatedTag.comment || true,
 		};
 	}
 
@@ -91,37 +94,37 @@ function applyJsDocDeprecated<T extends Partial<Pick<ComponentMember, "deprecate
  * @param feature
  * @param jsDoc
  */
-function applyJsDocVisibility<T extends Partial<Pick<ComponentMember, "visibility">>>(feature: T, jsDoc: JsDoc): T {
-	const visibilityTag = jsDoc.tags?.find(tag => ["public", "protected", "private", "package", "access"].includes(tag.tag)); // member + method
+function applyJsDocVisibility<T extends Partial<Pick<ComponentMember, 'visibility'>>>(feature: T, jsDoc: JsDoc): T {
+	const visibilityTag = jsDoc.tags?.find(tag => [ 'public', 'protected', 'private', 'package', 'access' ].includes(tag.tag)); // member + method
 
 	if (visibilityTag != null) {
 		return {
 			...feature,
 			visibility: ((): VisibilityKind | undefined => {
 				switch (visibilityTag.tag) {
-					case "public":
-						return "public";
-					case "protected":
-						return "protected";
-					case "package":
-					case "private":
-						return "private";
-					case "access":
-						switch (visibilityTag.parsed().name) {
-							case "public":
-								return "public";
-							case "protected":
-								return "protected";
-							case "private":
-							case "package":
-								return "private";
-							default:
-								return undefined;
-						}
+				case 'public':
+					return 'public';
+				case 'protected':
+					return 'protected';
+				case 'package':
+				case 'private':
+					return 'private';
+				case 'access':
+					switch (visibilityTag.parsed().name) {
+					case 'public':
+						return 'public';
+					case 'protected':
+						return 'protected';
+					case 'private':
+					case 'package':
+						return 'private';
 					default:
 						return undefined;
+					}
+				default:
+					return undefined;
 				}
-			})()
+			})(),
 		};
 	}
 
@@ -134,12 +137,12 @@ function applyJsDocVisibility<T extends Partial<Pick<ComponentMember, "visibilit
  * @param jsDoc
  * @param context
  */
-function applyJsDocAttribute<T extends Partial<Pick<ComponentMember, "propName" | "attrName" | "default" | "type" | "typeHint">>>(
+function applyJsDocAttribute<T extends Partial<Pick<ComponentMember, 'propName' | 'attrName' | 'default' | 'type' | 'typeHint'>>>(
 	feature: T,
 	jsDoc: JsDoc,
-	context: AnalyzerVisitContext
+	context: AnalyzerVisitContext,
 ): T {
-	const attributeTag = jsDoc.tags?.find(tag => ["attr", "attribute"].includes(tag.tag));
+	const attributeTag = jsDoc.tags?.find(tag => [ 'attr', 'attribute' ].includes(tag.tag));
 
 	if (attributeTag != null && feature.attrName == null) {
 		const parsed = attributeTag.parsed();
@@ -147,13 +150,13 @@ function applyJsDocAttribute<T extends Partial<Pick<ComponentMember, "propName" 
 		const result: T = {
 			...feature,
 			attrName: attributeTag.parsed().name || feature.propName,
-			default: feature.default ?? parsed.default
+			default:  feature.default ?? parsed.default,
 		};
 
 		// @attr jsdoc tag can also include the type of attribute
 		if (parsed.type != null && result.typeHint == null) {
 			result.typeHint = parsed.type;
-			result.type = feature.type ?? lazy(() => parseSimpleJsDocTypeExpression(parsed.type || "", context));
+			result.type = feature.type ?? lazy(() => parseSimpleJsDocTypeExpression(parsed.type || '', context));
 		}
 
 		return result;
@@ -167,13 +170,13 @@ function applyJsDocAttribute<T extends Partial<Pick<ComponentMember, "propName" 
  * @param feature
  * @param jsDoc
  */
-function applyJsDocRequired<T extends Partial<Pick<ComponentMember, "required">>>(feature: T, jsDoc: JsDoc): T {
-	const requiredTag = jsDoc.tags?.find(tag => ["optional", "required"].includes(tag.tag));
+function applyJsDocRequired<T extends Partial<Pick<ComponentMember, 'required'>>>(feature: T, jsDoc: JsDoc): T {
+	const requiredTag = jsDoc.tags?.find(tag => [ 'optional', 'required' ].includes(tag.tag));
 
 	if (requiredTag != null) {
 		return {
 			...feature,
-			required: requiredTag.tag === "required"
+			required: requiredTag.tag === 'required',
 		};
 	}
 
@@ -185,13 +188,13 @@ function applyJsDocRequired<T extends Partial<Pick<ComponentMember, "required">>
  * @param feature
  * @param jsDoc
  */
-function applyJsDocModifiers<T extends Partial<Pick<ComponentMember, "modifiers">>>(feature: T, jsDoc: JsDoc): T {
-	const readonlyTag = jsDoc.tags?.find(tag => tag.tag === "readonly");
+function applyJsDocModifiers<T extends Partial<Pick<ComponentMember, 'modifiers'>>>(feature: T, jsDoc: JsDoc): T {
+	const readonlyTag = jsDoc.tags?.find(tag => tag.tag === 'readonly');
 
 	if (readonlyTag != null) {
 		return {
 			...feature,
-			modifiers: (feature.modifiers != null ? new Set(feature.modifiers) : new Set()).add("readonly")
+			modifiers: (feature.modifiers != null ? new Set(feature.modifiers) : new Set()).add('readonly'),
 		};
 	}
 
@@ -203,13 +206,13 @@ function applyJsDocModifiers<T extends Partial<Pick<ComponentMember, "modifiers"
  * @param feature
  * @param jsDoc
  */
-function applyJsDocDefault<T extends Partial<Pick<ComponentMember, "default">>>(feature: T, jsDoc: JsDoc): T {
-	const defaultTag = jsDoc.tags?.find(tag => tag.tag === "default");
+function applyJsDocDefault<T extends Partial<Pick<ComponentMember, 'default'>>>(feature: T, jsDoc: JsDoc): T {
+	const defaultTag = jsDoc.tags?.find(tag => tag.tag === 'default');
 
 	if (defaultTag != null) {
 		return {
 			...feature,
-			default: defaultTag.comment
+			default: defaultTag.comment,
 		};
 	}
 
@@ -221,24 +224,24 @@ function applyJsDocDefault<T extends Partial<Pick<ComponentMember, "default">>>(
  * @param feature
  * @param jsDoc
  */
-function applyJsDocReflect<T extends Partial<Pick<ComponentMember, "reflect">>>(feature: T, jsDoc: JsDoc): T {
-	const reflectTag = jsDoc.tags?.find(tag => tag.tag === "reflect");
+function applyJsDocReflect<T extends Partial<Pick<ComponentMember, 'reflect'>>>(feature: T, jsDoc: JsDoc): T {
+	const reflectTag = jsDoc.tags?.find(tag => tag.tag === 'reflect');
 
 	if (reflectTag != null && feature.reflect == null) {
 		return {
 			...feature,
 			reflect: ((): ComponentMemberReflectKind | undefined => {
 				switch (reflectTag.comment) {
-					case "to-attribute":
-						return "to-attribute";
-					case "to-property":
-						return "to-property";
-					case "both":
-						return "both";
-					default:
-						return undefined;
+				case 'to-attribute':
+					return 'to-attribute';
+				case 'to-property':
+					return 'to-property';
+				case 'both':
+					return 'both';
+				default:
+					return undefined;
 				}
-			})()
+			})(),
 		};
 	}
 
@@ -251,8 +254,8 @@ function applyJsDocReflect<T extends Partial<Pick<ComponentMember, "reflect">>>(
  * @param jsDoc
  * @param context
  */
-function applyJsDocType<T extends Partial<Pick<ComponentMember, "type" | "typeHint">>>(feature: T, jsDoc: JsDoc, context: AnalyzerVisitContext): T {
-	const typeTag = jsDoc.tags?.find(tag => tag.tag === "type");
+function applyJsDocType<T extends Partial<Pick<ComponentMember, 'type' | 'typeHint'>>>(feature: T, jsDoc: JsDoc, context: AnalyzerVisitContext): T {
+	const typeTag = jsDoc.tags?.find(tag => tag.tag === 'type');
 
 	if (typeTag != null && feature.typeHint == null) {
 		const parsed = typeTag.parsed();
@@ -261,7 +264,7 @@ function applyJsDocType<T extends Partial<Pick<ComponentMember, "type" | "typeHi
 			return {
 				...feature,
 				typeHint: parsed.type,
-				type: feature.type ?? lazy(() => parseSimpleJsDocTypeExpression(parsed.type || "", context))
+				type:     feature.type ?? lazy(() => parseSimpleJsDocTypeExpression(parsed.type || '', context)),
 			};
 		}
 	}
@@ -274,5 +277,5 @@ function applyJsDocType<T extends Partial<Pick<ComponentMember, "type" | "typeHi
  * @param jsDoc
  */
 function hasIgnoreJsDocTag(jsDoc: JsDoc): boolean {
-	return jsDoc?.tags?.find(tag => tag.tag === "ignore") != null;
+	return jsDoc?.tags?.find(tag => tag.tag === 'ignore') != null;
 }

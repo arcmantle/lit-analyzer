@@ -1,7 +1,8 @@
-import { Node } from "typescript";
-import { AnalyzerVisitContext } from "../../analyzer-visit-context.js";
-import { DefinitionNodeResult } from "../../flavors/analyzer-flavor.js";
-import { executeFunctionsUntilMatch } from "../../util/execute-functions-until-match.js";
+import { Node } from 'typescript';
+
+import { AnalyzerVisitContext } from '../../analyzer-visit-context.js';
+import { DefinitionNodeResult } from '../../flavors/analyzer-flavor.js';
+import { executeFunctionsUntilMatch } from '../../util/execute-functions-until-match.js';
 
 /**
  * Uses flavors to visit definitions
@@ -10,12 +11,13 @@ import { executeFunctionsUntilMatch } from "../../util/execute-functions-until-m
  * @param emit
  */
 export function visitDefinitions(node: Node, context: AnalyzerVisitContext, emit: (results: DefinitionNodeResult[]) => void): void {
-	const result = executeFunctionsUntilMatch(context.flavors, "discoverDefinitions", node, context);
+	const result = executeFunctionsUntilMatch(context.flavors, 'discoverDefinitions', node, context);
 
 	if (result != null) {
 		emit(result.value);
 
-		if (!result.shouldContinue) return;
+		if (!result.shouldContinue)
+			return;
 	}
 
 	// Visit child nodes

@@ -1,14 +1,15 @@
-import { Node } from "typescript";
-import { AnalyzerVisitContext } from "../analyzer-visit-context.js";
-import { AnalyzerDeclarationVisitContext, ComponentFeatureCollection } from "../flavors/analyzer-flavor.js";
-import { ComponentDeclaration } from "../types/component-declaration.js";
-import { getNodeName, getSymbol, resolveDeclarations } from "../util/ast-util.js";
-import { getJsDoc } from "../util/js-doc-util.js";
-import { discoverFeatures } from "./discover-features.js";
-import { discoverInheritance } from "./discover-inheritance.js";
-import { excludeNode } from "./flavor/exclude-node.js";
-import { refineDeclaration } from "./flavor/refine-declaration.js";
-import { mergeFeatures } from "./merge/merge-features.js";
+import { Node } from 'typescript';
+
+import { AnalyzerVisitContext } from '../analyzer-visit-context.js';
+import { AnalyzerDeclarationVisitContext, ComponentFeatureCollection } from '../flavors/analyzer-flavor.js';
+import { ComponentDeclaration } from '../types/component-declaration.js';
+import { getNodeName, getSymbol, resolveDeclarations } from '../util/ast-util.js';
+import { getJsDoc } from '../util/js-doc-util.js';
+import { discoverFeatures } from './discover-features.js';
+import { discoverInheritance } from './discover-inheritance.js';
+import { excludeNode } from './flavor/exclude-node.js';
+import { refineDeclaration } from './flavor/refine-declaration.js';
+import { mergeFeatures } from './merge/merge-features.js';
 
 /**
  * Discovers features on component declaration nodes
@@ -19,20 +20,20 @@ import { mergeFeatures } from "./merge/merge-features.js";
 export function analyzeComponentDeclaration(
 	initialDeclarationNodes: Node[],
 	baseContext: AnalyzerVisitContext,
-	options: { visitedNodes?: Set<Node> } = {}
+	options: { visitedNodes?: Set<Node>; } = {},
 ): ComponentDeclaration | undefined {
 	const mainDeclarationNode = initialDeclarationNodes[0];
-	if (mainDeclarationNode == null) {
+	if (mainDeclarationNode == null)
 		return undefined;
 		//throw new Error("Couldn't find main declaration node");
-	}
+
 
 	// Check if there exists a cached declaration for this node.
 	// If a cached declaration was found, test if it should be invalidated (by looking at inherited declarations)
 	const cachedDeclaration = baseContext.cache.componentDeclarationCache.get(mainDeclarationNode);
-	if (cachedDeclaration != null && !shouldInvalidateCachedDeclaration(cachedDeclaration, baseContext)) {
+	if (cachedDeclaration != null && !shouldInvalidateCachedDeclaration(cachedDeclaration, baseContext))
 		return cachedDeclaration;
-	}
+
 
 	options.visitedNodes = options.visitedNodes || new Set();
 
@@ -43,12 +44,11 @@ export function analyzeComponentDeclaration(
 	for (const heritageClause of heritageClauses) {
 		// Only resolve declarations we haven't yet seen and shouldn't be excluded
 		const declarations = resolveDeclarations(heritageClause.identifier, baseContext).filter(
-			n => !options.visitedNodes?.has(n) && !shouldExcludeNode(n, baseContext)
+			n => !options.visitedNodes?.has(n) && !shouldExcludeNode(n, baseContext),
 		);
 
-		if (declarations.length > 0) {
+		if (declarations.length > 0)
 			heritageClause.declaration = analyzeComponentDeclaration(declarations, baseContext, options);
-		}
 	}
 
 	// Get symbol of main declaration node
@@ -58,43 +58,43 @@ export function analyzeComponentDeclaration(
 
 	const baseDeclaration: ComponentDeclaration = {
 		sourceFile,
-		node: mainDeclarationNode,
+		node:             mainDeclarationNode,
 		declarationNodes: new Set(declarationNodes),
 		symbol,
 		heritageClauses,
-		kind: declarationKind || "class",
-		events: [],
-		cssParts: [],
-		cssProperties: [],
-		members: [],
-		methods: [],
-		slots: [],
-		jsDoc: getJsDoc(mainDeclarationNode, baseContext.ts)
+		kind:             declarationKind || 'class',
+		events:           [],
+		cssParts:         [],
+		cssProperties:    [],
+		members:          [],
+		methods:          [],
+		slots:            [],
+		jsDoc:            getJsDoc(mainDeclarationNode, baseContext.ts),
 	};
 
 	// Add the "get declaration" hook to the context
 	const context: AnalyzerDeclarationVisitContext = {
 		...baseContext,
 		declarationNode: mainDeclarationNode,
-		sourceFile: mainDeclarationNode.getSourceFile(),
-		getDeclaration: () => baseDeclaration
+		sourceFile:      mainDeclarationNode.getSourceFile(),
+		getDeclaration:  () => baseDeclaration,
 	};
 
 	// Find features on all declaration nodes
 	const featureCollections: ComponentFeatureCollection[] = [];
 
 	for (const node of declarationNodes) {
-		if (shouldExcludeNode(node, context)) {
+		if (shouldExcludeNode(node, context))
 			continue;
-		}
+
 
 		// Discover component features using flavors
 		featureCollections.push(
 			discoverFeatures(node, {
 				...context,
 				declarationNode: node,
-				sourceFile: node.getSourceFile()
-			})
+				sourceFile:      node.getSourceFile(),
+			}),
 		);
 	}
 
@@ -103,15 +103,15 @@ export function analyzeComponentDeclaration(
 		if (heritageClause.declaration != null) {
 			featureCollections.push({
 				...heritageClause.declaration,
-				members: heritageClause.declaration.members
+				members: heritageClause.declaration.members,
 			});
 		}
 	}
 
 	// If all nodes were excluded, return empty declaration
-	if (featureCollections.length === 0) {
+	if (featureCollections.length === 0)
 		return baseDeclaration;
-	}
+
 
 	// Merge all features into one single collection prioritizing features found in first
 	const mergedFeatureCollection = mergeFeatures(featureCollections, context);
@@ -120,14 +120,14 @@ export function analyzeComponentDeclaration(
 	const refinedDeclaration = refineDeclaration(
 		{
 			...baseDeclaration,
-			cssParts: mergedFeatureCollection.cssParts,
+			cssParts:      mergedFeatureCollection.cssParts,
 			cssProperties: mergedFeatureCollection.cssProperties,
-			events: mergedFeatureCollection.events,
-			methods: mergedFeatureCollection.methods,
-			members: mergedFeatureCollection.members,
-			slots: mergedFeatureCollection.slots
+			events:        mergedFeatureCollection.events,
+			methods:       mergedFeatureCollection.methods,
+			members:       mergedFeatureCollection.members,
+			slots:         mergedFeatureCollection.slots,
 		},
-		context
+		context,
 	);
 
 	Object.assign(baseDeclaration, refinedDeclaration);
@@ -145,16 +145,16 @@ export function analyzeComponentDeclaration(
  */
 function shouldExcludeNode(node: Node, context: AnalyzerVisitContext): boolean {
 	// Uses flavors to determine if the node should be excluded
-	if (excludeNode(node, context)) {
+	if (excludeNode(node, context))
 		return true;
-	}
+
 
 	// It's possible to exclude declaration names
 	const name = getNodeName(node, context);
 
-	if (name != null && context.config.excludedDeclarationNames?.includes(name)) {
+	if (name != null && context.config.excludedDeclarationNames?.includes(name))
 		return true;
-	}
+
 
 	return false;
 }
@@ -176,14 +176,13 @@ function shouldInvalidateCachedDeclaration(componentDeclaration: ComponentDeclar
 			const foundInCache = (newSourceFile != null && newSourceFile === oldSourceFile) ?? false;
 
 			// Return "true" that the declaration should invalidate if it wasn't found in the cache
-			if (!foundInCache) {
+			if (!foundInCache)
 				return true;
-			}
+
 
 			// Test the inherited declarations recursively
-			if (shouldInvalidateCachedDeclaration(heritageClause.declaration, context)) {
+			if (shouldInvalidateCachedDeclaration(heritageClause.declaration, context))
 				return true;
-			}
 		}
 	}
 

@@ -1,9 +1,10 @@
-import { Node } from "typescript";
-import { ComponentMethod } from "../../types/features/component-method.js";
-import { getMemberVisibilityFromNode, hasModifier } from "../../util/ast-util.js";
-import { getJsDoc } from "../../util/js-doc-util.js";
-import { lazy } from "../../util/lazy.js";
-import { AnalyzerDeclarationVisitContext } from "../analyzer-flavor.js";
+import { Node } from 'typescript';
+
+import { ComponentMethod } from '../../types/features/component-method.js';
+import { getMemberVisibilityFromNode, hasModifier } from '../../util/ast-util.js';
+import { getJsDoc } from '../../util/js-doc-util.js';
+import { lazy } from '../../util/lazy.js';
+import { AnalyzerDeclarationVisitContext } from '../analyzer-flavor.js';
 
 /**
  * Discovers methods
@@ -14,30 +15,30 @@ export function discoverMethods(node: Node, context: AnalyzerDeclarationVisitCon
 	const { ts } = context;
 
 	// Never pick up method declaration not declared directly on the declaration node being traversed
-	if (node.parent !== context.declarationNode) {
+	if (node.parent !== context.declarationNode)
 		return undefined;
-	}
+
 
 	// class { myMethod () {} }
 	if ((ts.isMethodDeclaration(node) || ts.isMethodSignature(node)) && !hasModifier(node, ts.SyntaxKind.StaticKeyword, ts)) {
 		// Outscope static methods for now
 		const name = node.name.getText();
 
-		if (!context.config.analyzeDefaultLib && isHTMLElementMethodName(name)) {
+		if (!context.config.analyzeDefaultLib && isHTMLElementMethodName(name))
 			return undefined;
-		}
+
 
 		// Allow the analyzer to analyze within methods
 		context.emitContinue?.();
 
 		return [
 			{
-				jsDoc: getJsDoc(node, ts),
+				jsDoc:      getJsDoc(node, ts),
 				name,
-				node: node,
+				node:       node,
 				visibility: getMemberVisibilityFromNode(node, ts),
-				type: lazy(() => context.checker.getTypeAtLocation(node))
-			}
+				type:       lazy(() => context.checker.getTypeAtLocation(node)),
+			},
 		];
 	}
 
@@ -45,5 +46,5 @@ export function discoverMethods(node: Node, context: AnalyzerDeclarationVisitCon
 }
 
 function isHTMLElementMethodName(name: string): boolean {
-	return ["attributeChangedCallback", "connectedCallback", "disconnectedCallback"].includes(name);
+	return [ 'attributeChangedCallback', 'connectedCallback', 'disconnectedCallback' ].includes(name);
 }

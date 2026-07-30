@@ -1,6 +1,6 @@
-import { analyzeText, AnalyzeTextResult, VirtualSourceFile } from "../../src/analyze/analyze-text";
-import { AnalyzerOptions } from "../../src/analyze/types/analyzer-options";
-import { getCurrentTsModule } from "./ts-test";
+import { analyzeText, AnalyzeTextResult, VirtualSourceFile } from "../../src/analyze/analyze-text.js";
+import { AnalyzerOptions } from "../../src/analyze/types/analyzer-options.js";
+import { getCurrentTsModule } from "./ts-test.js";
 
 /**
  * Calls the "analyzeText" function, but with the current ts module

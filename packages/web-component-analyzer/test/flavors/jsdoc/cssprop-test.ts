@@ -1,5 +1,5 @@
-import { analyzeTextWithCurrentTsModule } from "../../helpers/analyze-text-with-current-ts-module";
-import { tsTest } from "../../helpers/ts-test";
+import { analyzeTextWithCurrentTsModule } from "../../helpers/analyze-text-with-current-ts-module.js";
+import { tsTest } from "../../helpers/ts-test.js";
 
 tsTest("jsdoc: Discovers css properties with @cssprop", t => {
 	const {
@@ -9,7 +9,7 @@ tsTest("jsdoc: Discovers css properties with @cssprop", t => {
 	 * @element
 	 * @cssprop --this-is-a-css-prop  - This is a comment
 	 */
-	 class MyElement extends HTMLElement { 
+	 class MyElement extends HTMLElement {
 	 }
 	 `);
 
@@ -28,7 +28,7 @@ tsTest("jsdoc: Discovers css properties with @cssproperty", t => {
 	 * @element
 	 * @cssproperty --this-is-a-css-prop  - This is a comment
 	 */
-	 class MyElement extends HTMLElement { 
+	 class MyElement extends HTMLElement {
 	 }
 	 `);
 
@@ -47,7 +47,7 @@ tsTest("jsdoc: Discovers css properties with @cssproperty and default", t => {
 	 * @element
 	 * @cssproperty [--element-color=red] - This is a comment
 	 */
-	 class MyElement extends HTMLElement { 
+	 class MyElement extends HTMLElement {
 	 }
 	 `);
 

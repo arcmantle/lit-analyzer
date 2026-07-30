@@ -1,32 +1,33 @@
-import { SimpleTypeStringLiteral } from "ts-simple-type";
-import { Node } from "typescript";
-import { AnalyzerVisitContext } from "../../analyzer-visit-context.js";
-import { ComponentCssPart } from "../../types/features/component-css-part.js";
-import { ComponentCssProperty } from "../../types/features/component-css-property.js";
-import { ComponentEvent } from "../../types/features/component-event.js";
-import { ComponentMember, ComponentMemberAttribute, ComponentMemberProperty } from "../../types/features/component-member.js";
-import { ComponentSlot } from "../../types/features/component-slot.js";
-import { getNodeSourceFileLang } from "../../util/ast-util.js";
-import { parseSimpleJsDocTypeExpression } from "../../util/js-doc-util.js";
-import { lazy } from "../../util/lazy.js";
-import { FeatureDiscoverVisitMap } from "../analyzer-flavor.js";
-import { parseJsDocForNode } from "./parse-js-doc-for-node.js";
+import { SimpleTypeStringLiteral } from 'ts-simple-type';
+import { Node } from 'typescript';
+
+import { AnalyzerVisitContext } from '../../analyzer-visit-context.js';
+import { ComponentCssPart } from '../../types/features/component-css-part.js';
+import { ComponentCssProperty } from '../../types/features/component-css-property.js';
+import { ComponentEvent } from '../../types/features/component-event.js';
+import { ComponentMember, ComponentMemberAttribute, ComponentMemberProperty } from '../../types/features/component-member.js';
+import { ComponentSlot } from '../../types/features/component-slot.js';
+import { getNodeSourceFileLang } from '../../util/ast-util.js';
+import { parseSimpleJsDocTypeExpression } from '../../util/js-doc-util.js';
+import { lazy } from '../../util/lazy.js';
+import { FeatureDiscoverVisitMap } from '../analyzer-flavor.js';
+import { parseJsDocForNode } from './parse-js-doc-for-node.js';
 
 export const discoverFeatures: Partial<FeatureDiscoverVisitMap<AnalyzerVisitContext>> = {
 	csspart: (node: Node, context: AnalyzerVisitContext): ComponentCssPart[] | undefined => {
 		if (context.ts.isInterfaceDeclaration(node) || context.ts.isClassDeclaration(node)) {
 			return parseJsDocForNode(
 				node,
-				["csspart"],
+				[ 'csspart' ],
 				(tagNode, { name, description }) => {
 					if (name != null && name.length > 0) {
 						return {
-							name: name,
-							jsDoc: description != null ? { description } : undefined
+							name:  name,
+							jsDoc: description != null ? { description } : undefined,
 						};
 					}
 				},
-				context
+				context,
 			);
 		}
 	},
@@ -34,18 +35,18 @@ export const discoverFeatures: Partial<FeatureDiscoverVisitMap<AnalyzerVisitCont
 		if (context.ts.isInterfaceDeclaration(node) || context.ts.isClassDeclaration(node)) {
 			return parseJsDocForNode(
 				node,
-				["cssprop", "cssproperty", "cssvar", "cssvariable"],
+				[ 'cssprop', 'cssproperty', 'cssvar', 'cssvariable' ],
 				(tagNode, { name, description, type, default: def }) => {
 					if (name != null && name.length > 0) {
 						return {
-							name: name,
-							jsDoc: description != null ? { description } : undefined,
+							name:     name,
+							jsDoc:    description != null ? { description } : undefined,
 							typeHint: type || undefined,
-							default: def
+							default:  def,
 						};
 					}
 				},
-				context
+				context,
 			);
 		}
 	},
@@ -53,19 +54,19 @@ export const discoverFeatures: Partial<FeatureDiscoverVisitMap<AnalyzerVisitCont
 		if (context.ts.isInterfaceDeclaration(node) || context.ts.isClassDeclaration(node)) {
 			return parseJsDocForNode(
 				node,
-				["event", "fires", "emits"],
+				[ 'event', 'fires', 'emits' ],
 				(tagNode, { name, description, type }) => {
 					if (name != null && name.length > 0 && tagNode != null) {
 						return {
-							name: name,
-							jsDoc: description != null ? { description } : undefined,
-							type: type != null ? lazy(() => parseSimpleJsDocTypeExpression(type, context) || { kind: "ANY" }) : undefined,
+							name:     name,
+							jsDoc:    description != null ? { description } : undefined,
+							type:     type != null ? lazy(() => parseSimpleJsDocTypeExpression(type, context) || { kind: 'ANY' }) : undefined,
 							typeHint: type,
-							node: tagNode
+							node:     tagNode,
 						};
 					}
 				},
-				context
+				context,
 			);
 		}
 	},
@@ -73,100 +74,100 @@ export const discoverFeatures: Partial<FeatureDiscoverVisitMap<AnalyzerVisitCont
 		if (context.ts.isInterfaceDeclaration(node) || context.ts.isClassDeclaration(node)) {
 			return parseJsDocForNode(
 				node,
-				["slot"],
+				[ 'slot' ],
 				(tagNode, { name, type, description }) => {
 					// Treat "-" as unnamed slot
-					if (name === "-") {
+					if (name === '-')
 						name = undefined;
-					}
+
 
 					// Grab the type from jsdoc and use it to find permitted tag names
 					// Example: @slot {"div"|"span"} myslot
 					const permittedTagNameType = type == null ? undefined : parseSimpleJsDocTypeExpression(type, context);
 					const permittedTagNames: string[] | undefined = (() => {
-						if (permittedTagNameType == null) {
+						if (permittedTagNameType == null)
 							return undefined;
-						}
+
 
 						switch (permittedTagNameType.kind) {
-							case "STRING_LITERAL":
-								return [permittedTagNameType.value];
-							case "UNION":
-								return permittedTagNameType.types
-									.filter((type): type is SimpleTypeStringLiteral => type.kind === "STRING_LITERAL")
-									.map(type => type.value);
-							default:
-								return undefined;
+						case 'STRING_LITERAL':
+							return [ permittedTagNameType.value ];
+						case 'UNION':
+							return permittedTagNameType.types
+								.filter((type): type is SimpleTypeStringLiteral => type.kind === 'STRING_LITERAL')
+								.map(type => type.value);
+						default:
+							return undefined;
 						}
 					})();
 
 					return {
-						name: name,
+						name:  name,
 						jsDoc: description != null ? { description } : undefined,
-						permittedTagNames
+						permittedTagNames,
 					};
 				},
-				context
+				context,
 			);
 		}
 	},
 	member: (node: Node, context: AnalyzerVisitContext): ComponentMember[] | undefined => {
 		if (context.ts.isInterfaceDeclaration(node) || context.ts.isClassDeclaration(node)) {
-			const priority = getNodeSourceFileLang(node) === "js" ? "high" : "medium";
+			const priority = getNodeSourceFileLang(node) === 'js' ? 'high' : 'medium';
 
 			const properties = parseJsDocForNode(
 				node,
-				["prop", "property"],
+				[ 'prop', 'property' ],
 				(tagNode, { name, default: def, type, description }) => {
 					if (name != null && name.length > 0) {
 						return {
 							priority,
-							kind: "property",
-							propName: name,
-							jsDoc: description != null ? { description } : undefined,
-							typeHint: type,
-							type: lazy(() => (type && parseSimpleJsDocTypeExpression(type, context)) || { kind: "ANY" }),
-							node: tagNode,
-							default: def,
+							kind:       'property',
+							propName:   name,
+							jsDoc:      description != null ? { description } : undefined,
+							typeHint:   type,
+							type:       lazy(() => (type && parseSimpleJsDocTypeExpression(type, context)) || { kind: 'ANY' }),
+							node:       tagNode,
+							default:    def,
 							visibility: undefined,
-							reflect: undefined,
-							required: undefined,
-							deprecated: undefined
+							reflect:    undefined,
+							required:   undefined,
+							deprecated: undefined,
 						} as ComponentMemberProperty;
 					}
 				},
-				context
+				context,
 			);
 
 			const attributes = parseJsDocForNode(
 				node,
-				["attr", "attribute"],
+				[ 'attr', 'attribute' ],
 				(tagNode, { name, default: def, type, description }) => {
 					if (name != null && name.length > 0) {
 						return {
 							priority,
-							kind: "attribute",
-							attrName: name,
-							jsDoc: description != null ? { description } : undefined,
-							type: lazy(() => (type && parseSimpleJsDocTypeExpression(type, context)) || { kind: "ANY" }),
-							typeHint: type,
-							node: tagNode,
-							default: def,
+							kind:       'attribute',
+							attrName:   name,
+							jsDoc:      description != null ? { description } : undefined,
+							type:       lazy(() => (type && parseSimpleJsDocTypeExpression(type, context)) || { kind: 'ANY' }),
+							typeHint:   type,
+							node:       tagNode,
+							default:    def,
 							visibility: undefined,
-							reflect: undefined,
-							required: undefined,
-							deprecated: undefined
+							reflect:    undefined,
+							required:   undefined,
+							deprecated: undefined,
 						} as ComponentMemberAttribute;
 					}
 				},
-				context
+				context,
 			);
 
-			if (attributes != null || properties != null) {
-				return [...(attributes || []), ...(properties || [])];
-			}
+			if (attributes != null || properties != null)
+				return [ ...(attributes || []), ...(properties || []) ];
+
 
 			return undefined;
 		}
-	}
+	},
 };

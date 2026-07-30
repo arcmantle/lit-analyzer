@@ -1,22 +1,23 @@
-import fastGlob from "fast-glob";
-import { existsSync, lstatSync } from "fs";
-import { Program, SourceFile } from "typescript";
-import { analyzeSourceFile } from "../../analyze/analyze-source-file.js";
-import { AnalyzerResult } from "../../analyze/types/analyzer-result.js";
-import { arrayFlat } from "../../util/array-util.js";
-import { stripTypescriptValues } from "../../util/strip-typescript-values.js";
-import { AnalyzerCliConfig } from "../analyzer-cli-config.js";
-import { CompileResult, compileTypescript } from "./compile.js";
-import { logVerbose } from "./log.js";
+import fastGlob from 'fast-glob';
+import { existsSync, lstatSync } from 'fs';
+import { Program, SourceFile } from 'typescript';
 
-const IGNORE_GLOBS = ["**/node_modules/**", "**/web_modules/**"];
-const DEFAULT_DIR_GLOB = "**/*.{js,jsx,ts,tsx}";
-const DEFAULT_GLOBS = [DEFAULT_DIR_GLOB];
+import { analyzeSourceFile } from '../../analyze/analyze-source-file.js';
+import { AnalyzerResult } from '../../analyze/types/analyzer-result.js';
+import { arrayFlat } from '../../util/array-util.js';
+import { stripTypescriptValues } from '../../util/strip-typescript-values.js';
+import { AnalyzerCliConfig } from '../analyzer-cli-config.js';
+import { CompileResult, compileTypescript } from './compile.js';
+import { logVerbose } from './log.js';
+
+const IGNORE_GLOBS = [ '**/node_modules/**', '**/web_modules/**' ];
+const DEFAULT_DIR_GLOB = '**/*.{js,jsx,ts,tsx}';
+const DEFAULT_GLOBS = [ DEFAULT_DIR_GLOB ];
 
 export interface AnalyzeGlobsContext {
 	didExpandGlobs?(filePaths: string[]): void;
 	willAnalyzeFiles?(filePaths: string[]): void;
-	emitAnalyzedFile?(file: SourceFile, result: AnalyzerResult, options: { program: Program }): Promise<void> | void;
+	emitAnalyzedFile?(file: SourceFile, result: AnalyzerResult, options: { program: Program; }): Promise<void> | void;
 }
 
 /**
@@ -28,12 +29,12 @@ export interface AnalyzeGlobsContext {
 export async function analyzeGlobs(
 	globs: string[],
 	config: AnalyzerCliConfig,
-	context: AnalyzeGlobsContext = {}
-): Promise<CompileResult & { results: AnalyzerResult[] }> {
+	context: AnalyzeGlobsContext = {},
+): Promise<CompileResult & { results: AnalyzerResult[]; }> {
 	// Set default glob
-	if (globs.length === 0) {
+	if (globs.length === 0)
 		globs = DEFAULT_GLOBS;
-	}
+
 
 	// Expand the globs
 	const filePaths = await expandGlobs(globs, config);
@@ -54,14 +55,14 @@ export async function analyzeGlobs(
 		const result = analyzeSourceFile(file, {
 			program,
 			verbose: config.verbose || false,
-			ts: config.ts,
-			config: {
-				features: config.features,
-				analyzeDependencies: config.analyzeDependencies,
-				analyzeDefaultLib: config.analyzeDefaultLibrary,
-				analyzeGlobalFeatures: config.analyzeGlobalFeatures,
-				analyzeAllDeclarations: config.format == "json2" // TODO: find a better way to construct the config
-			}
+			ts:      config.ts,
+			config:  {
+				features:               config.features,
+				analyzeDependencies:    config.analyzeDependencies,
+				analyzeDefaultLib:      config.analyzeDefaultLibrary,
+				analyzeGlobalFeatures:  config.analyzeGlobalFeatures,
+				analyzeAllDeclarations: config.format == 'json2', // TODO: find a better way to construct the config
+			},
 		});
 
 		logVerbose(() => stripTypescriptValues(result, program.getTypeChecker()), config);
@@ -81,7 +82,7 @@ export async function analyzeGlobs(
  * @param config
  */
 async function expandGlobs(globs: string | string[], config: AnalyzerCliConfig): Promise<string[]> {
-	globs = Array.isArray(globs) ? globs : [globs];
+	globs = Array.isArray(globs) ? globs : [ globs ];
 
 	const ignoreGlobs = config?.discoverNodeModules ? [] : IGNORE_GLOBS;
 
@@ -94,24 +95,25 @@ async function expandGlobs(globs: string | string[], config: AnalyzerCliConfig):
 					const dirExists = existsSync(g) && lstatSync(g).isDirectory();
 
 					if (dirExists) {
-						return fastGlob([fastGlobNormalize(`${g}/${DEFAULT_DIR_GLOB}`)], {
-							ignore: ignoreGlobs,
-							absolute: true,
-							followSymbolicLinks: false
+						return fastGlob([ fastGlobNormalize(`${ g }/${ DEFAULT_DIR_GLOB }`) ], {
+							ignore:              ignoreGlobs,
+							absolute:            true,
+							followSymbolicLinks: false,
 						});
 					}
-				} catch (e) {
+				}
+				catch (e) {
 					// the glob wasn't a directory
 				}
 
 				// Return the result of globbing
-				return fastGlob([fastGlobNormalize(g)], {
-					ignore: ignoreGlobs,
-					absolute: true,
-					followSymbolicLinks: false
+				return fastGlob([ fastGlobNormalize(g) ], {
+					ignore:              ignoreGlobs,
+					absolute:            true,
+					followSymbolicLinks: false,
 				});
-			})
-		)
+			}),
+		),
 	);
 }
 
@@ -121,5 +123,5 @@ async function expandGlobs(globs: string | string[], config: AnalyzerCliConfig):
  * @param glob
  */
 function fastGlobNormalize(glob: string): string {
-	return glob.replace(/\\/g, "/");
+	return glob.replace(/\\/g, '/');
 }

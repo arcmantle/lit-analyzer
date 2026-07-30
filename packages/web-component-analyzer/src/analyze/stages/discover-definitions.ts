@@ -1,9 +1,10 @@
-import { Node, SourceFile } from "typescript";
-import { AnalyzerVisitContext } from "../analyzer-visit-context.js";
-import { ComponentDeclaration } from "../types/component-declaration.js";
-import { ComponentDefinition } from "../types/component-definition.js";
-import { getSymbol, resolveSymbolDeclarations } from "../util/ast-util.js";
-import { visitDefinitions } from "./flavor/visit-definitions.js";
+import { Node, SourceFile } from 'typescript';
+
+import { AnalyzerVisitContext } from '../analyzer-visit-context.js';
+import { ComponentDeclaration } from '../types/component-declaration.js';
+import { ComponentDefinition } from '../types/component-definition.js';
+import { getSymbol, resolveSymbolDeclarations } from '../util/ast-util.js';
+import { visitDefinitions } from './flavor/visit-definitions.js';
 
 /**
  * Visits the source file and finds all component definitions using flavors
@@ -14,12 +15,12 @@ import { visitDefinitions } from "./flavor/visit-definitions.js";
 export function discoverDefinitions(
 	sourceFile: SourceFile,
 	context: AnalyzerVisitContext,
-	analyzeDeclaration: (definition: ComponentDefinition, declarationNodes: Node[]) => ComponentDeclaration | undefined
+	analyzeDeclaration: (definition: ComponentDefinition, declarationNodes: Node[]) => ComponentDeclaration | undefined,
 ): ComponentDefinition[] {
 	// Find all definitions in the file using flavors
 	const definitionResults = analyzeAndDedupeDefinitions(sourceFile, context);
 
-	return Array.from(definitionResults.entries()).map(([definition, declarationSet]) => {
+	return Array.from(definitionResults.entries()).map(([ definition, declarationSet ]) => {
 		let declaration: ComponentDeclaration | undefined;
 		let didEvaluateDeclaration = false;
 
@@ -32,7 +33,7 @@ export function discoverDefinitions(
 				}
 
 				return declaration;
-			}
+			},
 		};
 	});
 }
@@ -43,7 +44,8 @@ export function discoverDefinitions(
  * @param context
  */
 function analyzeAndDedupeDefinitions(sourceFile: SourceFile, context: AnalyzerVisitContext): Map<ComponentDefinition, Set<Node>> {
-	if (sourceFile == null) return new Map();
+	if (sourceFile == null)
+		return new Map();
 
 	// Keep a map of "tag name" ==> "definition"
 	const tagNameDefinitionMap: Map<string, ComponentDefinition> = new Map();
@@ -63,23 +65,23 @@ function analyzeAndDedupeDefinitions(sourceFile: SourceFile, context: AnalyzerVi
 				// No existing definition was found, - create one!
 				definition = {
 					sourceFile,
-					tagName: result.tagName,
-					tagNameNodes: new Set(),
-					identifierNodes: new Set()
+					tagName:         result.tagName,
+					tagNameNodes:    new Set(),
+					identifierNodes: new Set(),
 				};
 
 				tagNameDefinitionMap.set(result.tagName, definition);
 			}
 
 			// Add the discovered identifier node to the definition
-			if (result.identifierNode != null) {
+			if (result.identifierNode != null)
 				definition.identifierNodes.add(result.identifierNode);
-			}
+
 
 			// Add the discovered tag name node to the definition
-			if (result.tagNameNode) {
+			if (result.tagNameNode)
 				definition.tagNameNodes.add(result.tagNameNode);
-			}
+
 
 			// Add the discovered declaration node to the map from "definition" ==> "declaration nodes"
 			let declarationNodeSet = definitionToDeclarationMap.get(definition);
@@ -91,19 +93,18 @@ function analyzeAndDedupeDefinitions(sourceFile: SourceFile, context: AnalyzerVi
 			// Grab the symbol from the identifier node and get the declarations
 			// If the is no symbol on the result, use "result.declarationNode" instead
 			const symbol = result.identifierNode != null ? getSymbol(result.identifierNode, context) : undefined;
-			const declarations = symbol != null ? resolveSymbolDeclarations(symbol) : result.declarationNode != null ? [result.declarationNode] : [];
+			const declarations = symbol != null ? resolveSymbolDeclarations(symbol) : result.declarationNode != null ? [ result.declarationNode ] : [];
 
-			for (const decl of declarations) {
+			for (const decl of declarations)
 				declarationNodeSet.add(decl);
-			}
 		}
 	});
 
 	// Remove duplicates where "tagName" is equals to "" if the declaration node is not used in any other definition.
 	const results = Array.from(definitionToDeclarationMap.entries());
-	for (const [definition, declarations] of results) {
-		if (definition.tagName === "") {
-			for (const [checkDefinition, checkDeclarations] of results) {
+	for (const [ definition, declarations ] of results) {
+		if (definition.tagName === '') {
+			for (const [ checkDefinition, checkDeclarations ] of results) {
 				// Find duplicated based on overlapping declarations
 				if (definition !== checkDefinition && Array.from(declarations).find(decl => checkDeclarations.has(decl) != null)) {
 					definitionToDeclarationMap.delete(definition);

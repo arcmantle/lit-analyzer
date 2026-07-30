@@ -1,6 +1,6 @@
-import { analyzeTextWithCurrentTsModule } from "../../helpers/analyze-text-with-current-ts-module";
-import { tsTest } from "../../helpers/ts-test";
-import { getComponentProp } from "../../helpers/util";
+import { analyzeTextWithCurrentTsModule } from "../../helpers/analyze-text-with-current-ts-module.js";
+import { tsTest } from "../../helpers/ts-test.js";
+import { getComponentProp } from "../../helpers/util.js";
 
 tsTest("Correctly extends interface with interface from different file", t => {
 	const {
@@ -17,7 +17,7 @@ export interface Checked {
 		{
 			fileName: "main.ts",
 			text: `
-import {Checked} from "./base";
+import {Checked} from "./base.js";
 
 interface CheckableElement extends HTMLElement, Checked {
 }
@@ -54,7 +54,7 @@ export {Checked};
 		{
 			fileName: "main.ts",
 			text: `
-import {Checked} from "./base";
+import {Checked} from "./base.js";
 
 interface CheckableElement extends HTMLElement, Checked {
 }
@@ -88,7 +88,7 @@ export class Checked {
 		{
 			fileName: "main.ts",
 			text: `
-import {Checked} from "./base";
+import {Checked} from "./base.js";
 
 class CheckableElement extends Checked {
 }

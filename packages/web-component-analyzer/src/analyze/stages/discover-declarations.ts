@@ -1,8 +1,9 @@
-import { SourceFile } from "typescript";
-import { AnalyzerVisitContext } from "../analyzer-visit-context.js";
-import { ComponentDeclaration } from "../types/component-declaration.js";
-import { resolveSymbolDeclarations } from "../util/ast-util.js";
-import { analyzeComponentDeclaration } from "./analyze-declaration.js";
+import { SourceFile } from 'typescript';
+
+import { AnalyzerVisitContext } from '../analyzer-visit-context.js';
+import { ComponentDeclaration } from '../types/component-declaration.js';
+import { resolveSymbolDeclarations } from '../util/ast-util.js';
+import { analyzeComponentDeclaration } from './analyze-declaration.js';
 
 /**
  * Visits the source file and finds all component definitions using flavors
@@ -25,9 +26,8 @@ export function discoverDeclarations(sourceFile: SourceFile, context: AnalyzerVi
 				if (context.ts.isClassDeclaration(node) /* || context.ts.isInterfaceDeclaration(node)*/) {
 					const nodes = resolveSymbolDeclarations(symbol);
 					const decl = analyzeComponentDeclaration(nodes, context);
-					if (decl != null) {
+					if (decl != null)
 						declarations.push(decl);
-					}
 				}
 			}
 		}

@@ -1,25 +1,25 @@
-import { JSDoc, JSDocTag } from "typescript";
+import { JSDoc, JSDocTag } from 'typescript';
 
 export interface JsDocTagParsed {
-	tag: string;
-	name?: string;
-	type?: string;
-	optional?: boolean;
-	default?: unknown;
+	tag:          string;
+	name?:        string;
+	type?:        string;
+	optional?:    boolean;
+	default?:     unknown;
 	description?: string;
-	className?: string;
-	namespace?: string;
+	className?:   string;
+	namespace?:   string;
 }
 
 export interface JsDocTag {
-	node?: JSDocTag;
+	node?:    JSDocTag;
 	comment?: string;
-	tag: string;
-	parsed: () => JsDocTagParsed;
+	tag:      string;
+	parsed:   () => JsDocTagParsed;
 }
 
 export interface JsDoc {
-	node?: JSDoc;
+	node?:        JSDoc;
 	description?: string;
-	tags?: JsDocTag[];
+	tags?:        JsDocTag[];
 }

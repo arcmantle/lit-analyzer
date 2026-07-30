@@ -1,19 +1,19 @@
-import { AnalyzerVisitContext } from "../../analyzer-visit-context.js";
-import { ComponentFeatureBase } from "../../types/features/component-feature.js";
-import { ComponentMember } from "../../types/features/component-member.js";
-import { getDecorators } from "../../util/ast-util.js";
-import { Node, ClassDeclaration } from "typescript";
+import { ClassDeclaration, Node } from 'typescript';
 
-import { ComponentMethod } from "../../types/features/component-method.js";
-import { AnalyzerFlavor } from "../analyzer-flavor.js";
-import { getLwcComponent } from "./utils.js";
+import { AnalyzerVisitContext } from '../../analyzer-visit-context.js';
+import { ComponentFeatureBase } from '../../types/features/component-feature.js';
+import { ComponentMember } from '../../types/features/component-member.js';
+import { ComponentMethod } from '../../types/features/component-method.js';
+import { getDecorators } from '../../util/ast-util.js';
+import { AnalyzerFlavor } from '../analyzer-flavor.js';
+import { getLwcComponent } from './utils.js';
 
 // In LWC, the public properties & methods must be tagged with @api
 // everything else becomes protected and not accessible externally
 function hasApiDecorator(node: Node | undefined, context: AnalyzerVisitContext) {
-	if (!node) {
+	if (!node)
 		return false;
-	}
+
 
 	const { ts } = context;
 
@@ -24,9 +24,8 @@ function hasApiDecorator(node: Node | undefined, context: AnalyzerVisitContext) 
 		if (ts.isIdentifier(expression)) {
 			const identifier = expression;
 			const kind = identifier.text;
-			if (kind === "api") {
+			if (kind === 'api')
 				return true;
-			}
 		}
 	}
 
@@ -35,42 +34,46 @@ function hasApiDecorator(node: Node | undefined, context: AnalyzerVisitContext) 
 
 function findClassDeclaration(node: Node | undefined, { ts }: AnalyzerVisitContext): ClassDeclaration | undefined {
 	while (node) {
-		if (ts.isClassDeclaration(node)) {
+		if (ts.isClassDeclaration(node))
 			return node;
-		}
+
 		node = node.parent;
 	}
 }
 
 function isLWCComponent(component: ComponentFeatureBase, context: AnalyzerVisitContext) {
 	const node = findClassDeclaration(component.declaration?.node, context);
-	if (node) {
+	if (node)
 		return !!getLwcComponent(node, context);
-	}
+
 	// You can't assume that everything is a LWC component - that will cause huge
 	// problems with the refinement rules below that switch default visibility to protected!!
 	return false;
 }
 
-export const refineFeature: AnalyzerFlavor["refineFeature"] = {
+export const refineFeature: AnalyzerFlavor['refineFeature'] = {
 	member: (member: ComponentMember, context: AnalyzerVisitContext): ComponentMember | undefined => {
 		if (isLWCComponent(member, context)) {
-			const visibility = hasApiDecorator(member.node, context) ? "public" : "protected";
+			const visibility = hasApiDecorator(member.node, context) ? 'public' : 'protected';
+
 			return {
 				...member,
-				visibility
+				visibility,
 			};
 		}
+
 		return member;
 	},
 	method: (method: ComponentMethod, context: AnalyzerVisitContext): ComponentMethod | undefined => {
 		if (isLWCComponent(method, context)) {
-			const visibility = hasApiDecorator(method.node, context) ? "public" : "protected";
+			const visibility = hasApiDecorator(method.node, context) ? 'public' : 'protected';
+
 			return {
 				...method,
-				visibility
+				visibility,
 			};
 		}
+
 		return method;
-	}
+	},
 };

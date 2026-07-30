@@ -1,7 +1,8 @@
 {
 	"name": "web-component-analyzer",
 	"version": "2.0.0",
-	"description": "CLI that analyzes web components",
+	"private": true,
+	"description": "CLI that analyzes web components. Internal to this repository and not published.",
 	"author": "Rune Mehlsen",
 	"license": "MIT",
 	"engines": {
@@ -11,11 +12,6 @@
 		"type": "git",
 		"url": "https://github.com/runem/web-component-analyzer.git"
 	},
-	"keywords": [
-		"web components",
-		"web",
-		"components"
-	],
 	"type": "module",
 	"main": "lib/api.js",
 	"types": "lib/api.d.ts",
@@ -29,14 +25,11 @@
 		"wca": "cli.js",
 		"web-component-analyzer": "cli.js"
 	},
-	"files": [
-		"lib",
-		"cli.js"
-	],
 	"scripts": {
 		"build": "tsc --build --pretty",
 		"rebuild": "tsc --build --force --pretty",
-		"watch": "tsc --build --watch"
+		"watch": "tsc --build --watch",
+		"test": "vitest run"
 	},
 	"dependencies": {
 		"fast-glob": "^3.2.2",
@@ -46,6 +39,7 @@
 	},
 	"devDependencies": {
 		"@types/node": "^24.0.0",
-		"@types/yargs": "^17.0.28"
+		"@types/yargs": "^17.0.28",
+		"vitest": "^4.1.10"
 	}
 }
