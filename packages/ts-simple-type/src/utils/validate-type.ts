@@ -1,5 +1,6 @@
 import { DEFAULT_GENERIC_PARAMETER_TYPE } from '../constants.js';
 import { SimpleType } from '../simple-type.js';
+import { getGenericTarget } from './get-generic-target.js';
 import { and, or } from './list-util.js';
 import { extendTypeParameterMap } from './simple-type-util.js';
 
@@ -21,7 +22,7 @@ function validateTypeInternal(type: SimpleType, callback: (simpleType: SimpleTyp
 	}
 
 	case 'ALIAS': {
-		return validateTypeInternal(type.target, callback, parameterMap);
+		return validateTypeInternal(getGenericTarget(type), callback, parameterMap);
 	}
 
 	case 'INTERSECTION': {
@@ -37,7 +38,7 @@ function validateTypeInternal(type: SimpleType, callback: (simpleType: SimpleTyp
 	case 'GENERIC_ARGUMENTS': {
 		const updatedGenericParameterMap = extendTypeParameterMap(type, parameterMap);
 
-		return validateTypeInternal(type.target, callback, updatedGenericParameterMap);
+		return validateTypeInternal(getGenericTarget(type), callback, updatedGenericParameterMap);
 	}
 	}
 

@@ -8,4 +8,5 @@ export * from './transform/serialize-simple-type.js';
 export * from './transform/to-simple-type.js';
 export * from './transform/type-to-string.js';
 export * from './ts-module.js';
+export * from './utils/get-generic-target.js';
 export * from './utils/validate-type.js';

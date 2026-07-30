@@ -1,4 +1,4 @@
-import { SimpleType, toSimpleType } from 'ts-simple-type';
+import { getGenericTarget, SimpleType, toSimpleType } from 'ts-simple-type';
 import { Expression } from 'typescript';
 
 import { HtmlNodeAttrAssignment, HtmlNodeAttrAssignmentKind } from '../../../analyze/types/html-node/html-node-attr-assignment-types.js';
@@ -138,7 +138,7 @@ export function getDirective(assignment: HtmlNodeAttrAssignment, context: RuleMo
 					// Read more: https://github.com/Polymer/lit-html/pull/1151
 					// && typeB.typeArguments[0].kind !== "UNKNOWN"
 					const actualType =
-							typeB.kind === 'GENERIC_ARGUMENTS' && typeB.target.name === 'DirectiveFn' && typeB.typeArguments.length > 0
+							typeB.kind === 'GENERIC_ARGUMENTS' && getGenericTarget(typeB).name === 'DirectiveFn' && typeB.typeArguments.length > 0
 								? () => typeB.typeArguments[0]
 								: undefined;
 

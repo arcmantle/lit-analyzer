@@ -252,6 +252,22 @@ tsTest("Attribute binding: 'ifDefined' directive correctly removes 'undefined' f
 	hasDiagnostic(t, diagnostics, 'no-incompatible-type-binding');
 });
 
+tsTest("Attribute binding: 'ifDefined' directive removes 'undefined' from a non-generic alias", t => {
+	const { diagnostics } = getDiagnostics(
+		'type ifDefined = Function; type MaybeNumber = number | undefined; \
+html`<input maxlength="${ifDefined({} as MaybeNumber)}" />`',
+	);
+	hasNoDiagnostics(t, diagnostics);
+});
+
+tsTest("Attribute binding: 'ifDefined' directive removes 'undefined' from a generic alias", t => {
+	const { diagnostics } = getDiagnostics(
+		'type ifDefined = Function; type Maybe<T> = T | undefined; \
+html`<input maxlength="${ifDefined({} as Maybe<number>)}" />`',
+	);
+	hasNoDiagnostics(t, diagnostics);
+});
+
 tsTest("Attribute binding: 'guard' directive correctly infers correct type from the callback 1", t => {
 	const { diagnostics } = getDiagnostics('type guard = Function; html`<img src="${guard([""], () => "nothing.png")}" />`');
 	hasNoDiagnostics(t, diagnostics);

@@ -10,6 +10,7 @@ import {
 	SimpleTypeTuple,
 	SimpleTypeUndefined,
 } from '../simple-type.js';
+import { getGenericTarget } from './get-generic-target.js';
 import { resolveType } from './resolve-type.js';
 
 /**
@@ -85,7 +86,7 @@ export function simplifySimpleTypes(types: SimpleType[]): SimpleType[] {
 }
 
 export function extendTypeParameterMap(genericType: SimpleTypeGenericArguments, existingMap: Map<string, SimpleType>) {
-	const target = resolveType(genericType.target, existingMap);
+	const target = resolveType(getGenericTarget(genericType), existingMap);
 
 	if ('typeParameters' in target) {
 		const parameterEntries = (target.typeParameters || []).map((parameter, i) => {

@@ -533,10 +533,14 @@ function toSimpleTypeInternal(type: Type, options: ToSimpleTypeInternalOptions):
 		const defaultType = type.getDefault();
 		const defaultSimpleType = defaultType != null ? toSimpleTypeCached(defaultType, options) : undefined;
 
+		const constraintType = type.getConstraint();
+		const constraintSimpleType = constraintType != null ? toSimpleTypeCached(constraintType, options) : undefined;
+
 		simpleType = {
-			kind:    'GENERIC_PARAMETER',
-			name:    symbol.getName(),
-			default: defaultSimpleType,
+			kind:       'GENERIC_PARAMETER',
+			name:       symbol.getName(),
+			default:    defaultSimpleType,
+			constraint: constraintSimpleType,
 		} as SimpleTypeGenericParameter;
 	}
 

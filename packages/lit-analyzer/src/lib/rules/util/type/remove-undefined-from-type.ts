@@ -1,11 +1,12 @@
-import { isAssignableToSimpleTypeKind, SimpleType } from 'ts-simple-type';
+import { getGenericTarget, isAssignableToSimpleTypeKind, SimpleType } from 'ts-simple-type';
 
 export function removeUndefinedFromType(type: SimpleType): SimpleType {
 	switch (type.kind) {
 	case 'ALIAS':
+	case 'GENERIC_ARGUMENTS':
 		return {
 			...type,
-			target: removeUndefinedFromType(type.target),
+			target: removeUndefinedFromType(getGenericTarget(type)),
 		};
 	case 'UNION':
 		return {

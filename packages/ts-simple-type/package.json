@@ -1,7 +1,8 @@
 {
 	"name": "ts-simple-type",
 	"version": "2.0.0-next.0",
-	"description": "Relationship type checker functions for Typescript types.",
+	"private": true,
+	"description": "Relationship type checker functions for Typescript types. Internal to this repository and not published.",
 	"author": "runem",
 	"license": "MIT",
 	"engines": {
@@ -11,12 +12,6 @@
 		"type": "git",
 		"url": "https://github.com/runem/ts-simple-type.git"
 	},
-	"keywords": [
-		"typescript",
-		"ast",
-		"typechecker",
-		"type"
-	],
 	"type": "module",
 	"main": "lib/index.js",
 	"types": "lib/index.d.ts",
@@ -26,9 +21,6 @@
 			"default": "./lib/index.js"
 		}
 	},
-	"files": [
-		"lib"
-	],
 	"scripts": {
 		"build": "tsc --build --pretty",
 		"rebuild": "tsc --build --force --pretty",

@@ -1,5 +1,6 @@
 import { DEFAULT_GENERIC_PARAMETER_TYPE } from '../constants.js';
 import { SimpleType, SimpleTypeGenericArguments, SimpleTypeGenericParameter } from '../simple-type.js';
+import { getGenericTarget } from './get-generic-target.js';
 import { extendTypeParameterMap } from './simple-type-util.js';
 
 export function resolveType(simpleType: SimpleType, parameterMap: Map<string, SimpleType> = new Map()): Exclude<SimpleType, SimpleTypeGenericParameter | SimpleTypeGenericArguments> {
@@ -12,7 +13,7 @@ export function resolveType(simpleType: SimpleType, parameterMap: Map<string, Si
 	case 'GENERIC_ARGUMENTS': {
 		const updatedGenericParameterMap = extendTypeParameterMap(simpleType, parameterMap);
 
-		return resolveType(simpleType.target, updatedGenericParameterMap);
+		return resolveType(getGenericTarget(simpleType), updatedGenericParameterMap);
 	}
 	default:
 		return simpleType;

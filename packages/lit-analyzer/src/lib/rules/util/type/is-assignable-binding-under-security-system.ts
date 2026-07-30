@@ -1,4 +1,4 @@
-import { SimpleType, typeToString } from 'ts-simple-type';
+import { getGenericTarget, SimpleType, typeToString } from 'ts-simple-type';
 
 import { HtmlNodeAttr } from '../../../analyze/types/html-node/html-node-attr-types.js';
 import { RuleModuleContext } from '../../../analyze/types/rule/rule-module-context.js';
@@ -132,7 +132,7 @@ function matchesAtLeastOneNominalType(typeNames: string[], typeB: SimpleType): b
 	case 'STRING':
 		return typeNames.includes('string');
 	case 'GENERIC_ARGUMENTS':
-		return matchesAtLeastOneNominalType(typeNames, typeB.target);
+		return matchesAtLeastOneNominalType(typeNames, getGenericTarget(typeB));
 	default:
 		return false;
 	}

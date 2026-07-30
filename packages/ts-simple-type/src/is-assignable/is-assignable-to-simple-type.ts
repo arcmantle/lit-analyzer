@@ -14,6 +14,7 @@ import {
 	SimpleTypeTuple,
 } from '../simple-type.js';
 import { simpleTypeToString } from '../transform/simple-type-to-string.js';
+import { getGenericTarget } from '../utils/get-generic-target.js';
 import { and, or } from '../utils/list-util.js';
 import { resolveType as resolveTypeUnsafe } from '../utils/resolve-type.js';
 import { extendTypeParameterMap, getTupleLengthType } from '../utils/simple-type-util.js';
@@ -276,7 +277,7 @@ function isAssignableToSimpleTypeInternal(
 
 	// [typeB] (expand)
 	case 'ALIAS': {
-		return isAssignableToSimpleTypeCached(typeA, typeB.target, options);
+		return isAssignableToSimpleTypeCached(typeA, getGenericTarget(typeB), options);
 	}
 
 	// [typeB] (expand)
@@ -291,11 +292,11 @@ function isAssignableToSimpleTypeInternal(
 				Array.from(updatedGenericParameterMapB.entries())
 					.map(([ name, type ]) => `${ name }=${ simpleTypeToStringLazy(type) }`)
 					.join('; '),
-				'typeParameters' in typeB.target ? '' : '[No type parameters in target!]',
+				'typeParameters' in getGenericTarget(typeB) ? '' : '[No type parameters in target!]',
 			);
 		}
 
-		return isAssignableToSimpleTypeCached(typeA, typeB.target, {
+		return isAssignableToSimpleTypeCached(typeA, getGenericTarget(typeB), {
 			...options,
 			genericParameterMapB: updatedGenericParameterMapB,
 		});
@@ -371,7 +372,7 @@ function isAssignableToSimpleTypeInternal(
 	switch (typeA.kind) {
 	// [typeA] (expand)
 	case 'ALIAS': {
-		return isAssignableToSimpleTypeCached(typeA.target, typeB, options);
+		return isAssignableToSimpleTypeCached(getGenericTarget(typeA), typeB, options);
 	}
 
 	// [typeA] (expand)
@@ -411,11 +412,11 @@ function isAssignableToSimpleTypeInternal(
 				Array.from(updatedGenericParameterMapA.entries())
 					.map(([ name, type ]) => `${ name }=${ simpleTypeToStringLazy(type) }`)
 					.join('; '),
-				'typeParameters' in typeA.target ? '' : '[No type parameters in target!]',
+				'typeParameters' in getGenericTarget(typeA) ? '' : '[No type parameters in target!]',
 			);
 		}
 
-		return isAssignableToSimpleTypeCached(typeA.target, typeB, {
+		return isAssignableToSimpleTypeCached(getGenericTarget(typeA), typeB, {
 			...options,
 			genericParameterMapA: updatedGenericParameterMapA,
 		});

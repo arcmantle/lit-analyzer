@@ -1,4 +1,4 @@
-import { isSimpleTypeLiteral, SimpleType } from 'ts-simple-type';
+import { getGenericTarget, isSimpleTypeLiteral, SimpleType } from 'ts-simple-type';
 
 import { LitAnalyzerContext } from '../../../lit-analyzer-context.js';
 import { HtmlNodeAttrAssignmentKind } from '../../../types/html-node/html-node-attr-assignment-types.js';
@@ -61,7 +61,7 @@ function getOptionsFromType(type: SimpleType): string[] {
 			.filter(isSimpleTypeLiteral)
 			.map(t => t.value.toString());
 	case 'ALIAS':
-		return getOptionsFromType(type.target);
+		return getOptionsFromType(getGenericTarget(type));
 	}
 
 	return [];

@@ -242,9 +242,10 @@ export interface SimpleTypeGenericArguments extends SimpleTypeBase {
 }
 
 export interface SimpleTypeGenericParameter extends SimpleTypeBase {
-	readonly name:     string;
-	readonly kind:     'GENERIC_PARAMETER';
-	readonly default?: SimpleType;
+	readonly name:        string;
+	readonly kind:        'GENERIC_PARAMETER';
+	readonly default?:    SimpleType;
+	readonly constraint?: SimpleType;
 }
 
 export interface SimpleTypeAlias extends SimpleTypeBase {

@@ -1,4 +1,4 @@
-import { SimpleType } from 'ts-simple-type';
+import { getGenericTarget, SimpleType } from 'ts-simple-type';
 
 const partTypeNames: ReadonlySet<string | undefined> = new Set([
 	'Part',
@@ -22,7 +22,7 @@ export function isLitDirective(type: SimpleType): boolean {
 export function isLit1Directive(type: SimpleType): boolean {
 	switch (type.kind) {
 	case 'ALIAS':
-		return type.name === 'DirectiveFn' || isLit1Directive(type.target);
+		return type.name === 'DirectiveFn' || isLit1Directive(getGenericTarget(type));
 	case 'OBJECT':
 		return type.call != null && isLit1Directive(type.call);
 	case 'FUNCTION': {
@@ -44,9 +44,12 @@ export function isLit1Directive(type: SimpleType): boolean {
 
 		return partTypeNames.has(firstArg.name);
 	}
-	case 'GENERIC_ARGUMENTS':
+	case 'GENERIC_ARGUMENTS': {
 		// Test for the built in type from lit-html: Directive<NodePart>
-		return (type.target.kind === 'FUNCTION' && type.target.name === 'Directive') || isLit1Directive(type.target);
+		const target = getGenericTarget(type);
+
+		return (target.kind === 'FUNCTION' && target.name === 'Directive') || isLit1Directive(target);
+	}
 	default:
 		return false;
 	}
@@ -61,7 +64,7 @@ export function isLit2Directive(type: SimpleType): boolean {
 		return type.name === 'DirectiveResult';
 	}
 	case 'GENERIC_ARGUMENTS': {
-		return isLit2Directive(type.target);
+		return isLit2Directive(getGenericTarget(type));
 	}
 	default:
 		return false;
