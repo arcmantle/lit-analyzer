@@ -26,7 +26,6 @@
 	"main": "bundle.js",
 	"scripts": {
 		"watch": "tsc -watch -p ./",
-		"readme": "readme generate -i readme.blueprint.md -c readme.config.json",
 		"bundle": "node esbuild.script.js",
 		"make-built-dir": "rm -rf built && pnpm run bundle && node ./copy-to-built.js",
 		"build": "pnpm run make-built-dir && tsc --build --pretty",

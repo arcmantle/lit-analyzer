@@ -14,6 +14,7 @@ export default defineConfig({
 			'packages/lit-language-server',
 			'packages/ts-simple-type',
 			'packages/vscode-lit-plugin',
+			'packages/web-component-analyzer',
 		],
 	},
 });

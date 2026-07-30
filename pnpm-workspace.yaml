@@ -21,7 +21,6 @@ allowBuilds:
   # extension signing binary. Nothing in build, test or package needs them.
   '@vscode/vsce-sign': false
   keytar: false
-  husky: set this to true or false
 
 # The package scripts are plain shell (`mkdir -p`, `rm -rf`, `&&`). Run them
 # through pnpm's bash-like emulator so they behave the same on Windows, which CI
