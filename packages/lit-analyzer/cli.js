@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-require('./dist/index.js')
-	.cli()
-	// eslint-disable-next-line no-console
-	.catch(console.log);
+import { cli } from './dist/index.js';
+
+// eslint-disable-next-line no-console
+cli().catch(console.log);

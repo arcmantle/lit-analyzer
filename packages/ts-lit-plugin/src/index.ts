@@ -33,7 +33,7 @@ export function init({ typescript }: { typescript: typeof ts; }): tsServer.serve
 			logger.debug(`Lit Analyzer: ${ VERSION }`);
 			logger.debug(`Web Component Analyzer: ${ WCA_VERSION }`);
 			logger.debug(`Running Typescript: ${ typescript.version }`);
-			logger.debug(`DIRNAME: ${ __dirname }`);
+			logger.debug(`DIRNAME: ${ import.meta.dirname }`);
 			printDebugOnce = undefined;
 		}
 	};

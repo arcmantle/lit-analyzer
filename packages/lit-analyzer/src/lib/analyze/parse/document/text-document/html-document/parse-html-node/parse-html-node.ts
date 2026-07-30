@@ -1,7 +1,7 @@
 import { TS_IGNORE_FLAG } from '../../../../../constants.js';
 import { HtmlNode, HtmlNodeKind, IHtmlNodeBase, IHtmlNodeSourceCodeLocation } from '../../../../../types/html-node/html-node-types.js';
 import { isCommentNode, isTagNode } from '../parse-html-p5/parse-html.js';
-import { getSourceLocation, IP5TagNode, P5Node } from '../parse-html-p5/parse-html-types.js';
+import { P5Node, P5TagNode, P5WrittenElementSourceCodeLocation } from '../parse-html-p5/parse-html-types.js';
 import { parseHtmlNodeAttrs } from './parse-html-attribute.js';
 import { ParseHtmlContext } from './parse-html-context.js';
 
@@ -43,16 +43,17 @@ export function parseHtmlNodes(p5Nodes: P5Node[], parent: HtmlNode | undefined, 
  * @param parent
  * @param context
  */
-export function parseHtmlNode(p5Node: IP5TagNode, parent: HtmlNode | undefined, context: ParseHtmlContext): HtmlNode | undefined {
+export function parseHtmlNode(p5Node: P5TagNode, parent: HtmlNode | undefined, context: ParseHtmlContext): HtmlNode | undefined {
 	// `sourceCodeLocation` will be undefined if the element was implicitly created by the parser.
-	if (getSourceLocation(p5Node) == null)
+	const location = p5Node.sourceCodeLocation as P5WrittenElementSourceCodeLocation | undefined | null;
+	if (location?.startTag == null)
 		return undefined;
 
 	const htmlNodeBase: IHtmlNodeBase = {
 		tagName:    p5Node.tagName.toLowerCase(),
-		selfClosed: isSelfClosed(p5Node, context),
+		selfClosed: isSelfClosed(p5Node, location),
 		attributes: [],
-		location:   makeHtmlNodeLocation(p5Node, context),
+		location:   makeHtmlNodeLocation(p5Node, location),
 		children:   [],
 		document:   context.document,
 		parent,
@@ -73,11 +74,11 @@ export function parseHtmlNode(p5Node: IP5TagNode, parent: HtmlNode | undefined, 
 /**
  * Returns if this node is self-closed.
  * @param p5Node
- * @param context
+ * @param location
  */
-function isSelfClosed(p5Node: IP5TagNode, context: ParseHtmlContext) {
+function isSelfClosed(p5Node: P5TagNode, location: P5WrittenElementSourceCodeLocation) {
 	const isEmpty = p5Node.childNodes == null || p5Node.childNodes.length === 0;
-	const isSelfClosed = getSourceLocation(p5Node)!.startTag.endOffset === getSourceLocation(p5Node)!.endOffset;
+	const isSelfClosed = location.startTag.endOffset === location.endOffset;
 
 	return isEmpty && isSelfClosed;
 }
@@ -85,21 +86,21 @@ function isSelfClosed(p5Node: IP5TagNode, context: ParseHtmlContext) {
 /**
  * Creates source code location from a p5Node.
  * @param p5Node
- * @param context
+ * @param loc
  */
-function makeHtmlNodeLocation(p5Node: IP5TagNode, context: ParseHtmlContext): IHtmlNodeSourceCodeLocation {
-	const loc = getSourceLocation(p5Node)!;
+function makeHtmlNodeLocation(p5Node: P5TagNode, loc: P5WrittenElementSourceCodeLocation): IHtmlNodeSourceCodeLocation {
+	const startTag = loc.startTag;
 
 	return {
 		start: loc.startOffset,
 		end:   loc.endOffset,
 		name:  {
-			start: loc.startTag.startOffset + 1, // take '<' into account
-			end:   loc.startTag.startOffset + 1 + p5Node.tagName.length,
+			start: startTag.startOffset + 1, // take '<' into account
+			end:   startTag.startOffset + 1 + p5Node.tagName.length,
 		},
 		startTag: {
-			start: loc.startTag.startOffset,
-			end:   loc.startTag.endOffset,
+			start: startTag.startOffset,
+			end:   startTag.endOffset,
 		},
 		endTag:
 			loc.endTag == null

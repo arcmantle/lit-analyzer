@@ -3,7 +3,7 @@ import { Expression } from 'typescript';
 import { HtmlNodeAttrAssignment, HtmlNodeAttrAssignmentKind } from '../../../../../types/html-node/html-node-attr-assignment-types.js';
 import { HtmlNodeAttr } from '../../../../../types/html-node/html-node-attr-types.js';
 import { Range } from '../../../../../types/range.js';
-import { getSourceLocation, IP5NodeAttr, IP5TagNode } from '../parse-html-p5/parse-html-types.js';
+import { P5NodeAttr, P5TagNode } from '../parse-html-p5/parse-html-types.js';
 import { ParseHtmlContext } from './parse-html-context.js';
 
 /**
@@ -14,8 +14,8 @@ import { ParseHtmlContext } from './parse-html-context.js';
  * @param context
  */
 export function parseHtmlAttrAssignment(
-	p5Node: IP5TagNode,
-	p5Attr: IP5NodeAttr,
+	p5Node: P5TagNode,
+	p5Attr: P5NodeAttr,
 	htmlAttr: HtmlNodeAttr,
 	context: ParseHtmlContext,
 ): HtmlNodeAttrAssignment | undefined {
@@ -75,17 +75,17 @@ export function parseHtmlAttrAssignment(
 }
 
 function getAssignmentLocation(
-	p5Node: IP5TagNode,
-	p5Attr: IP5NodeAttr,
+	p5Node: P5TagNode,
+	p5Attr: P5NodeAttr,
 	htmlAttr: HtmlNodeAttr,
 	context: ParseHtmlContext,
 ): Range | undefined {
-	const sourceLocation = getSourceLocation(p5Node);
+	const sourceLocation = p5Node.sourceCodeLocation;
 	if (sourceLocation == null)
 		return undefined;
 
 
-	const htmlAttrLocation = (sourceLocation.startTag.attrs || {})[p5Attr.name];
+	const htmlAttrLocation = (sourceLocation.attrs || {})[p5Attr.name];
 	if (htmlAttrLocation == null)
 		return undefined;
 

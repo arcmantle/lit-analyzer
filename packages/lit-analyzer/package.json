@@ -31,7 +31,6 @@
 		"rebuild": "tsc --build --force --pretty",
 		"prepack": "pnpm run rebuild",
 		"prepublishOnly": "pnpm test",
-		"readme": "readme generate -i readme.blueprint.md -c readme.config.json",
 		"test": "vitest run && pnpm run check-version",
 		"test:all": "pnpm test",
 		"test:watch": "vitest",
@@ -48,9 +47,9 @@
 	"dependencies": {
 		"@vscode/web-custom-data": "^0.4.2",
 		"chalk": "^2.4.2",
-		"didyoumean2": "4.1.0",
+		"didyoumean2": "7.0.4",
 		"fast-glob": "^3.2.11",
-		"parse5": "5.1.0",
+		"parse5": "8.0.1",
 		"ts-simple-type": "workspace:*",
 		"vscode-css-languageservice": "6.3.7",
 		"vscode-html-languageservice": "5.5.1",
@@ -58,7 +57,6 @@
 		"web-component-analyzer": "workspace:*"
 	},
 	"devDependencies": {
-		"@appnest/readme": "^1.2.7",
 		"@types/node": "^24.0.0",
 		"tslib": "^2.0.0",
 		"typescript": "catalog:",
@@ -82,5 +80,5 @@
 		}
 	],
 	"types": "dist/index.d.ts",
-	"type": "commonjs"
+	"type": "module"
 }

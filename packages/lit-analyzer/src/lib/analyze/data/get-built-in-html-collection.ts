@@ -1,4 +1,4 @@
-import htmlDataJson from '@vscode/web-custom-data/data/browsers.html-data.json';
+import htmlDataJson from '@vscode/web-custom-data/data/browsers.html-data.json' with { type: 'json' };
 import { SimpleType } from 'ts-simple-type';
 import { HTMLDataV1 } from 'vscode-html-languageservice';
 

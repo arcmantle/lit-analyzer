@@ -1,4 +1,5 @@
-import * as vscode from 'vscode-css-languageservice';
+import type * as vscodeTypes from 'vscode-css-languageservice';
+import * as vscodeNs from 'vscode-css-languageservice';
 import { IAtDirectiveData, ICSSDataProvider, IPropertyData, IPseudoClassData, IPseudoElementData } from 'vscode-css-languageservice';
 
 import { isRuleDisabled } from '../../lit-analyzer-config.js';
@@ -16,7 +17,12 @@ import { getPositionContextInDocument, grabWordInDirection } from '../../util/ge
 import { iterableFilter, iterableMap } from '../../util/iterable-util.js';
 import { documentRangeToSFRange } from '../../util/range-util.js';
 
-function makeVscTextDocument(cssDocument: CssDocument): vscode.TextDocument {
+// Node resolves the CommonJS build and exposes only part of it as named ESM
+// exports, so runtime values come off the whole `module.exports`. Bundlers
+// resolve the real ESM build instead, where the namespace already has them all.
+const vscode = (vscodeNs as unknown as Record<string, typeof vscodeNs>)['default'] ?? vscodeNs;
+
+function makeVscTextDocument(cssDocument: CssDocument): vscodeTypes.TextDocument {
 	return vscode.TextDocument.create('untitled://embedded.css', 'css', 1, cssDocument.virtualDocument.text);
 }
 
@@ -189,13 +195,13 @@ export class LitCssVscodeService {
 		return completions;
 	}
 
-	private makeVscStylesheet(vscTextDocument: vscode.TextDocument) {
+	private makeVscStylesheet(vscTextDocument: vscodeTypes.TextDocument) {
 		return this.scssService.parseStylesheet(vscTextDocument);
 	}
 
 }
 
-function translateCompletionItemKind(kind: vscode.CompletionItemKind): LitTargetKind {
+function translateCompletionItemKind(kind: vscodeTypes.CompletionItemKind): LitTargetKind {
 	switch (kind) {
 	case vscode.CompletionItemKind.Method:
 		return 'memberFunctionElement';

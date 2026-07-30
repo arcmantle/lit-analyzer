@@ -1,11 +1,5 @@
-// This package is CommonJS, and `pnpm check-version` runs this file straight
-// from source. Node strips the types but does not rewrite module syntax, so the
-// source has to be CommonJS too. `import(...)` in type position and `as` are
-// both erased, leaving a plain `require`.
-// eslint-disable-next-line @typescript-eslint/no-require-imports
-const fs = require('fs') as typeof import('fs');
-// eslint-disable-next-line @typescript-eslint/no-require-imports
-const path = require('path') as typeof import('path');
+import fs from 'node:fs';
+import path from 'node:path';
 
 const pkg = JSON.parse(fs.readFileSync(path.resolve('package.json'), 'utf-8'));
 const { version } = pkg;

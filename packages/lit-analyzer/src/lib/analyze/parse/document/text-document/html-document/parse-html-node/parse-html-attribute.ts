@@ -10,7 +10,7 @@ import {
 	IHtmlNodeAttrSourceCodeLocation,
 } from '../../../../../types/html-node/html-node-attr-types.js';
 import { parseLitAttrName } from '../../../../../util/general-util.js';
-import { getSourceLocation, IP5NodeAttr, IP5TagNode } from '../parse-html-p5/parse-html-types.js';
+import { P5NodeAttr, P5TagNode } from '../parse-html-p5/parse-html-types.js';
 import { parseHtmlAttrAssignment } from './parse-html-attr-assignment.js';
 import { ParseHtmlAttrContext } from './parse-html-attr-context.js';
 
@@ -19,7 +19,7 @@ import { ParseHtmlAttrContext } from './parse-html-attr-context.js';
  * @param p5Node
  * @param context
  */
-export function parseHtmlNodeAttrs(p5Node: IP5TagNode, context: ParseHtmlAttrContext): HtmlNodeAttr[] {
+export function parseHtmlNodeAttrs(p5Node: P5TagNode, context: ParseHtmlAttrContext): HtmlNodeAttr[] {
 	return p5Node.attrs
 		.map(htmlAttr =>
 			parseHtmlNodeAttr(p5Node, htmlAttr, {
@@ -36,8 +36,8 @@ export function parseHtmlNodeAttrs(p5Node: IP5TagNode, context: ParseHtmlAttrCon
  * @param context
  */
 export function parseHtmlNodeAttr(
-	p5Node: IP5TagNode,
-	p5Attr: IP5NodeAttr,
+	p5Node: P5TagNode,
+	p5Attr: P5NodeAttr,
 	context: ParseHtmlAttrContext,
 ): HtmlNodeAttr | undefined {
 	const { htmlNode } = context;
@@ -70,13 +70,13 @@ export function parseHtmlNodeAttr(
  * @param context
  */
 function makeHtmlAttrLocation(
-	p5Node: IP5TagNode,
-	p5Attr: IP5NodeAttr,
+	p5Node: P5TagNode,
+	p5Attr: P5NodeAttr,
 	context: ParseHtmlAttrContext,
 ): IHtmlNodeAttrSourceCodeLocation | undefined {
 	const { name, modifier } = parseLitAttrName(p5Attr.name);
 
-	const sourceLocation = getSourceLocation(p5Node);
+	const sourceLocation = p5Node.sourceCodeLocation;
 	if (sourceLocation == null)
 		return undefined;
 
@@ -85,7 +85,7 @@ function makeHtmlAttrLocation(
 	// Parse5 lowercases source code location attr keys but doesnt lowercase the attr name when it comes to svg.
 	// It would be correct not to lowercase the attr names because svg is case sensitive
 	const sourceCodeLocationName = `${ p5Attr.prefix || '' }${ (p5Attr.prefix && ':') || '' }${ p5Attr.name }`.toLowerCase();
-	const htmlAttrLocation = (sourceLocation.startTag.attrs || {})[sourceCodeLocationName];
+	const htmlAttrLocation = (sourceLocation.attrs || {})[sourceCodeLocationName];
 	const start = htmlAttrLocation.startOffset;
 	const end = htmlAttrLocation.endOffset;
 

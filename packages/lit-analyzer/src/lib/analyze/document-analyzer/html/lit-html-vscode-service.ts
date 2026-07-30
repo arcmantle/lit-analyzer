@@ -1,5 +1,6 @@
 import * as ts from 'typescript';
-import * as vscode from 'vscode-html-languageservice';
+import type * as vscodeTypes from 'vscode-html-languageservice';
+import * as vscodeNs from 'vscode-html-languageservice';
 
 import { HtmlDocument } from '../../parse/document/text-document/html-document/html-document.js';
 import { textPartsToRanges } from '../../parse/document/virtual-document/virtual-document.js';
@@ -8,13 +9,18 @@ import { LitFormatEdit } from '../../types/lit-format-edit.js';
 import { DocumentOffset } from '../../types/range.js';
 import { documentRangeToSFRange, makeDocumentRange } from '../../util/range-util.js';
 
+// Node resolves the CommonJS build and exposes only part of it as named ESM
+// exports, so runtime values come off the whole `module.exports`. Bundlers
+// resolve the real ESM build instead, where the namespace already has them all.
+const vscode = (vscodeNs as unknown as Record<string, typeof vscodeNs>)['default'] ?? vscodeNs;
+
 const htmlService = vscode.getLanguageService();
 
-function makeVscTextDocument(htmlDocument: HtmlDocument): vscode.TextDocument {
+function makeVscTextDocument(htmlDocument: HtmlDocument): vscodeTypes.TextDocument {
 	return vscode.TextDocument.create('untitled://embedded.html', 'html', 1, htmlDocument.virtualDocument.text);
 }
 
-function makeVscHtmlDocument(vscTextDocument: vscode.TextDocument) {
+function makeVscHtmlDocument(vscTextDocument: vscodeTypes.TextDocument) {
 	return htmlService.parseHTMLDocument(vscTextDocument);
 }
 
