@@ -4,7 +4,6 @@ import { AnalyzerVisitContext } from '../../analyzer-visit-context.js';
 import { ComponentEvent } from '../../types/features/component-event.js';
 import { ComponentMember } from '../../types/features/component-member.js';
 import { getJsDoc } from '../../util/js-doc-util.js';
-import { lazy } from '../../util/lazy.js';
 import { resolveNodeValue } from '../../util/resolve-node-value.js';
 import { AnalyzerFlavor } from '../analyzer-flavor.js';
 
@@ -13,7 +12,7 @@ import { AnalyzerFlavor } from '../analyzer-flavor.js';
  */
 export const discoverGlobalFeatures: AnalyzerFlavor['discoverGlobalFeatures'] = {
 	event: (node: Node, context: AnalyzerVisitContext): ComponentEvent[] | undefined => {
-		const { ts, checker } = context;
+		const { ts } = context;
 
 		if (context.ts.isInterfaceDeclaration(node) && [ 'HTMLElementEventMap', 'GlobalEventHandlersEventMap' ].includes(node.name.text)) {
 			const events: ComponentEvent[] = [];
@@ -27,7 +26,7 @@ export const discoverGlobalFeatures: AnalyzerFlavor['discoverGlobalFeatures'] = 
 							node:  member,
 							jsDoc: getJsDoc(member, ts),
 							name:  name,
-							type:  lazy(() => checker.getTypeAtLocation(member)),
+							type:  checker => checker.getTypeAtLocation(member),
 						});
 					}
 				}
@@ -55,7 +54,7 @@ export const discoverGlobalFeatures: AnalyzerFlavor['discoverGlobalFeatures'] = 
 							jsDoc:    getJsDoc(member, ts),
 							kind:     'property',
 							propName: name,
-							type:     lazy(() => context.checker.getTypeAtLocation(member)),
+							type:     checker => checker.getTypeAtLocation(member),
 						});
 					}
 				}

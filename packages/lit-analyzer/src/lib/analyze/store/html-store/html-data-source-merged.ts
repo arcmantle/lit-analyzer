@@ -19,7 +19,6 @@ import {
 	mergeHtmlTags,
 	NamedHtmlDataCollection,
 } from '../../parse/parse-html-data/html-tag.js';
-import { lazy } from '../../util/general-util.js';
 import { iterableDefined } from '../../util/iterable-util.js';
 import { HtmlDataSource } from './html-data-source.js';
 
@@ -462,13 +461,38 @@ function mergeRelatedMembers<T extends HtmlMember>(members: Iterable<T>): Readon
 				required:    existingMember.required && member.required,
 				builtIn:     existingMember.required && member.required,
 				fromTagName: existingMember.fromTagName || member.fromTagName,
-				getType:     lazy(() => mergeRelatedTypeToUnion(prevType(), member.getType())),
+				getType:     checker => mergeRelatedTypeToUnionCached(prevType(checker), member.getType(checker)),
 				related:     existingMember.related == null ? [ existingMember, member ] : [ ...existingMember.related, member ],
 			});
 		}
 	}
 
 	return mergedMembers;
+}
+
+/**
+ * A merged union is a new object on every call, so it is memoized on its inputs to keep
+ * a stable identity for the assignability cache. The inputs belong to the current program,
+ * so an entry is collected with it.
+ */
+const MERGED_UNION_CACHE: WeakMap<SimpleType, WeakMap<SimpleType, SimpleType>> = new WeakMap();
+
+function mergeRelatedTypeToUnionCached(typeA: SimpleType, typeB: SimpleType): SimpleType {
+	let mergedForTypeA = MERGED_UNION_CACHE.get(typeA);
+	if (mergedForTypeA == null) {
+		mergedForTypeA = new WeakMap();
+		MERGED_UNION_CACHE.set(typeA, mergedForTypeA);
+	}
+
+	const existing = mergedForTypeA.get(typeB);
+	if (existing != null)
+		return existing;
+
+
+	const merged = mergeRelatedTypeToUnion(typeA, typeB);
+	mergedForTypeA.set(typeB, merged);
+
+	return merged;
 }
 
 function mergeRelatedTypeToUnion(typeA: SimpleType, typeB: SimpleType): SimpleType {
@@ -549,7 +573,7 @@ function mergeRelatedEvents(events: Iterable<HtmlEvent>): ReadonlyMap<string, Ht
 				...existingEvent,
 				global:      existingEvent.global && event.global,
 				description: undefined,
-				getType:     lazy(() => mergeRelatedTypeToUnion(prevType(), event.getType())),
+				getType:     checker => mergeRelatedTypeToUnionCached(prevType(checker), event.getType(checker)),
 				related:     existingEvent.related == null ? [ existingEvent, event ] : [ ...existingEvent.related, event ],
 				fromTagName: existingEvent.fromTagName || event.fromTagName,
 			});

@@ -135,7 +135,7 @@ function componentMemberToHtmlDataAttribute(member: ComponentMember, checker: Ty
 	return {
 		name:              member.attrName,
 		description:       getDescriptionFromJsDoc(member.jsDoc),
-		type:              getTypeHintFromType(member.typeHint ?? member.type?.(), checker, config),
+		type:              getTypeHintFromType(member.typeHint ?? member.type?.(checker), checker, config),
 		default:           member.default != null ? JSON.stringify(member.default) : undefined,
 		deprecated:        member.deprecated === true || undefined,
 		deprecatedMessage: typeof member.deprecated === 'string' ? member.deprecated : undefined,
@@ -151,7 +151,7 @@ function componentMemberToHtmlDataProperty(member: ComponentMember, checker: Typ
 		name:              member.propName,
 		attribute:         member.attrName,
 		description:       getDescriptionFromJsDoc(member.jsDoc),
-		type:              getTypeHintFromType(member.typeHint ?? member.type?.(), checker, config),
+		type:              getTypeHintFromType(member.typeHint ?? member.type?.(checker), checker, config),
 		default:           member.default != null ? JSON.stringify(member.default) : undefined,
 		deprecated:        member.deprecated === true || undefined,
 		deprecatedMessage: typeof member.deprecated === 'string' ? member.deprecated : undefined,

@@ -9,7 +9,6 @@ import { ComponentMember, ComponentMemberAttribute, ComponentMemberProperty } fr
 import { ComponentSlot } from '../../types/features/component-slot.js';
 import { getNodeSourceFileLang } from '../../util/ast-util.js';
 import { parseSimpleJsDocTypeExpression } from '../../util/js-doc-util.js';
-import { lazy } from '../../util/lazy.js';
 import { FeatureDiscoverVisitMap } from '../analyzer-flavor.js';
 import { parseJsDocForNode } from './parse-js-doc-for-node.js';
 
@@ -57,10 +56,13 @@ export const discoverFeatures: Partial<FeatureDiscoverVisitMap<AnalyzerVisitCont
 				[ 'event', 'fires', 'emits' ],
 				(tagNode, { name, description, type }) => {
 					if (name != null && name.length > 0 && tagNode != null) {
+						// Resolved here, not on read, because a jsdoc type comes from the tag text, not from a node.
+						const jsDocType = type != null ? parseSimpleJsDocTypeExpression(type, context) || { kind: 'ANY' as const } : undefined;
+
 						return {
 							name:     name,
 							jsDoc:    description != null ? { description } : undefined,
-							type:     type != null ? lazy(() => parseSimpleJsDocTypeExpression(type, context) || { kind: 'ANY' }) : undefined,
+							type:     jsDocType == null ? undefined : () => jsDocType,
 							typeHint: type,
 							node:     tagNode,
 						};
@@ -120,13 +122,15 @@ export const discoverFeatures: Partial<FeatureDiscoverVisitMap<AnalyzerVisitCont
 				[ 'prop', 'property' ],
 				(tagNode, { name, default: def, type, description }) => {
 					if (name != null && name.length > 0) {
+						const jsDocType = (type && parseSimpleJsDocTypeExpression(type, context)) || { kind: 'ANY' as const };
+
 						return {
 							priority,
 							kind:       'property',
 							propName:   name,
 							jsDoc:      description != null ? { description } : undefined,
 							typeHint:   type,
-							type:       lazy(() => (type && parseSimpleJsDocTypeExpression(type, context)) || { kind: 'ANY' }),
+							type:       () => jsDocType,
 							node:       tagNode,
 							default:    def,
 							visibility: undefined,
@@ -144,12 +148,14 @@ export const discoverFeatures: Partial<FeatureDiscoverVisitMap<AnalyzerVisitCont
 				[ 'attr', 'attribute' ],
 				(tagNode, { name, default: def, type, description }) => {
 					if (name != null && name.length > 0) {
+						const jsDocType = (type && parseSimpleJsDocTypeExpression(type, context)) || { kind: 'ANY' as const };
+
 						return {
 							priority,
 							kind:       'attribute',
 							attrName:   name,
 							jsDoc:      description != null ? { description } : undefined,
-							type:       lazy(() => (type && parseSimpleJsDocTypeExpression(type, context)) || { kind: 'ANY' }),
+							type:       () => jsDocType,
 							typeHint:   type,
 							node:       tagNode,
 							default:    def,

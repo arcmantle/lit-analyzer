@@ -28,7 +28,7 @@ function hints(inlineTypes: boolean): Record<string, string | undefined> {
 
 	return Object.fromEntries(members.map(member => [
 		member.propName!,
-		getTypeHintFromType(toSimpleType(member.type!(), checker), checker, config),
+		getTypeHintFromType(toSimpleType(member.type!(checker), checker), checker, config),
 	]));
 }
 

@@ -51,8 +51,8 @@ export function assertHasMembers(
 				if (checker == null) {
 					throw new Error("Type checker is not given to assert util!");
 				}
-				const typeA = actualMember.type();
-				const typeB = expectedMember.type();
+				const typeA = actualMember.type(checker);
+				const typeB = expectedMember.type(checker);
 				t.truthy(
 					isAssignableToType(typeA, typeB, checker),
 					`Type for ${name} doesn't match: ${typeToString(typeA, checker)} === ${typeToString(typeB, checker)}`

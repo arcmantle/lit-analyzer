@@ -1,7 +1,7 @@
 import { SourceFile } from 'typescript';
-import { AnalyzerResult, ComponentDeclaration, ComponentDefinition, visitAllHeritageClauses } from 'web-component-analyzer';
+import { AnalyzerResult, ComponentDeclaration, ComponentDefinition } from 'web-component-analyzer';
 
-import { getDeclarationsInFile } from '../../util/component-util.js';
+import { getContributingFiles, getDeclarationsInFile } from '../../util/component-util.js';
 import { AnalyzerDefinitionStore } from '../analyzer-definition-store.js';
 
 export class DefaultAnalyzerDefinitionStore implements AnalyzerDefinitionStore {
@@ -17,18 +17,8 @@ export class DefaultAnalyzerDefinitionStore implements AnalyzerDefinitionStore {
 		result.componentDefinitions.forEach(definition => {
 			this.definitionForTagName.set(definition.tagName, definition);
 
-			addToSetInMap(this.intersectingDefinitionsForFile, definition.sourceFile.fileName, definition);
-
-			if (definition.declaration == null)
-				return;
-
-
-			addToSetInMap(this.intersectingDefinitionsForFile, definition.declaration?.sourceFile.fileName, definition);
-
-			visitAllHeritageClauses(definition.declaration, clause => {
-				if (clause.declaration != null)
-					addToSetInMap(this.intersectingDefinitionsForFile, clause.declaration.sourceFile.fileName, definition);
-			});
+			for (const contributingFile of getContributingFiles(definition))
+				addToSetInMap(this.intersectingDefinitionsForFile, contributingFile.fileName, definition);
 		});
 	}
 
@@ -40,18 +30,8 @@ export class DefaultAnalyzerDefinitionStore implements AnalyzerDefinitionStore {
 		result.componentDefinitions.forEach(definition => {
 			this.definitionForTagName.delete(definition.tagName);
 
-			this.intersectingDefinitionsForFile.get(definition.sourceFile.fileName)?.delete(definition);
-
-			if (definition.declaration == null)
-				return;
-
-
-			this.intersectingDefinitionsForFile.get(definition.declaration?.sourceFile.fileName)?.delete(definition);
-
-			visitAllHeritageClauses(definition.declaration, clause => {
-				if (clause.declaration != null)
-					this.intersectingDefinitionsForFile.get(clause.declaration.sourceFile.fileName)?.delete(definition);
-			});
+			for (const contributingFile of getContributingFiles(definition))
+				this.intersectingDefinitionsForFile.get(contributingFile.fileName)?.delete(definition);
 		});
 
 		this.analysisResultForFile.delete(sourceFile.fileName);

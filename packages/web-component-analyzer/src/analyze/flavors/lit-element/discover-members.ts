@@ -4,7 +4,6 @@ import { ComponentMember } from '../../types/features/component-member.js';
 import { LitElementPropertyConfig } from '../../types/features/lit-element-property-config.js';
 import { getMemberVisibilityFromNode, getModifiersFromNode, getNodeSourceFileLang, hasModifier } from '../../util/ast-util.js';
 import { getJsDoc, getJsDocType } from '../../util/js-doc-util.js';
-import { lazy } from '../../util/lazy.js';
 import { resolveNodeValue } from '../../util/resolve-node-value.js';
 import { camelToDashCase, isNamePrivate } from '../../util/text-util.js';
 import { AnalyzerDeclarationVisitContext } from '../analyzer-flavor.js';
@@ -49,7 +48,7 @@ function parsePropertyDecorator(
 	node: SetAccessorDeclaration | GetAccessorDeclaration | PropertyDeclaration | PropertySignature,
 	context: AnalyzerDeclarationVisitContext,
 ): ComponentMember[] | undefined {
-	const { ts, checker } = context;
+	const { ts } = context;
 
 	// Parse the content of a possible lit "@property" decorator.
 	const litConfig = getLitElementPropertyDecoratorConfig(node, context);
@@ -78,12 +77,12 @@ function parsePropertyDecorator(
 				kind:     'property',
 				propName,
 				attrName,
-				type:     lazy(() => {
+				type:     checker => {
 					const propType = checker.getTypeAtLocation(node);
 					const inJavascriptFile = getNodeSourceFileLang(node) === 'js';
 
 					return inJavascriptFile && typeof litConfig.type === 'object' && litConfig.type.kind === 'ANY' ? litConfig.type : propType;
-				}),
+				},
 				node,
 				default:    def,
 				required,
@@ -196,13 +195,16 @@ function parseStaticProperties(returnStatement: ReturnStatement, context: Analyz
 
 			const emitAttribute = litConfig.attribute !== false;
 
+			// Resolved here, not on read, because a jsdoc type comes from the tag text, not from a node.
+			const declaredType = (jsDoc && getJsDocType(jsDoc, context))
+				|| (typeof litConfig.type === 'object' && litConfig.type)
+				|| { kind: 'ANY' as const };
+
 			// Emit either the attribute or the property
 			memberResults.push({
-				priority: 'high',
-				kind:     'property',
-				type:     lazy(() => {
-					return (jsDoc && getJsDocType(jsDoc, context)) || (typeof litConfig.type === 'object' && litConfig.type) || { kind: 'ANY' };
-				}),
+				priority:   'high',
+				kind:       'property',
+				type:       () => declaredType,
 				propName:   propName,
 				attrName:   emitAttribute ? attrName : undefined,
 				jsDoc,

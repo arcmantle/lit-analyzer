@@ -9,29 +9,32 @@ import { createAnalysisCompiler } from '../analysis-compiler.js';
 const PROJECT = path.resolve(import.meta.dirname, 'fixtures/program-change-project');
 const TSCONFIG = path.join(PROJECT, 'tsconfig.json');
 const CONSUMER = path.join(PROJECT, 'src/consumer.ts');
+const BASE = path.join(PROJECT, 'src/base.ts');
+const ELEMENT = path.join(PROJECT, 'src/element.ts');
+const VALUE_TYPE = path.join(PROJECT, 'src/value-type.ts');
 
 /**
- * Counts the component member types that no longer belong to the given program.
- * A member type from an earlier program keeps that whole program alive.
+ * Counts the component member nodes that no longer belong to the given program.
+ * A checker read is valid only on a node of a source file the program still owns.
  */
-function countStaleMemberTypes(context: DefaultLitAnalyzerContext, tagName: string): number {
-	const checker = context.program.getTypeChecker();
-	let stale = 0;
+function countDeadNodes(context: DefaultLitAnalyzerContext, tagName: string): number {
+	let dead = 0;
 
 	for (const property of context.htmlStore.getAllPropertiesForTag(tagName)) {
-		const declaration = property.declaration;
-		if (declaration?.type == null)
+		const node = property.declaration?.node;
+		if (node == null)
 			continue;
 
 
-		if (declaration.type() !== checker.getTypeAtLocation(declaration.node))
-			stale += 1;
+		const sourceFile = node.getSourceFile();
+		if (context.program.getSourceFile(sourceFile.fileName) !== sourceFile)
+			dead += 1;
 	}
 
-	return stale;
+	return dead;
 }
 
-test('A component member type belongs to the current program after the program changes', () => {
+test('A component member node belongs to the current program after the program changes', () => {
 	const compiler = createAnalysisCompiler(TSCONFIG);
 	const context = new DefaultLitAnalyzerContext({ getProgram: () => compiler.getProgram() });
 	context.updateConfig(makeConfig({}));
@@ -44,7 +47,7 @@ test('A component member type belongs to the current program after the program c
 	const names = Array.from(context.htmlStore.getAllPropertiesForTag('my-element')).map(property => property.name);
 	expect(names).toContain('value');
 	expect(names).toContain('label');
-	expect(countStaleMemberTypes(context, 'my-element')).toBe(0);
+	expect(countDeadNodes(context, 'my-element')).toBe(0);
 
 	// Opening and closing a document makes the language service build a new program.
 	compiler.openDocument(CONSUMER, readFileSync(CONSUMER, 'utf8'));
@@ -52,5 +55,78 @@ test('A component member type belongs to the current program after the program c
 	compiler.closeDocument(CONSUMER);
 	analyze();
 
-	expect(countStaleMemberTypes(context, 'my-element')).toBe(0);
+	expect(countDeadNodes(context, 'my-element')).toBe(0);
+});
+
+test('A component member type comes from the checker the caller gives it', () => {
+	const compiler = createAnalysisCompiler(TSCONFIG);
+	const context = new DefaultLitAnalyzerContext({ getProgram: () => compiler.getProgram() });
+	context.updateConfig(makeConfig({}));
+	const analyzer = new LitAnalyzer(context);
+
+	analyzer.getDiagnosticsInFile(compiler.getProgram().getSourceFile(CONSUMER)!);
+
+	const property = Array.from(context.htmlStore.getAllPropertiesForTag('my-element'))
+		.find(candidate => candidate.name === 'value')!;
+	const member = property.declaration!;
+
+	// Editing the consumer makes a new program. The element file is untouched, so its nodes stay live.
+	compiler.openDocument(CONSUMER, `${ readFileSync(CONSUMER, 'utf8') }\n`);
+	const checker = compiler.getProgram().getTypeChecker();
+
+	expect(member.type!(checker)).toBe(checker.getTypeAtLocation(member.node));
+});
+
+/** Builds an analyzed project and counts how often a tag is rebuilt after the first analysis. */
+function startProject() {
+	const compiler = createAnalysisCompiler(TSCONFIG);
+	const context = new DefaultLitAnalyzerContext({ getProgram: () => compiler.getProgram() });
+	context.updateConfig(makeConfig({}));
+	const analyzer = new LitAnalyzer(context);
+
+	const analyze = () => analyzer.getDiagnosticsInFile(compiler.getProgram().getSourceFile(CONSUMER)!);
+	analyze();
+
+	let rebuilds = 0;
+	const debug = context.logger.debug.bind(context.logger);
+	context.logger.debug = (...args: unknown[]) => {
+		if (String(args[0]).includes(ELEMENT))
+			rebuilds += 1;
+
+
+		debug(...args);
+	};
+
+	const typeKindOf = (propertyName: string) => {
+		const property = Array.from(context.htmlStore.getAllPropertiesForTag('my-element'))
+			.find(candidate => candidate.name === propertyName)!;
+
+		return property.getType(compiler.getProgram().getTypeChecker()).kind;
+	};
+
+	return { compiler, analyze, typeKindOf, rebuildCount: () => rebuilds };
+}
+
+test('A change to a base class file rebuilds the component', () => {
+	const project = startProject();
+
+	expect(project.typeKindOf('label')).toBe('STRING');
+
+	project.compiler.openDocument(BASE, 'export class BaseElement extends HTMLElement {\n\tlabel: number = 0;\n}\n');
+	project.analyze();
+
+	expect(project.rebuildCount()).toBe(1);
+	expect(project.typeKindOf('label')).toBe('NUMBER');
+});
+
+test('A change to a file the component only takes a type from does not rebuild it', () => {
+	const project = startProject();
+
+	expect(project.typeKindOf('value')).toBe('STRING');
+
+	project.compiler.openDocument(VALUE_TYPE, 'export type Value = number;\n');
+	project.analyze();
+
+	expect(project.rebuildCount()).toBe(0);
+	expect(project.typeKindOf('value')).toBe('NUMBER');
 });

@@ -22,6 +22,7 @@ import { DefaultAnalyzerDocumentStore } from './store/document-store/default-ana
 import { DefaultAnalyzerHtmlStore } from './store/html-store/default-analyzer-html-store.js';
 import { HtmlDataSourceKind } from './store/html-store/html-data-source-merged.js';
 import { changedSourceFileIterator } from './util/changed-source-file-iterator.js';
+import { getContributingFiles } from './util/component-util.js';
 
 // An id, rather than the program itself, so that recording which program
 // analyzed a file cannot keep that program alive.
@@ -39,10 +40,9 @@ export class DefaultLitAnalyzerContext implements LitAnalyzerContext {
 
 	protected componentSourceFileIterator = changedSourceFileIterator();
 	protected hasAnalyzedSubclassExtensions = false;
-	protected componentProgramId:       number | undefined;
-	protected programIdForAnalyzedFile: Map<string, number> = new Map();
-	private refreshingTags:             Set<string> = new Set();
-	protected _config:                  LitAnalyzerConfig = makeConfig({});
+	protected componentProgramId: number | undefined;
+	private refreshingTags:       Set<string> = new Set();
+	protected _config:            LitAnalyzerConfig = makeConfig({});
 
 	get ts(): typeof tsMod {
 		return this.handler.ts || tsMod;
@@ -194,9 +194,9 @@ export class DefaultLitAnalyzerContext implements LitAnalyzerContext {
 	}
 
 	/**
-	 * Rebuilds the component behind `tagName` when an earlier program built it.
-	 * Called before every read of a tag, so only the tags a file uses are
-	 * rebuilt, not every component in the project.
+	 * Rebuilds the component behind `tagName` when one of its contributing files is no longer the
+	 * source file the current program owns, which means its nodes are dead. Called before every
+	 * read of a tag, so only the tags a file uses are rebuilt, not every component in the project.
 	 */
 	private refreshTagBuiltWithAnotherProgram(tagName: string): void {
 		if (this.refreshingTags.has(tagName))
@@ -208,18 +208,27 @@ export class DefaultLitAnalyzerContext implements LitAnalyzerContext {
 			return;
 
 
+		const staleFile = Array.from(getContributingFiles(definition))
+			.find(file => this.program.getSourceFile(file.fileName) !== file);
+
+		if (staleFile == null)
+			return;
+
+
 		const fileName = definition.sourceFile.fileName;
-		if (this.programIdForAnalyzedFile.get(fileName) === programIdOf(this.program))
-			return;
-
-
 		const sourceFile = this.program.getSourceFile(fileName);
-		if (sourceFile == null)
-			return;
-
 
 		this.refreshingTags.add(tagName);
 		try {
+			if (sourceFile == null) {
+				this.logger.debug(`Forgetting <${ tagName }>: ${ fileName } left the program`);
+				// A default library file never leaves the program, so the kind can only be DECLARED here.
+				this.forgetComponentsInFile(definition.sourceFile, HtmlDataSourceKind.DECLARED);
+
+				return;
+			}
+
+			this.logger.debug(`Rebuilding <${ tagName }> in ${ fileName }: ${ staleFile.fileName } is no longer current`);
 			this.componentSourceFileIterator.invalidate(sourceFile);
 			this.findComponentsInFile(sourceFile);
 		}
@@ -313,38 +322,46 @@ export class DefaultLitAnalyzerContext implements LitAnalyzerContext {
 
 		const reg = isDefaultLibrary ? HtmlDataSourceKind.BUILT_IN_DECLARED : HtmlDataSourceKind.DECLARED;
 
-		// Forget
-		const existingResult = this.definitionStore.getAnalysisResultForFile(sourceFile);
-		if (existingResult != null) {
-			this.htmlStore.forgetCollection(
-				{
-					tags:   existingResult.componentDefinitions.map(d => d.tagName),
-					global: {
-						events:        existingResult.globalFeatures?.events.map(e => e.name),
-						slots:         existingResult.globalFeatures?.slots.map(s => s.name || ''),
-						cssParts:      existingResult.globalFeatures?.cssParts.map(s => s.name || ''),
-						cssProperties: existingResult.globalFeatures?.cssProperties.map(s => s.name || ''),
-						attributes:    existingResult.globalFeatures?.members
-							.filter(m => m.kind === 'attribute')
-							.map(m => m.attrName || ''),
-						properties: existingResult.globalFeatures?.members
-							.filter(m => m.kind === 'property')
-							.map(m => m.propName || ''),
-					},
-				},
-				reg,
-			);
-			this.definitionStore.forgetAnalysisResultForFile(sourceFile);
-		}
+		this.forgetComponentsInFile(sourceFile, reg);
 
 		// Absorb
 		this.definitionStore.absorbAnalysisResult(sourceFile, analyzeResult);
-		this.programIdForAnalyzedFile.set(sourceFile.fileName, programIdOf(this.program));
 		const htmlCollection = convertAnalyzeResultToHtmlCollection(analyzeResult, {
-			checker:                              this.checker,
 			addDeclarationPropertiesAsAttributes: this.program.isSourceFileFromExternalLibrary(sourceFile),
 		});
 		this.htmlStore.absorbCollection(htmlCollection, reg);
+	}
+
+	/**
+	 * Drops everything an earlier analysis of `sourceFile` put in the stores. The source file may
+	 * be one the current program no longer owns, because a file that left the program must be
+	 * forgotten and cannot be analyzed again.
+	 */
+	private forgetComponentsInFile(sourceFile: SourceFile, dataSource: HtmlDataSourceKind) {
+		const existingResult = this.definitionStore.getAnalysisResultForFile(sourceFile);
+		if (existingResult == null)
+			return;
+
+
+		this.htmlStore.forgetCollection(
+			{
+				tags:   existingResult.componentDefinitions.map(d => d.tagName),
+				global: {
+					events:        existingResult.globalFeatures?.events.map(e => e.name),
+					slots:         existingResult.globalFeatures?.slots.map(s => s.name || ''),
+					cssParts:      existingResult.globalFeatures?.cssParts.map(s => s.name || ''),
+					cssProperties: existingResult.globalFeatures?.cssProperties.map(s => s.name || ''),
+					attributes:    existingResult.globalFeatures?.members
+						.filter(m => m.kind === 'attribute')
+						.map(m => m.attrName || ''),
+					properties: existingResult.globalFeatures?.members
+						.filter(m => m.kind === 'property')
+						.map(m => m.propName || ''),
+				},
+			},
+			dataSource,
+		);
+		this.definitionStore.forgetAnalysisResultForFile(sourceFile);
 	}
 
 	private analyzeSubclassExtensions() {
@@ -353,7 +370,7 @@ export class DefaultLitAnalyzerContext implements LitAnalyzerContext {
 
 		const result = analyzeHTMLElement(this.program, this.ts);
 		if (result != null) {
-			const extension = convertComponentDeclarationToHtmlTag(result, undefined, { checker: this.checker });
+			const extension = convertComponentDeclarationToHtmlTag(result, undefined, {});
 			this.htmlStore.absorbSubclassExtension('HTMLElement', extension);
 			this.hasAnalyzedSubclassExtensions = true;
 		}

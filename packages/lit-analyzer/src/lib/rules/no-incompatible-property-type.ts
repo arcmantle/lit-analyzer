@@ -21,14 +21,15 @@ const rule: RuleModule = {
 			return;
 
 		// Grab the type and fallback to "any"
-		const type = member.type?.() || { kind: 'ANY' };
+		const checker = context.program.getTypeChecker();
+		const type = member.type?.(checker) || { kind: 'ANY' };
 
 		return validateLitPropertyConfig(
 			member.meta.node?.type || member.meta.node?.decorator?.expression || member.node,
 			member.meta,
 			{
 				propName:       member.propName,
-				simplePropType: isSimpleType(type) ? type : toSimpleType(type, context.program.getTypeChecker()),
+				simplePropType: isSimpleType(type) ? type : toSimpleType(type, checker),
 			},
 			context,
 		);

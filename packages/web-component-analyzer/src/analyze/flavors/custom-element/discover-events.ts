@@ -3,7 +3,6 @@ import { Node } from 'typescript';
 import { AnalyzerVisitContext } from '../../analyzer-visit-context.js';
 import { ComponentEvent } from '../../types/features/component-event.js';
 import { getJsDoc } from '../../util/js-doc-util.js';
-import { lazy } from '../../util/lazy.js';
 import { resolveNodeValue } from '../../util/resolve-node-value.js';
 
 const EVENT_NAMES = [
@@ -33,7 +32,7 @@ const EVENT_NAMES = [
  * @param context
  */
 export function discoverEvents(node: Node, context: AnalyzerVisitContext): ComponentEvent[] | undefined {
-	const { ts, checker } = context;
+	const { ts } = context;
 
 	// new CustomEvent("my-event");
 	if (ts.isNewExpression(node)) {
@@ -57,7 +56,7 @@ export function discoverEvents(node: Node, context: AnalyzerVisitContext): Compo
 						jsDoc,
 						name: eventName,
 						node,
-						type: lazy(() => checker.getTypeAtLocation(node)),
+						type: checker => checker.getTypeAtLocation(node),
 					},
 				];
 			}

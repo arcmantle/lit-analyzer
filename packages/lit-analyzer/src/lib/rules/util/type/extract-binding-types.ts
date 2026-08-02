@@ -35,7 +35,7 @@ export function extractBindingTypes(
 	const htmlAttrTarget = context.htmlStore.getHtmlAttrTarget(assignment.htmlAttr);
 	//if (htmlAttrTarget == null) return [];
 
-	const typeA = htmlAttrTarget == null ? ({ kind: 'ANY' } as SimpleType) : htmlAttrTarget.getType();
+	const typeA = htmlAttrTarget == null ? ({ kind: 'ANY' } as SimpleType) : htmlAttrTarget.getType(checker);
 
 	// Handle directives
 	const directive = getDirective(assignment, context);

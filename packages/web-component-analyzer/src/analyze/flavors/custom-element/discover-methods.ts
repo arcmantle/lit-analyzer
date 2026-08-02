@@ -3,7 +3,6 @@ import { Node } from 'typescript';
 import { ComponentMethod } from '../../types/features/component-method.js';
 import { getMemberVisibilityFromNode, hasModifier } from '../../util/ast-util.js';
 import { getJsDoc } from '../../util/js-doc-util.js';
-import { lazy } from '../../util/lazy.js';
 import { AnalyzerDeclarationVisitContext } from '../analyzer-flavor.js';
 
 /**
@@ -37,7 +36,7 @@ export function discoverMethods(node: Node, context: AnalyzerDeclarationVisitCon
 				name,
 				node:       node,
 				visibility: getMemberVisibilityFromNode(node, ts),
-				type:       lazy(() => context.checker.getTypeAtLocation(node)),
+				type:       checker => checker.getTypeAtLocation(node),
 			},
 		];
 	}

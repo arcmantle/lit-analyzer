@@ -2,12 +2,10 @@ import { isSimpleType, SimpleType, SimpleTypeAny, toSimpleType } from 'ts-simple
 import { TypeChecker } from 'typescript';
 import { AnalyzerResult, ComponentDeclaration, ComponentDefinition, ComponentFeatures } from 'web-component-analyzer';
 
-import { lazy } from '../util/general-util.js';
 import { HtmlDataCollection, HtmlDataFeatures, HtmlTag } from './parse-html-data/html-tag.js';
 
 export interface AnalyzeResultConversionOptions {
 	addDeclarationPropertiesAsAttributes?: boolean;
-	checker:                               TypeChecker;
 }
 
 export function convertAnalyzeResultToHtmlCollection(
@@ -19,7 +17,7 @@ export function convertAnalyzeResultToHtmlCollection(
 
 	const global = result.globalFeatures == null
 		? {}
-		: convertComponentFeaturesToHtml(result.globalFeatures, { checker: options.checker });
+		: convertComponentFeaturesToHtml(result.globalFeatures, {});
 
 	return {
 		tags,
@@ -30,7 +28,7 @@ export function convertAnalyzeResultToHtmlCollection(
 export function convertComponentDeclarationToHtmlTag(
 	declaration: ComponentDeclaration | undefined,
 	definition: ComponentDefinition | undefined,
-	{ checker, addDeclarationPropertiesAsAttributes }: AnalyzeResultConversionOptions,
+	{ addDeclarationPropertiesAsAttributes }: AnalyzeResultConversionOptions,
 ): HtmlTag {
 	const tagName = definition?.tagName ?? '';
 
@@ -54,7 +52,7 @@ export function convertComponentDeclarationToHtmlTag(
 		tagName,
 		builtIn,
 		description: declaration.jsDoc?.description,
-		...convertComponentFeaturesToHtml(declaration, { checker, builtIn, fromTagName: tagName }),
+		...convertComponentFeaturesToHtml(declaration, { builtIn, fromTagName: tagName }),
 	};
 
 	if (addDeclarationPropertiesAsAttributes && !builtIn) {
@@ -77,7 +75,7 @@ export function convertComponentDeclarationToHtmlTag(
 
 export function convertComponentFeaturesToHtml(
 	features: ComponentFeatures,
-	{ checker, builtIn, fromTagName }: { checker: TypeChecker; builtIn?: boolean; fromTagName?: string; },
+	{ builtIn, fromTagName }: { builtIn?: boolean; fromTagName?: string; },
 ): HtmlDataFeatures {
 	const result: HtmlDataFeatures = {
 		attributes:    [],
@@ -93,15 +91,15 @@ export function convertComponentFeaturesToHtml(
 			declaration: event,
 			description: event.jsDoc?.description,
 			name:        event.name,
-			getType:     lazy(() => {
-				const type = event.type?.();
+			getType:     checker => {
+				const type = event.type?.(checker);
 
 				if (type == null)
 					return { kind: 'ANY' };
 
 
 				return isSimpleType(type) ? type : toSimpleType(type, checker);
-			}),
+			},
 			fromTagName,
 			builtIn,
 		});
@@ -110,7 +108,7 @@ export function convertComponentFeaturesToHtml(
 			kind:        'attribute',
 			name:        `on${ event.name }`,
 			description: event.jsDoc?.description,
-			getType:     lazy(() => ({ kind: 'STRING' } as SimpleType)),
+			getType:     () => ({ kind: 'STRING' } as SimpleType),
 			declaration: {
 				attrName: `on${ event.name }`,
 				jsDoc:    event.jsDoc,
@@ -170,15 +168,15 @@ export function convertComponentFeaturesToHtml(
 		const base = {
 			declaration: member,
 			description: member.jsDoc?.description,
-			getType:     lazy(() => {
-				const type = member.type?.();
+			getType:     (checker: TypeChecker) => {
+				const type = member.type?.(checker);
 
 				if (type == null)
 					return { kind: 'ANY' } as SimpleTypeAny;
 
 
 				return isSimpleType(type) ? type : toSimpleType(type, checker);
-			}),
+			},
 			builtIn,
 			fromTagName,
 		};

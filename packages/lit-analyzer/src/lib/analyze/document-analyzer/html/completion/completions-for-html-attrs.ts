@@ -1,4 +1,5 @@
 import { isAssignableToSimpleTypeKind, SimpleType } from 'ts-simple-type';
+import { TypeChecker } from 'typescript';
 
 import {
 	LIT_HTML_BOOLEAN_ATTRIBUTE_MODIFIER,
@@ -16,9 +17,10 @@ import { iterableFilter, iterableMap } from '../../../util/iterable-util.js';
 export function completionsForHtmlAttrs(
 	htmlNode: HtmlNode,
 	location: DocumentPositionContext,
-	{ htmlStore }: LitAnalyzerContext,
+	{ htmlStore, program }: LitAnalyzerContext,
 ): LitCompletion[] {
 	const onTagName = htmlNode.tagName;
+	const checker = program.getTypeChecker();
 
 	// Code completions for ".[...]";
 	if (location.word.startsWith(LIT_HTML_PROP_ATTRIBUTE_MODIFIER)) {
@@ -32,7 +34,7 @@ export function completionsForHtmlAttrs(
 
 		return Array.from(
 			iterableMap(unusedProps, prop =>
-				targetToCompletion(prop, {
+				targetToCompletion(prop, checker, {
 					modifier: LIT_HTML_PROP_ATTRIBUTE_MODIFIER,
 					onTagName,
 				})),
@@ -48,11 +50,11 @@ export function completionsForHtmlAttrs(
 			htmlStore.getAllAttributesForTag(htmlNode),
 			prop => !alreadyUsedAttrNames.includes(prop.name),
 		);
-		const booleanAttributes = iterableFilter(unusedAttrs, prop => isAssignableToBoolean(prop.getType()));
+		const booleanAttributes = iterableFilter(unusedAttrs, prop => isAssignableToBoolean(prop.getType(checker)));
 
 		return Array.from(
 			iterableMap(booleanAttributes, attr =>
-				targetToCompletion(attr, {
+				targetToCompletion(attr, checker, {
 					modifier: LIT_HTML_BOOLEAN_ATTRIBUTE_MODIFIER,
 					onTagName,
 				})),
@@ -71,7 +73,7 @@ export function completionsForHtmlAttrs(
 
 		return Array.from(
 			iterableMap(unusedEvents, prop =>
-				targetToCompletion(prop, {
+				targetToCompletion(prop, checker, {
 					modifier: LIT_HTML_EVENT_LISTENER_ATTRIBUTE_MODIFIER,
 					onTagName,
 				})),
@@ -84,7 +86,7 @@ export function completionsForHtmlAttrs(
 		prop => !alreadyUsedAttrNames.includes(prop.name),
 	);
 
-	return Array.from(iterableMap(unusedAttrs, prop => targetToCompletion(prop, { modifier: '', onTagName })));
+	return Array.from(iterableMap(unusedAttrs, prop => targetToCompletion(prop, checker, { modifier: '', onTagName })));
 }
 
 function isAssignableToBoolean(type: SimpleType, { matchAny } = { matchAny: true }): boolean {
@@ -95,11 +97,12 @@ function isAssignableToBoolean(type: SimpleType, { matchAny } = { matchAny: true
 
 function targetToCompletion(
 	target: HtmlAttrTarget,
+	checker: TypeChecker,
 	{ modifier, insertModifier, onTagName }: { modifier?: string; insertModifier?: boolean; onTagName?: string; },
 ): LitCompletion {
 	if (modifier == null) {
 		if (isHtmlAttr(target)) {
-			if (isAssignableToBoolean(target.getType(), { matchAny: false }))
+			if (isAssignableToBoolean(target.getType(checker), { matchAny: false }))
 				modifier = LIT_HTML_BOOLEAN_ATTRIBUTE_MODIFIER;
 			else
 				modifier = '';
@@ -120,6 +123,6 @@ function targetToCompletion(
 		insert:        `${ insertModifier ? modifier : '' }${ target.name }`,
 		kind:          isBuiltIn ? 'enumElement' : isMember ? 'member' : 'label',
 		importance:    isBuiltIn ? 'low' : isMember ? 'high' : 'medium',
-		documentation: lazy(() => documentationForTarget(target, { modifier })),
+		documentation: lazy(() => documentationForTarget(target, checker, { modifier })),
 	};
 }

@@ -9,7 +9,7 @@ import { tsTest } from '../helpers/ts-test.js';
  * `GENERIC_ARGUMENTS` wrapper on that type.
  */
 function memberType(propName: string): SimpleType {
-	const { results } = analyzeTextWithCurrentTsModule({
+	const { results, program } = analyzeTextWithCurrentTsModule({
 		fileName: 'test.js',
 		text:     `
 			/**
@@ -37,7 +37,7 @@ function memberType(propName: string): SimpleType {
 
 	const member = results[0].componentDefinitions[0].declaration!.members.find(m => m.propName === propName);
 
-	return member!.type!();
+	return member!.type!(program.getTypeChecker()) as SimpleType;
 }
 
 tsTest('relaxType looks through a generic alias wrapper', t => {

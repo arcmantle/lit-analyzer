@@ -3,7 +3,6 @@ import { ComponentMember, ComponentMemberReflectKind } from '../../types/feature
 import { JsDoc } from '../../types/js-doc.js';
 import { VisibilityKind } from '../../types/visibility-kind.js';
 import { parseSimpleJsDocTypeExpression } from '../../util/js-doc-util.js';
-import { lazy } from '../../util/lazy.js';
 import { AnalyzerFlavor } from '../analyzer-flavor.js';
 
 /**
@@ -155,8 +154,9 @@ function applyJsDocAttribute<T extends Partial<Pick<ComponentMember, 'propName' 
 
 		// @attr jsdoc tag can also include the type of attribute
 		if (parsed.type != null && result.typeHint == null) {
+			const jsDocType = parseSimpleJsDocTypeExpression(parsed.type, context);
 			result.typeHint = parsed.type;
-			result.type = feature.type ?? lazy(() => parseSimpleJsDocTypeExpression(parsed.type || '', context));
+			result.type = feature.type ?? (() => jsDocType);
 		}
 
 		return result;
@@ -261,10 +261,12 @@ function applyJsDocType<T extends Partial<Pick<ComponentMember, 'type' | 'typeHi
 		const parsed = typeTag.parsed();
 
 		if (parsed.type != null && parsed.type.length > 0) {
+			const jsDocType = parseSimpleJsDocTypeExpression(parsed.type, context);
+
 			return {
 				...feature,
 				typeHint: parsed.type,
-				type:     feature.type ?? lazy(() => parseSimpleJsDocTypeExpression(parsed.type || '', context)),
+				type:     feature.type ?? (() => jsDocType),
 			};
 		}
 	}

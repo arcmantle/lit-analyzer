@@ -265,7 +265,7 @@ function getExportsDocFromDeclaration(
  */
 function getEventDocsFromDeclaration(declaration: ComponentDeclaration, context: TransformerContext): EventDoc[] {
 	return filterVisibility(context.config.visibility, declaration.events).map(event => {
-		const type = event.type?.() || { kind: 'ANY' };
+		const type = event.type?.(context.checker) || { kind: 'ANY' };
 		const simpleType = isSimpleType(type) ? type : toSimpleType(type, context.checker);
 
 		const typeName = simpleType.kind === 'GENERIC_ARGUMENTS' ? getGenericTarget(simpleType).name : simpleType.name;
@@ -333,11 +333,13 @@ function getAttributeDocsFromDeclaration(declaration: ComponentDeclaration, cont
 	for (const member of filterVisibility(context.config.visibility, declaration.members)) {
 		if (member.attrName != null) {
 			attributeDocs.push({
-				name:          member.attrName,
-				fieldName:     member.propName,
-				defaultValue:  member.default != null ? JSON.stringify(member.default) : undefined,
-				description:   member.jsDoc?.description,
-				type:          getTypeHintFromType(member.typeHint || member.type?.(), context.checker, context.config),
+				name:         member.attrName,
+				fieldName:    member.propName,
+				defaultValue: member.default != null ? JSON.stringify(member.default) : undefined,
+				description:  member.jsDoc?.description,
+				type:         getTypeHintFromType(
+					member.typeHint || member.type?.(context.checker), context.checker, context.config,
+				),
 				inheritedFrom: getInheritedFromReference(declaration, member, context),
 			});
 		}
@@ -426,11 +428,13 @@ function getFieldDocsFromDeclaration(declaration: ComponentDeclaration, context:
 	for (const member of filterVisibility(context.config.visibility, declaration.members)) {
 		if (member.propName != null) {
 			fieldDocs.push({
-				kind:          'field',
-				name:          member.propName,
-				privacy:       member.visibility,
-				description:   member.jsDoc?.description,
-				type:          getTypeHintFromType(member.typeHint || member.type?.(), context.checker, context.config),
+				kind:        'field',
+				name:        member.propName,
+				privacy:     member.visibility,
+				description: member.jsDoc?.description,
+				type:        getTypeHintFromType(
+					member.typeHint || member.type?.(context.checker), context.checker, context.config,
+				),
 				default:       member.default != null ? JSON.stringify(member.default) : undefined,
 				inheritedFrom: getInheritedFromReference(declaration, member, context),
 				summary:       getSummaryFromJsDoc(member.jsDoc),

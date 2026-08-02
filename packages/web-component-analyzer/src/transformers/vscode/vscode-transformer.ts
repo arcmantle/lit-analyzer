@@ -56,14 +56,18 @@ function definitionToHtmlDataTag(definition: ComponentDefinition, checker: TypeC
 	return {
 		name:        definition.tagName,
 		description: formatMetadata(declaration.jsDoc, {
-			Events: declaration.events.map(e => formatEntryRow(e.name, e.jsDoc, e.type?.(), checker)),
+			Events: declaration.events.map(e => formatEntryRow(e.name, e.jsDoc, e.type?.(checker), checker)),
 			Slots:  declaration.slots.map(s =>
 				formatEntryRow(s.name || ' ', s.jsDoc, s.permittedTagNames && s.permittedTagNames.map(n => `"${ markdownHighlight(n) }"`).join(' | '), checker)),
 			Attributes: declaration.members
-				.map(m => ('attrName' in m && m.attrName != null ? formatEntryRow(m.attrName, m.jsDoc, m.typeHint || m.type?.(), checker) : undefined))
+				.map(m => ('attrName' in m && m.attrName != null
+					? formatEntryRow(m.attrName, m.jsDoc, m.typeHint || m.type?.(checker), checker)
+					: undefined))
 				.filter(m => m != null),
 			Properties: declaration.members
-				.map(m => ('propName' in m && m.propName != null ? formatEntryRow(m.propName, m.jsDoc, m.typeHint || m.type?.(), checker) : undefined))
+				.map(m => ('propName' in m && m.propName != null
+					? formatEntryRow(m.propName, m.jsDoc, m.typeHint || m.type?.(checker), checker)
+					: undefined))
 				.filter(m => m != null),
 		}),
 		attributes,
@@ -73,7 +77,7 @@ function definitionToHtmlDataTag(definition: ComponentDefinition, checker: TypeC
 function componentEventToVscodeAttr(event: ComponentEvent, checker: TypeChecker): HtmlDataAttr | undefined {
 	return {
 		name:        `on${ event.name }`,
-		description: formatEntryRow(event.name, event.jsDoc, event.type?.(), checker),
+		description: formatEntryRow(event.name, event.jsDoc, event.type?.(checker), checker),
 	};
 }
 
@@ -84,11 +88,11 @@ function componentMemberToVscodeAttr(member: ComponentMember, checker: TypeCheck
 
 	return {
 		name:        member.attrName,
-		description: formatMetadata(formatEntryRow(member.attrName, member.jsDoc, member.typeHint || member.type?.(), checker), {
+		description: formatMetadata(formatEntryRow(member.attrName, member.jsDoc, member.typeHint || member.type?.(checker), checker), {
 			Property: 'propName' in member ? member.propName : undefined,
 			Default:  member.default === undefined ? undefined : String(member.default),
 		}),
-		...((member.type && typeToVscodeValuePart(member.type?.(), checker)) || {}),
+		...((member.type && typeToVscodeValuePart(member.type(checker), checker)) || {}),
 	};
 }
 

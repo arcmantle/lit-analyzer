@@ -1,8 +1,9 @@
 import { BaseElement } from './base.js';
+import type { Value } from './value-type.js';
 
 export class MyElement extends BaseElement {
 
-	value: string = '';
+	value: Value = '';
 
 }
 

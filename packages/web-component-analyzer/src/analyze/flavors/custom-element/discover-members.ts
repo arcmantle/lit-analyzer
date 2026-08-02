@@ -4,7 +4,6 @@ import { BinaryExpression, ExpressionStatement, Node, ReturnStatement } from 'ty
 import { ComponentMember } from '../../types/features/component-member.js';
 import { getMemberVisibilityFromNode, getModifiersFromNode, hasModifier } from '../../util/ast-util.js';
 import { getJsDoc } from '../../util/js-doc-util.js';
-import { lazy } from '../../util/lazy.js';
 import { resolveNodeValue } from '../../util/resolve-node-value.js';
 import { isNamePrivate } from '../../util/text-util.js';
 import { relaxType } from '../../util/type-util.js';
@@ -16,7 +15,7 @@ import { AnalyzerDeclarationVisitContext } from '../analyzer-flavor.js';
  * @param context
  */
 export function discoverMembers(node: Node, context: AnalyzerDeclarationVisitContext): ComponentMember[] | undefined {
-	const { ts, checker } = context;
+	const { ts } = context;
 
 	// Never pick up members not declared directly on the declaration node being traversed
 	if (node.parent !== context.declarationNode)
@@ -81,7 +80,7 @@ export function discoverMembers(node: Node, context: AnalyzerDeclarationVisitCon
 					kind:       'property',
 					jsDoc:      getJsDoc(node, ts),
 					propName:   name.text,
-					type:       lazy(() => checker.getTypeAtLocation(node)),
+					type:       checker => checker.getTypeAtLocation(node),
 					default:    def,
 					visibility: getMemberVisibilityFromNode(node, ts),
 					modifiers:  getModifiersFromNode(node, ts),
@@ -105,7 +104,7 @@ export function discoverMembers(node: Node, context: AnalyzerDeclarationVisitCon
 					jsDoc:      getJsDoc(node, ts),
 					kind:       'property',
 					propName:   name.text,
-					type:       lazy(() => (parameter == null ? context.checker.getTypeAtLocation(node) : context.checker.getTypeAtLocation(parameter))),
+					type:       checker => (parameter == null ? checker.getTypeAtLocation(node) : checker.getTypeAtLocation(parameter)),
 					visibility: getMemberVisibilityFromNode(node, ts),
 					modifiers:  getModifiersFromNode(node, ts),
 				},
@@ -138,7 +137,7 @@ export function discoverMembers(node: Node, context: AnalyzerDeclarationVisitCon
 							kind:       'property',
 							propName,
 							default:    def,
-							type:       () => relaxType(toSimpleType(checker.getTypeAtLocation(right), checker)),
+							type:       checker => relaxType(toSimpleType(checker.getTypeAtLocation(right), checker)),
 							jsDoc:      getJsDoc(assignment.parent, ts),
 							visibility: isNamePrivate(propName) ? 'private' : undefined,
 						});

@@ -32,7 +32,7 @@ tsTest("Correctly discovers dispatched events and corresponding event types", t 
 			return;
 		}
 
-		t.is(typeToString(event.type!() as SimpleType, program.getTypeChecker()), typeName);
+		t.is(typeToString(event.type!(program.getTypeChecker()) as SimpleType, program.getTypeChecker()), typeName);
 	};
 
 	t.is(events.length, 5);

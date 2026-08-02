@@ -73,8 +73,8 @@ describe('lit-language-server serves lit diagnostics over LSP', () => {
 	// The literal acceptance target: opening the repo's own dogfood file
 	// produces a lit diagnostic, the same way it would with the setting on in
 	// the real extension.
-	test('verified against dev/: opening dev/src/my-element-1.ts publishes a lit diagnostic', async () => {
-		const devDir = path.join(repoRoot, 'dev');
+	test('verified against packages/dev/: opening packages/dev/src/my-element-1.ts publishes a lit diagnostic', async () => {
+		const devDir = path.join(repoRoot, 'packages', 'dev');
 		const devFile = path.join(devDir, 'src', 'my-element-1.ts');
 
 		const client = connectToServer();

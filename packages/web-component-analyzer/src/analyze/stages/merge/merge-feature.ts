@@ -70,8 +70,9 @@ export function mergeEvents(events: ComponentEvent[]): ComponentEvent[] {
 		event => event.name,
 		(left, right) => ({
 			...left,
-			jsDoc:    mergeJsDoc(left.jsDoc, right.jsDoc),
-			type:     () => (left.type != null ? left.type() : right.type != null ? right.type() : { kind: 'ANY' }),
+			jsDoc: mergeJsDoc(left.jsDoc, right.jsDoc),
+			type:  checker =>
+				(left.type != null ? left.type(checker) : right.type != null ? right.type(checker) : { kind: 'ANY' }),
 			typeHint: left.typeHint || right.typeHint,
 		}),
 	);

@@ -37,7 +37,8 @@ const rule: RuleModule = {
 			// Get suggested target
 			const suggestedTarget = suggestTargetForHtmlAttr(htmlAttr, htmlStore);
 			const suggestedMemberName = (suggestedTarget
-				&& `${ litAttributeModifierForTarget(suggestedTarget) }${ suggestedTarget.name }`) || undefined;
+				&& `${ litAttributeModifierForTarget(suggestedTarget, context.program.getTypeChecker()) }${
+					suggestedTarget.name }`) || undefined;
 
 			const suggestion = getSuggestionText({ config, definitionStore, htmlTag });
 

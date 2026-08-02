@@ -3,7 +3,6 @@ import type { GetAccessorDeclaration, Node, PropertyDeclaration, PropertySignatu
 import { ComponentMember } from '../../types/features/component-member.js';
 import { getMemberVisibilityFromNode, getModifiersFromNode } from '../../util/ast-util.js';
 import { getJsDoc } from '../../util/js-doc-util.js';
-import { lazy } from '../../util/lazy.js';
 import { resolveNodeValue } from '../../util/resolve-node-value.js';
 import { camelToDashCase } from '../../util/text-util.js';
 import { AnalyzerDeclarationVisitContext } from '../analyzer-flavor.js';
@@ -36,7 +35,7 @@ function parsePropertyDecorator(
 	node: SetAccessorDeclaration | GetAccessorDeclaration | PropertyDeclaration | PropertySignature,
 	context: AnalyzerDeclarationVisitContext,
 ): ComponentMember[] | undefined {
-	const { ts, checker } = context;
+	const { ts } = context;
 
 	// Parse the content of a possible lit "@api" decorator.
 	const lwcApi = hasLwcApiPropertyDecorator(node, context);
@@ -62,15 +61,11 @@ function parsePropertyDecorator(
 		// Emit a property with "attrName"
 		return [
 			{
-				priority: 'high',
-				kind:     'property',
+				priority:   'high',
+				kind:       'property',
 				propName,
 				attrName,
-				type:     lazy(() => {
-					const propType = checker.getTypeAtLocation(node);
-
-					return propType;
-				}),
+				type:       checker => checker.getTypeAtLocation(node),
 				node,
 				default:    def,
 				required,
