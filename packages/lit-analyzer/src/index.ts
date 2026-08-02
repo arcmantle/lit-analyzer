@@ -4,6 +4,7 @@ export * from './lib/analyze/lit-analyzer.js';
 export * from './lib/analyze/lit-analyzer-config.js';
 export * from './lib/analyze/lit-analyzer-context.js';
 export * from './lib/analyze/lit-analyzer-logger.js';
+export * from './lib/analyze/lit-config-file.js';
 export * from './lib/analyze/types/lit-closing-tag-info.js';
 export * from './lib/analyze/types/lit-code-fix.js';
 export * from './lib/analyze/types/lit-code-fix-action.js';

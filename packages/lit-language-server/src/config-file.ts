@@ -1,30 +1,20 @@
-import * as fs from 'node:fs';
 import * as path from 'node:path';
 
-import { type LitAnalyzerConfig, makeConfig } from 'lit-analyzer';
+import {
+	findNearestLitConfigFile,
+	LIT_CONFIG_FILE_NAME,
+	type LitAnalyzerConfig,
+	makeConfig,
+	readLitConfigFileOptions,
+} from 'lit-analyzer';
 
-export const CONFIG_FILE_NAME = 'lit-analyzer.config.json';
+export const CONFIG_FILE_NAME = LIT_CONFIG_FILE_NAME;
 
 /**
  * Walks up from `startDir` looking for the nearest `lit-analyzer.config.json`.
- * Mirrors the "nearest file wins" walk tsconfig discovery will use later --
- * not shared code yet, since tsconfig discovery hasn't landed.
  */
 export function findNearestConfigFile(startDir: string): string | undefined {
-	let dir = startDir;
-
-	for (;;) {
-		const candidate = path.join(dir, CONFIG_FILE_NAME);
-		if (fs.existsSync(candidate))
-			return candidate;
-
-
-		const parent = path.dirname(dir);
-		if (parent === dir)
-			return undefined;
-
-		dir = parent;
-	}
+	return findNearestLitConfigFile(startDir);
 }
 
 /**
@@ -34,17 +24,7 @@ export function findNearestConfigFile(startDir: string): string | undefined {
  * whether to fall back.
  */
 export function readConfigFile(configPath: string): LitAnalyzerConfig {
-	const raw = fs.readFileSync(configPath, 'utf8');
-
-	let userOptions: Partial<LitAnalyzerConfig>;
-	try {
-		userOptions = JSON.parse(raw) as Partial<LitAnalyzerConfig>;
-	}
-	catch (error) {
-		throw new Error(`Could not parse ${ configPath } as JSON: ${ (error as Error).message }`);
-	}
-
-	return makeConfig(userOptions);
+	return makeConfig(readLitConfigFileOptions(configPath));
 }
 
 export interface ResolvedConfig {

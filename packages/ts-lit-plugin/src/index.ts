@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { LitAnalyzerConfig, LitAnalyzerLoggerLevel, makeConfig, VERSION } from 'lit-analyzer';
+import { LitAnalyzerConfig, LitAnalyzerLoggerLevel, makeConfig, resolveLitConfigOptionsInDirectory, VERSION } from 'lit-analyzer';
 import * as ts from 'typescript';
 import { CompilerOptions } from 'typescript';
 import * as tsServer from 'typescript/lib/tsserverlibrary.js';
@@ -61,7 +61,10 @@ export function init({ typescript }: { typescript: typeof ts; }): tsServer.serve
 					},
 				});
 
-				context.updateConfig(makeConfig(info.config));
+				context.updateConfig(makeConfig(mergeConfigSeeds(
+					readLitAnalyzerConfigFromConfigFile(info.config.cwd as string),
+					info.config,
+				)));
 
 				logger.verbose('Starting ts-lit-plugin...');
 
@@ -98,23 +101,51 @@ export function init({ typescript }: { typescript: typeof ts; }): tsServer.serve
 				? readLitAnalyzerConfigFromCompilerOptions(compilerOptions)
 				: undefined;
 
-			// Make seed where options from "external" takes precedence over options from "tsconfig.json"
-			const configSeed = {
-				...(tsLitPluginOptions || {}),
-				...externalConfig,
+			const cwd = context.project?.getCurrentDirectory();
+			const configFileOptions = cwd != null
+				? readLitAnalyzerConfigFromConfigFile(cwd)
+				: undefined;
 
-				// Also merge rules deep
-				rules: {
-					...(tsLitPluginOptions?.rules || {}),
-					...(externalConfig.rules || {}),
-				},
-			};
+			// "external" beats "tsconfig.json", which beats "lit-analyzer.config.json"
+			const configSeed = mergeConfigSeeds(configFileOptions, tsLitPluginOptions, externalConfig);
 
 			context.updateConfig(makeConfig(configSeed));
 			if (printDebugOnce != null)
 				printDebugOnce();
 		},
 	};
+}
+
+/**
+ * Merges option seeds from lowest to highest precedence, merging `rules` deeply
+ * so that a rule set by one layer isn't dropped by the next.
+ */
+function mergeConfigSeeds(...seeds: (Partial<LitAnalyzerConfig> | undefined)[]): Partial<LitAnalyzerConfig> {
+	return seeds.reduce<Partial<LitAnalyzerConfig>>((merged, seed) => {
+		if (seed == null)
+			return merged;
+
+		return {
+			...merged,
+			...seed,
+			rules: { ...merged.rules, ...seed.rules },
+		};
+	}, {});
+}
+
+/**
+ * Reads the nearest "lit-analyzer.config.json" so that repo level configuration
+ * applies to tsserver too, not only to the language server.
+ */
+function readLitAnalyzerConfigFromConfigFile(cwd: string): Partial<LitAnalyzerConfig> | undefined {
+	const { configPath, options, error } = resolveLitConfigOptionsInDirectory(cwd);
+	if (configPath == null)
+		return undefined;
+
+	if (error != null)
+		logger.error(error);
+
+	return options;
 }
 
 /**
