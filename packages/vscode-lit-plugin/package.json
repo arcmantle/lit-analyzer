@@ -1,7 +1,7 @@
 {
 	"name": "lit-plugin",
 	"private": true,
-	"displayName": "lit-plugin2",
+	"displayName": "Lit Analyzer",
 	"description": "Syntax highlighting, type checking and code completion for lit-html",
 	"version": "1.4.3",
 	"publisher": "arcmantle",
@@ -23,6 +23,7 @@
 		"type": "git",
 		"url": "https://github.com/arcmantle/lit-analyzer.git"
 	},
+	"type": "module",
 	"main": "bundle.js",
 	"scripts": {
 		"watch": "tsc -watch -p ./",
@@ -59,19 +60,8 @@
 	],
 	"contributors": [
 		{
-			"name": "Rune Mehlsen",
-			"url": "https://twitter.com/runemehlsen",
-			"img": "https://avatars2.githubusercontent.com/u/5372940?s=460&v=4"
-		},
-		{
-			"name": "Andreas Mehlsen",
-			"url": "https://twitter.com/andreasmehlsen",
-			"img": "https://avatars1.githubusercontent.com/u/6267397?s=460&v=4"
-		},
-		{
-			"name": "You?",
-			"img": "https://joeschmoe.io/api/v1/random",
-			"url": "https://github.com/arcmantle/lit-analyzer/blob/master/CONTRIBUTING.md"
+			"name": "Arcmantle",
+			"url": "https://github.com/arcmantle"
 		}
 	],
 	"contributes": {
@@ -704,6 +694,5 @@
 				}
 			}
 		]
-	},
-	"type": "module"
+	}
 }
