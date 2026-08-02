@@ -118,7 +118,7 @@ export function getBuiltInHtmlCollection(): HtmlDataCollection {
 		},
 		{
 			name:        'exportparts',
-			description: `This attribute is used to explicitly forward a child’s part to be styleable outside of the parent’s \
+			description: `This attribute is used to explicitly forward a child's part to be styleable outside of the parent's \
 shadow tree.
 
 The value must be a comma-separated list of part mappings:
