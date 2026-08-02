@@ -12,5 +12,10 @@ export default defineConfig({
 		maxWorkers:      1,
 		testTimeout:     300_000,
 		hookTimeout:     300_000,
+
+		// This is the only project with a different worker count. The root config
+		// refuses to group projects that disagree about it, so this one gets its
+		// own group and runs after the others.
+		sequence: { groupOrder: 1 },
 	},
 });

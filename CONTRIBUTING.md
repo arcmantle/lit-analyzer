@@ -39,7 +39,7 @@ In order to debug `vscode-lit-plugin` you can open vscode from `packages/vscode-
 
 ### `pnpm package`
 
-You can use this script if you want to generate an installable package of vscode-lit-plugin. Afterwards, run `code --install-extension ./packages/vscode-lit-plugin/out/packaged.vsix` to install it.
+You can use this script if you want to generate an installable package of vscode-lit-plugin. Afterwards, run `code --install-extension ./lit-analyzer.vsix` to install it.
 
 ## Releasing
 

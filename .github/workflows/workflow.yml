@@ -41,11 +41,11 @@ jobs:
 
       - name: Package vscode plugin
         if: matrix.os == 'ubuntu-latest'
-        run: pnpm package && mv packages/vscode-lit-plugin/out/packaged.vsix vscode-lit-plugin.vsix
+        run: pnpm package
 
       - name: Upload artifacts
         uses: actions/upload-artifact@master
         if: matrix.os == 'ubuntu-latest' && matrix.node == 24
         with:
-          name: vscode-lit-plugin.vsix
-          path: vscode-lit-plugin.vsix
+          name: lit-analyzer.vsix
+          path: lit-analyzer.vsix

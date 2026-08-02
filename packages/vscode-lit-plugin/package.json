@@ -1,7 +1,7 @@
 {
 	"name": "lit-plugin",
 	"private": true,
-	"displayName": "lit-plugin",
+	"displayName": "lit-analyzer",
 	"description": "Syntax highlighting, type checking and code completion for lit-html",
 	"version": "1.4.3",
 	"publisher": "runem",
@@ -30,11 +30,11 @@
 		"make-built-dir": "rm -rf built && pnpm run bundle && node ./copy-to-built.js",
 		"build": "pnpm run make-built-dir && tsc --build --pretty",
 		"rebuild": "rm -rf out && pnpm run make-built-dir && tsc --build --force --pretty",
-		"package": "pnpm run make-built-dir && mkdir -p out && cd built && vsce package -o ../out/packaged.vsix",
+		"package": "pnpm run make-built-dir && cd built && vsce package -o ../../../lit-analyzer.vsix",
 		"publish": "pnpm run make-built-dir && cd built && vsce publish",
 		"test": "pnpm run build && vitest run",
 		"test:packaged": "pnpm run package && pnpm run unzip-vsix && LIT_PLUGIN_EXTENSION=packaged vitest run",
-		"unzip-vsix": "rm -rf out/packaged-extension && mkdir -p out/packaged-extension && unzip -qq out/packaged.vsix -d out/packaged-extension"
+		"unzip-vsix": "rm -rf out/packaged-extension && mkdir -p out/packaged-extension && unzip -qq ../../lit-analyzer.vsix -d out/packaged-extension"
 	},
 	"dependencies": {
 		"typescript": "catalog:"
@@ -259,17 +259,6 @@
 					"lit-plugin.rules.no-unknown-slot": {
 						"type": "string",
 						"description": "Check the existence of slot names (requires '@slot' jsdoc on custom element declarations).",
-						"default": "default",
-						"enum": [
-							"default",
-							"off",
-							"warning",
-							"error"
-						]
-					},
-					"lit-plugin.rules.no-invalid-boolean-binding": {
-						"type": "string",
-						"description": "Disallow boolean attribute bindings on non-boolean types.",
 						"default": "default",
 						"enum": [
 							"default",

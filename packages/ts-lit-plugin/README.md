@@ -133,7 +133,6 @@ Each rule can have severity of `off`, `warning` or `error`. You can toggle rules
 <!-- prettier-ignore -->
 | Rule    | Description | Severity normal | Severity strict |
 | :------ | ----------- | --------------- | --------------- |
-| [no-invalid-boolean-binding](#-no-invalid-boolean-binding)       | Disallow boolean attribute bindings on non-boolean types. | error | error |
 | [no-expressionless-property-binding](#-no-expressionless-property-binding) | Disallow property bindings without an expression. | error | error |
 | [no-noncallable-event-binding](#-no-noncallable-event-binding)   | Disallow event listener bindings with a noncallable type. | error | error |
 | [no-boolean-in-attribute-binding](#-no-boolean-in-attribute-binding) | Disallow attribute bindings with a boolean type. | error | error |
@@ -363,24 +362,6 @@ html`<input name=${val} />`;
 ### Validating binding types
 
 Be aware that many checks involving analyzing bindings will work better in Typescript files because we have more information about the values being bound.
-
-#### ❓ no-invalid-boolean-binding
-
-It never makes sense to use the boolean attribute binding on a non-boolean type.
-
-The following example is considered a warning:
-
-<!-- prettier-ignore -->
-```js
-html`<input ?type="${"button"}" />`
-```
-
-The following example is not considered a warning:
-
-<!-- prettier-ignore -->
-```js
-html`<input ?disabled="${isDisabled}" />`
-```
 
 #### ⚫️ no-expressionless-property-binding
 
