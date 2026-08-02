@@ -23,11 +23,26 @@ import { DefaultAnalyzerHtmlStore } from './store/html-store/default-analyzer-ht
 import { HtmlDataSourceKind } from './store/html-store/html-data-source-merged.js';
 import { changedSourceFileIterator } from './util/changed-source-file-iterator.js';
 
+// An id, rather than the program itself, so that recording which program
+// analyzed a file cannot keep that program alive.
+const PROGRAM_IDS: WeakMap<Program, number> = new WeakMap();
+let nextProgramId = 0;
+
+function programIdOf(program: Program): number {
+	const id = PROGRAM_IDS.get(program) ?? nextProgramId++;
+	PROGRAM_IDS.set(program, id);
+
+	return id;
+}
+
 export class DefaultLitAnalyzerContext implements LitAnalyzerContext {
 
 	protected componentSourceFileIterator = changedSourceFileIterator();
 	protected hasAnalyzedSubclassExtensions = false;
-	protected _config: LitAnalyzerConfig = makeConfig({});
+	protected componentProgramId:       number | undefined;
+	protected programIdForAnalyzedFile: Map<string, number> = new Map();
+	private refreshingTags:             Set<string> = new Set();
+	protected _config:                  LitAnalyzerConfig = makeConfig({});
 
 	get ts(): typeof tsMod {
 		return this.handler.ts || tsMod;
@@ -156,8 +171,61 @@ export class DefaultLitAnalyzerContext implements LitAnalyzerContext {
 	}
 
 	updateComponents(file: SourceFile): void {
+		this.forgetSubclassExtensionsBuiltWithAnotherProgram();
 		this.findInvalidatedComponents();
 		this.analyzeSubclassExtensions();
+	}
+
+	/**
+	 * A component keeps the types the checker of its own program gave it, so a
+	 * component built with an earlier program keeps that whole program alive. The
+	 * components themselves are rebuilt on demand, in `refreshTagBuiltWithAnotherProgram`.
+	 */
+	private forgetSubclassExtensionsBuiltWithAnotherProgram(): void {
+		const programId = programIdOf(this.program);
+		if (this.componentProgramId === programId)
+			return;
+
+
+		const previousProgramId = this.componentProgramId;
+		this.componentProgramId = programId;
+		if (previousProgramId != null)
+			this.hasAnalyzedSubclassExtensions = false;
+	}
+
+	/**
+	 * Rebuilds the component behind `tagName` when an earlier program built it.
+	 * Called before every read of a tag, so only the tags a file uses are
+	 * rebuilt, not every component in the project.
+	 */
+	private refreshTagBuiltWithAnotherProgram(tagName: string): void {
+		if (this.refreshingTags.has(tagName))
+			return;
+
+
+		const definition = this.definitionStore.getDefinitionForTagName(tagName);
+		if (definition == null)
+			return;
+
+
+		const fileName = definition.sourceFile.fileName;
+		if (this.programIdForAnalyzedFile.get(fileName) === programIdOf(this.program))
+			return;
+
+
+		const sourceFile = this.program.getSourceFile(fileName);
+		if (sourceFile == null)
+			return;
+
+
+		this.refreshingTags.add(tagName);
+		try {
+			this.componentSourceFileIterator.invalidate(sourceFile);
+			this.findComponentsInFile(sourceFile);
+		}
+		finally {
+			this.refreshingTags.delete(tagName);
+		}
 	}
 
 	private get checker(): TypeChecker {
@@ -168,6 +236,7 @@ export class DefaultLitAnalyzerContext implements LitAnalyzerContext {
 		// Add all HTML5 tags and attributes
 		const builtInCollection = getBuiltInHtmlCollection();
 		this.htmlStore.absorbCollection(builtInCollection, HtmlDataSourceKind.BUILT_IN);
+		this.htmlStore.beforeTagRead = tagName => this.refreshTagBuiltWithAnotherProgram(tagName);
 	}
 
 	private findInvalidatedComponents() {
@@ -270,6 +339,7 @@ export class DefaultLitAnalyzerContext implements LitAnalyzerContext {
 
 		// Absorb
 		this.definitionStore.absorbAnalysisResult(sourceFile, analyzeResult);
+		this.programIdForAnalyzedFile.set(sourceFile.fileName, programIdOf(this.program));
 		const htmlCollection = convertAnalyzeResultToHtmlCollection(analyzeResult, {
 			checker:                              this.checker,
 			addDeclarationPropertiesAsAttributes: this.program.isSourceFileFromExternalLibrary(sourceFile),

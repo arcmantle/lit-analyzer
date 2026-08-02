@@ -2,7 +2,7 @@ import * as tsModule from 'typescript';
 import { Node, Program } from 'typescript';
 
 import { AnalyzerVisitContext } from './analyzer-visit-context.js';
-import { DEFAULT_COMPONENT_DECLARATION_CACHE, DEFAULT_FEATURE_COLLECTION_CACHE } from './constants.js';
+import { analyzerCachesForProgram } from './constants.js';
 import { CustomElementFlavor } from './flavors/custom-element/custom-element-flavor.js';
 import { makeContextFromConfig } from './make-context-from-config.js';
 import { analyzeComponentDeclaration } from './stages/analyze-declaration.js';
@@ -35,9 +35,8 @@ export function analyzeHTMLElement(program: Program, ts: TsModule = tsModule): C
 			},
 		}),
 		cache: {
-			featureCollection:         DEFAULT_FEATURE_COLLECTION_CACHE,
-			componentDeclarationCache: DEFAULT_COMPONENT_DECLARATION_CACHE,
-			general:                   new Map(),
+			...analyzerCachesForProgram(program),
+			general: new Map(),
 		},
 	});
 }

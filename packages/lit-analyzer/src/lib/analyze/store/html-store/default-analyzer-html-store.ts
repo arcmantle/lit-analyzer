@@ -26,6 +26,16 @@ export class DefaultAnalyzerHtmlStore implements AnalyzerHtmlStore {
 
 	private dataSource = new HtmlDataSourceMerged();
 
+	/** Called with the tag name before every read, so an owner can refresh it first. */
+	beforeTagRead: ((tagName: string) => void) | undefined;
+
+	private tagNameOf(htmlNode: HtmlNode | string): string {
+		const tagName = typeof htmlNode === 'string' ? htmlNode : htmlNode.tagName;
+		this.beforeTagRead?.(tagName);
+
+		return tagName;
+	}
+
 	absorbSubclassExtension(name: string, extension: HtmlTag): void {
 		this.dataSource.absorbSubclassExtension(name, extension);
 	}
@@ -39,7 +49,7 @@ export class DefaultAnalyzerHtmlStore implements AnalyzerHtmlStore {
 	}
 
 	getHtmlTag(htmlNode: HtmlNode | string): HtmlTag | undefined {
-		return this.dataSource.getHtmlTag(typeof htmlNode === 'string' ? htmlNode : htmlNode.tagName);
+		return this.dataSource.getHtmlTag(this.tagNameOf(htmlNode));
 	}
 
 	getGlobalTags(): Iterable<HtmlTag> {
@@ -47,27 +57,27 @@ export class DefaultAnalyzerHtmlStore implements AnalyzerHtmlStore {
 	}
 
 	getAllAttributesForTag(htmlNode: HtmlNode | string): Iterable<HtmlAttr> {
-		return this.dataSource.getAllAttributesForTag(typeof htmlNode === 'string' ? htmlNode : htmlNode.tagName).values();
+		return this.dataSource.getAllAttributesForTag(this.tagNameOf(htmlNode)).values();
 	}
 
 	getAllPropertiesForTag(htmlNode: HtmlNode | string): Iterable<HtmlProp> {
-		return this.dataSource.getAllPropertiesForTag(typeof htmlNode === 'string' ? htmlNode : htmlNode.tagName).values();
+		return this.dataSource.getAllPropertiesForTag(this.tagNameOf(htmlNode)).values();
 	}
 
 	getAllEventsForTag(htmlNode: HtmlNode | string): Iterable<HtmlEvent> {
-		return this.dataSource.getAllEventsForTag(typeof htmlNode === 'string' ? htmlNode : htmlNode.tagName).values();
+		return this.dataSource.getAllEventsForTag(this.tagNameOf(htmlNode)).values();
 	}
 
 	getAllSlotsForTag(htmlNode: HtmlNode | string): Iterable<HtmlSlot> {
-		return this.dataSource.getAllSlotForTag(typeof htmlNode === 'string' ? htmlNode : htmlNode.tagName).values();
+		return this.dataSource.getAllSlotForTag(this.tagNameOf(htmlNode)).values();
 	}
 
 	getAllCssPartsForTag(htmlNode: HtmlNode | string): Iterable<HtmlCssPart> {
-		return this.dataSource.getAllCssPartsForTag(typeof htmlNode === 'string' ? htmlNode : htmlNode.tagName).values();
+		return this.dataSource.getAllCssPartsForTag(this.tagNameOf(htmlNode)).values();
 	}
 
 	getAllCssPropertiesForTag(htmlNode: HtmlNode | string): Iterable<HtmlCssPart> {
-		return this.dataSource.getAllCssPropertiesForTag(typeof htmlNode === 'string' ? htmlNode : htmlNode.tagName).values();
+		return this.dataSource.getAllCssPropertiesForTag(this.tagNameOf(htmlNode)).values();
 	}
 
 	getHtmlAttrTarget(htmlNodeAttr: IHtmlNodeAttrProp): HtmlProp | undefined;
@@ -80,14 +90,14 @@ export class DefaultAnalyzerHtmlStore implements AnalyzerHtmlStore {
 
 		switch (htmlNodeAttr.kind) {
 		case HtmlNodeAttrKind.EVENT_LISTENER:
-			return this.dataSource.getAllEventsForTag(htmlNodeAttr.htmlNode.tagName).get(name);
+			return this.dataSource.getAllEventsForTag(this.tagNameOf(htmlNodeAttr.htmlNode)).get(name);
 
 		case HtmlNodeAttrKind.BOOLEAN_ATTRIBUTE:
 		case HtmlNodeAttrKind.ATTRIBUTE:
-			return this.dataSource.getAllAttributesForTag(htmlNodeAttr.htmlNode.tagName).get(name);
+			return this.dataSource.getAllAttributesForTag(this.tagNameOf(htmlNodeAttr.htmlNode)).get(name);
 
 		case HtmlNodeAttrKind.PROPERTY:
-			return this.dataSource.getAllPropertiesForTag(htmlNodeAttr.htmlNode.tagName).get(name);
+			return this.dataSource.getAllPropertiesForTag(this.tagNameOf(htmlNodeAttr.htmlNode)).get(name);
 		}
 	}
 
