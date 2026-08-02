@@ -1,4 +1,4 @@
-import { getGenericTarget, isSimpleType, SimpleType, SimpleTypeAlias, typeToString } from 'ts-simple-type';
+import { getGenericTarget, isSimpleType, SimpleType, typeToString } from 'ts-simple-type';
 import { Type, TypeChecker, TypeFormatFlags } from 'typescript';
 
 import { TransformerConfig } from '../transformers/transformer-config.js';
@@ -27,7 +27,7 @@ export function getTypeHintFromType(
 		if (isSimpleType(type)) {
 			// Expand a possible alias
 			if (isUnionTypeAlias(type))
-				type = getGenericTarget(type);
+				type = unwrapGenericWrappers(type);
 
 
 			typeHint = typeToString(type);
@@ -59,9 +59,27 @@ export function getTypeHintFromType(
 }
 
 /**
+ * Removes every generic wrapper node, so that a generic alias and a plain alias
+ * both give the type they wrap.
+ */
+function unwrapGenericWrappers(simpleType: SimpleType): SimpleType {
+	let current = simpleType;
+	let target = getGenericTarget(current);
+	while (target != null) {
+		current = target;
+		target = getGenericTarget(current);
+	}
+
+	return current;
+}
+
+/**
  * Checks if a type is a type alias simple type
  * @param simpleType
  */
-function isUnionTypeAlias(simpleType: SimpleType): simpleType is SimpleTypeAlias {
-	return simpleType.kind === 'ALIAS' && getGenericTarget(simpleType).kind === 'UNION';
+function isUnionTypeAlias(simpleType: SimpleType): boolean {
+	if (simpleType.kind !== 'ALIAS' && simpleType.kind !== 'GENERIC_ARGUMENTS')
+		return false;
+
+	return unwrapGenericWrappers(simpleType).kind === 'UNION';
 }

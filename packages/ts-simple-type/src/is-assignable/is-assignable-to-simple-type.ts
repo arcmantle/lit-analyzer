@@ -1,4 +1,4 @@
-import { DEFAULT_GENERIC_PARAMETER_TYPE, DEFAULT_RESULT_CACHE, NEVER_TYPE } from '../constants.js';
+import { DEFAULT_RESULT_CACHE, NEVER_TYPE } from '../constants.js';
 import {
 	isSimpleTypeLiteral,
 	isSimpleTypePrimitive,
@@ -14,8 +14,10 @@ import {
 	SimpleTypeTuple,
 } from '../simple-type.js';
 import { simpleTypeToString } from '../transform/simple-type-to-string.js';
+import { getGenericParameterKey } from '../utils/get-generic-parameter-key.js';
 import { getGenericTarget } from '../utils/get-generic-target.js';
 import { and, or } from '../utils/list-util.js';
+import { resolveGenericParameter } from '../utils/resolve-generic-parameter.js';
 import { resolveType as resolveTypeUnsafe } from '../utils/resolve-type.js';
 import { extendTypeParameterMap, getTupleLengthType } from '../utils/simple-type-util.js';
 import { isAssignableToSimpleTypeKind } from './is-assignable-to-simple-type-kind.js';
@@ -236,12 +238,8 @@ function isAssignableToSimpleTypeInternal(
 	switch (typeB.kind) {
 	// [typeB] (expand)
 	case 'UNION': {
-		// Some types seems to absorb other types when type checking a union (eg. 'unknown').
-		// Usually typescript will absorb those types for us, but not when working with generic parameters.
-		// The following line needs to be improved.
-		const types = typeB.types.filter(t => resolveType(t, options.genericParameterMapB) !== DEFAULT_GENERIC_PARAMETER_TYPE);
-
-		return and(types, childTypeB => isAssignableToSimpleTypeCached(typeA, childTypeB, options));
+		// Every member must fit, and a free parameter is assignable on its own, so it fits.
+		return and(typeB.types, childTypeB => isAssignableToSimpleTypeCached(typeA, childTypeB, options));
 	}
 
 	// [typeB] (expand)
@@ -249,6 +247,13 @@ function isAssignableToSimpleTypeInternal(
 		// If we compare an intersection against an intersection, we need to compare from typeA and not typeB
 		// Example: [string, number] & [string] === [string, number] & [string]
 		if (typeA.kind === 'INTERSECTION')
+			break;
+
+
+		// Against a union, expand the union first. "any member of the intersection
+		// fits" would otherwise drop the other members before a union member that
+		// needs all of them is ever tried.
+		if (typeA.kind === 'UNION')
 			break;
 
 
@@ -304,8 +309,7 @@ function isAssignableToSimpleTypeInternal(
 
 	// [typeB] (expand)
 	case 'GENERIC_PARAMETER': {
-		const resolvedArgument = options.genericParameterMapB.get(typeB.name);
-		const realTypeB = resolvedArgument || typeB.default || DEFAULT_GENERIC_PARAMETER_TYPE;
+		const realTypeB = resolveGenericParameter(typeB, options.genericParameterMapB, 'source');
 
 		if (options.config.debug) {
 			logDebug(
@@ -313,10 +317,10 @@ function isAssignableToSimpleTypeInternal(
 				'generic',
 					`Resolving typeB for param ${ typeB.name } to:`,
 					simpleTypeToStringLazy(realTypeB),
-					', Default: ',
-					simpleTypeToStringLazy(typeB.default),
+					', Constraint: ',
+					simpleTypeToStringLazy(typeB.constraint),
 					', In map: ',
-					options.genericParameterMapB.has(typeB.name),
+					options.genericParameterMapB.has(getGenericParameterKey(typeB)),
 					', GenericParamMapB: ',
 					Array.from(options.genericParameterMapB.entries())
 						.map(([ name, t ]) => `${ name }=${ simpleTypeToStringLazy(t) }`)
@@ -377,8 +381,7 @@ function isAssignableToSimpleTypeInternal(
 
 	// [typeA] (expand)
 	case 'GENERIC_PARAMETER': {
-		const resolvedArgument = options.genericParameterMapA.get(typeA.name);
-		const realTypeA = resolvedArgument || typeA.default || DEFAULT_GENERIC_PARAMETER_TYPE;
+		const realTypeA = resolveGenericParameter(typeA, options.genericParameterMapA, 'target');
 
 		if (options.config.debug) {
 			logDebug(
@@ -386,10 +389,8 @@ function isAssignableToSimpleTypeInternal(
 				'generic',
 					`Resolving typeA for param ${ typeA.name } to:`,
 					simpleTypeToStringLazy(realTypeA),
-					', Default: ',
-					simpleTypeToStringLazy(typeA.default),
 					', In map: ',
-					options.genericParameterMapA.has(typeA.name),
+					options.genericParameterMapA.has(getGenericParameterKey(typeA)),
 					', GenericParamMapA: ',
 					Array.from(options.genericParameterMapA.entries())
 						.map(([ name, t ]) => `${ name }=${ simpleTypeToStringLazy(t) }`)
@@ -424,12 +425,9 @@ function isAssignableToSimpleTypeInternal(
 
 	// [typeA] (expand)
 	case 'UNION': {
-		// Some types seems to absorb other types when type checking a union (eg. 'unknown').
-		// Usually typescript will absorb those types for us, but not when working with generic parameters.
-		// The following line needs to be improved.
-		const types = typeA.types.filter(t => resolveType(t, options.genericParameterMapA) !== DEFAULT_GENERIC_PARAMETER_TYPE || typeB === DEFAULT_GENERIC_PARAMETER_TYPE);
-
-		return or(types, childTypeA => isAssignableToSimpleTypeCached(childTypeA, typeB, options));
+		// A free member resolves to a wildcard, so the whole union accepts every value.
+		// See ADR_5VGWXCBV5K8C6TS4FPZ28XMQD0.
+		return or(typeA.types, childTypeA => isAssignableToSimpleTypeCached(childTypeA, typeB, options));
 	}
 
 	// [typeA] (expand)

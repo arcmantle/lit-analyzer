@@ -10,23 +10,53 @@ import { TypescriptType } from "./type-test.js";
 import { visitComparisonsInTestCode } from "./visit-type-comparisons.js";
 
 /**
+ * A comparison where this library accepts what the TypeScript checker rejects.
+ *
+ * Parity with the checker is not a goal. A missed error is acceptable, a false
+ * error is not, so only this direction can be recorded here. Write `#` where the
+ * generated type id goes, for example `GenericClassA#<string>`.
+ */
+export interface AcceptedDivergence {
+	typeA: string;
+	typeB: string;
+	reason: string;
+}
+
+/**
  * Tests all type combinations with different options
  * @param typesX
  * @param typesY
+ * @param acceptedDivergences
  */
-export function testAssignments(typesX: TypescriptType[], typesY: TypescriptType[]) {
+export function testAssignments(typesX: TypescriptType[], typesY: TypescriptType[], acceptedDivergences: AcceptedDivergence[] = []) {
 	if (process.env.STRICT == null || process.env.STRICT === "true") {
-		testCombinedTypeAssignment(typesX, typesY, { strict: true }, { fileName: "repro-strict.ts", strictEnv: "" });
+		testCombinedTypeAssignment(typesX, typesY, { strict: true }, { fileName: "repro-strict.ts", strictEnv: "" }, acceptedDivergences);
 	}
 
 	if (process.env.STRICT == null || process.env.STRICT === "false") {
-		testCombinedTypeAssignment(typesX, typesY, { strict: false }, { fileName: "repro-non-strict.ts", strictEnv: "false" });
+		testCombinedTypeAssignment(typesX, typesY, { strict: false }, { fileName: "repro-non-strict.ts", strictEnv: "false" }, acceptedDivergences);
 	}
 }
 
 interface ReproOptions {
 	fileName: string;
 	strictEnv: string;
+}
+
+function matchesTypePattern(pattern: string, typeString: string): boolean {
+	const source = pattern
+		.split("#")
+		.map(part => part.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"))
+		.join("\\d+");
+
+	return new RegExp(`^${source}$`).test(typeString);
+}
+
+function isAcceptedDivergence(acceptedDivergences: AcceptedDivergence[], typeAString: string, typeBString: string, actualResult: boolean): boolean {
+	// Only a missed error can be accepted. A false error must always fail the run.
+	if (!actualResult) return false;
+
+	return acceptedDivergences.some(d => matchesTypePattern(d.typeA, typeAString) && matchesTypePattern(d.typeB, typeBString));
 }
 
 /**
@@ -50,7 +80,13 @@ interface ReproOptions {
  * @param compilerOptions
  * @param repro
  */
-export function testCombinedTypeAssignment(typesX: TypescriptType[], typesY: TypescriptType[], compilerOptions: CompilerOptions = {}, repro?: ReproOptions) {
+export function testCombinedTypeAssignment(
+	typesX: TypescriptType[],
+	typesY: TypescriptType[],
+	compilerOptions: CompilerOptions = {},
+	repro?: ReproOptions,
+	acceptedDivergences: AcceptedDivergence[] = []
+) {
 	const optionsText = Object.entries(compilerOptions)
 		.map(([k, v]) => `${k}: ${v}`)
 		.join(", ");
@@ -110,6 +146,10 @@ export function testCombinedTypeAssignment(typesX: TypescriptType[], typesY: Typ
 					console.log(inspect(simpleTypeB, false, 10, true));
 				}
 
+				return;
+			}
+
+			if (isAcceptedDivergence(acceptedDivergences, typeAString, typeBString, actualResult)) {
 				return;
 			}
 

@@ -348,4 +348,11 @@ export const ALL_TYPES: TypescriptType[] = [
 const A_TYPES = process.env.TYPEA == null ? ALL_TYPES : process.env.TYPEA.split(";");
 const B_TYPES = process.env.TYPEB == null ? ALL_TYPES : process.env.TYPEB.split(";");
 
-testAssignments(A_TYPES, B_TYPES);
+testAssignments(A_TYPES, B_TYPES, [
+	{
+		typeA: "GenericClassA#<string>",
+		typeB: "{ foo: string; bar: boolean; } & { hello(): void; }",
+		reason:
+			"`hello<U, R = string>(t: T): U | R` returns a union whose `U` stays free. A free member of a target union is a wildcard, so the union accepts `void`. The checker rejects it. This is a missed error, which ADR_5VGWXCBV5K8C6TS4FPZ28XMQD0 accepts."
+	}
+]);

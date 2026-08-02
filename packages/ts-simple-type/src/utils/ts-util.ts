@@ -155,6 +155,20 @@ export function getDeclaration(symbol: Symbol, ts: typeof tsModule): Declaration
 	return declarations[0];
 }
 
+/**
+ * The identity of a type parameter declaration. Two parameters with the same name from different
+ * declarations get different identities, so the generic parameter map keeps them apart.
+ *
+ * A parameter with no declaration keeps no identity, and falls back to its name.
+ */
+export function getGenericParameterId(symbol: Symbol, ts: typeof tsModule): string | undefined {
+	const declaration = getDeclaration(symbol, ts);
+	if (declaration == null)
+		return undefined;
+
+	return `${ declaration.getSourceFile().fileName }:${ declaration.pos }:${ symbol.getName() }`;
+}
+
 export function isArray(type: Type, checker: TypeChecker, ts: typeof tsModule): type is TypeReference {
 	if (!isObject(type, ts))
 		return false;

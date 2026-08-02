@@ -2,7 +2,6 @@ import {
 	isSimpleType,
 	SimpleType,
 	SimpleTypeBooleanLiteral,
-	SimpleTypeEnumMember,
 	SimpleTypeString,
 	SimpleTypeStringLiteral,
 	toSimpleType,
@@ -26,21 +25,11 @@ export function extractBindingTypes(
 
 	const checker = context.program.getTypeChecker();
 
-	// Relax the type we are looking at an expression in javascript files
-	//const inJavascriptFile = request.file.fileName.endsWith(".js");
-	//const shouldRelaxTypeB = 1 !== 1 && inJavascriptFile && assignment.kind === HtmlNodeAttrAssignmentKind.EXPRESSION;
-	const shouldRelaxTypeB = false; // Disable for now while collecting requirements
-
 	// Infer the type of the RHS
-	//const typeBInferred = shouldRelaxTypeB ? ({ kind: "ANY" } as SimpleType) : inferTypeFromAssignment(assignment, checker);
 	const typeBInferred = inferTypeFromAssignment(assignment, checker);
 
 	// Convert typeB to SimpleType
-	let typeB = (() => {
-		const type = isSimpleType(typeBInferred) ? typeBInferred : toSimpleType(typeBInferred, checker);
-
-		return shouldRelaxTypeB ? relaxType(type) : type;
-	})();
+	let typeB = isSimpleType(typeBInferred) ? typeBInferred : toSimpleType(typeBInferred, checker);
 
 	// Find a corresponding target for this attribute
 	const htmlAttrTarget = context.htmlStore.getHtmlAttrTarget(assignment.htmlAttr);
@@ -83,71 +72,5 @@ export function inferTypeFromAssignment(assignment: HtmlNodeAttrAssignment, chec
 		}
 
 		return { kind: 'STRING' } as SimpleTypeString;
-	}
-}
-
-/**
- * Relax the type so that for example "string literal" become "string" and "function" become "any"
- * This is used for javascript files to provide type checking with Typescript type inferring
- * @param type
- */
-export function relaxType(type: SimpleType): SimpleType {
-	switch (type.kind) {
-	case 'INTERSECTION':
-	case 'UNION':
-		return {
-			...type,
-			types: type.types.map(t => relaxType(t)),
-		};
-
-	case 'ENUM':
-		return {
-			...type,
-			types: type.types.map(t => relaxType(t) as SimpleTypeEnumMember),
-		};
-
-	case 'ARRAY':
-		return {
-			...type,
-			type: relaxType(type.type),
-		};
-
-	case 'PROMISE':
-		return {
-			...type,
-			type: relaxType(type.type),
-		};
-
-	case 'INTERFACE':
-	case 'OBJECT':
-	case 'FUNCTION':
-	case 'CLASS':
-		return {
-			kind: 'ANY',
-		};
-
-	case 'NUMBER_LITERAL':
-		return { kind: 'NUMBER' };
-	case 'STRING_LITERAL':
-		return { kind: 'STRING' };
-	case 'BOOLEAN_LITERAL':
-		return { kind: 'BOOLEAN' };
-	case 'BIG_INT_LITERAL':
-		return { kind: 'BIG_INT' };
-
-	case 'ENUM_MEMBER':
-		return {
-			...type,
-			type: relaxType(type.type),
-		} as SimpleTypeEnumMember;
-
-	case 'ALIAS':
-		return {
-			...type,
-			target: relaxType(type.target),
-		};
-
-	default:
-		return type;
 	}
 }

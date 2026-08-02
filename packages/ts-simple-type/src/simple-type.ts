@@ -244,6 +244,8 @@ export interface SimpleTypeGenericArguments extends SimpleTypeBase {
 export interface SimpleTypeGenericParameter extends SimpleTypeBase {
 	readonly name:        string;
 	readonly kind:        'GENERIC_PARAMETER';
+	/** Identity of the declaration. Two parameters with the same name from different declarations differ here. */
+	readonly id?:         string;
 	readonly default?:    SimpleType;
 	readonly constraint?: SimpleType;
 }

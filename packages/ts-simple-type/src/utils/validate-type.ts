@@ -1,7 +1,7 @@
-import { DEFAULT_GENERIC_PARAMETER_TYPE } from '../constants.js';
 import { SimpleType } from '../simple-type.js';
 import { getGenericTarget } from './get-generic-target.js';
 import { and, or } from './list-util.js';
+import { resolveGenericParameter } from './resolve-generic-parameter.js';
 import { extendTypeParameterMap } from './simple-type-util.js';
 
 export function validateType(type: SimpleType, callback: (simpleType: SimpleType) => boolean | undefined | void): boolean {
@@ -30,9 +30,8 @@ function validateTypeInternal(type: SimpleType, callback: (simpleType: SimpleTyp
 	}
 
 	case 'GENERIC_PARAMETER': {
-		const resolvedArgument = parameterMap?.get(type.name);
-
-		return validateTypeInternal(resolvedArgument || DEFAULT_GENERIC_PARAMETER_TYPE, callback, parameterMap);
+		// This walk has no assignability direction, so it takes the wildcard that the target position always gives.
+		return validateTypeInternal(resolveGenericParameter(type, parameterMap, 'target'), callback, parameterMap);
 	}
 
 	case 'GENERIC_ARGUMENTS': {

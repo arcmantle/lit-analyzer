@@ -207,6 +207,11 @@ tsTest('Boolean binding: String is not assignable in boolean attribute binding',
 	hasDiagnostic(t, diagnostics, 'no-incompatible-type-binding');
 });
 
+tsTest('Boolean binding: Boolean binding is not allowed on a non-boolean attribute', t => {
+	const { diagnostics } = getDiagnostics('html`<input ?type="${true}" />`');
+	hasDiagnostic(t, diagnostics, 'no-incompatible-type-binding');
+});
+
 tsTest('Property binding: String literal type expression is not assignable to boolean property', t => {
 	const { diagnostics } = getDiagnostics([
 		makeElement({ properties: [ 'required = false' ] }),
@@ -332,6 +337,65 @@ html\`<input step="\${myDirective("foo")}" /> \`
 
 tsTest('Attribute binding: the target attribute is correctly type checked when given a string', t => {
 	const { diagnostics } = getDiagnostics(`html\`<a target="custom-target"></a>\`
+	`);
+
+	hasNoDiagnostics(t, diagnostics);
+});
+
+const genericElement = `
+interface Base<T> { value: T; }
+
+class MyElement<T extends Base<string | number>, N extends Base<number>> extends HTMLElement {
+	bounded!: Base<string | number>;
+	narrow!: N;
+	label!: string;
+}
+customElements.define("my-element", MyElement);
+`;
+
+tsTest('Property binding: a constrained parameter binds to the property its constraint fits', t => {
+	const { diagnostics } = getDiagnostics(`${ genericElement }
+function bind<U extends Base<string>>(value: U) {
+	return html\`<my-element .bounded="\${value}"></my-element>\`;
+}
+	`);
+
+	hasNoDiagnostics(t, diagnostics);
+});
+
+tsTest('Property binding: a constrained parameter that does not fit the property still reports', t => {
+	const { diagnostics } = getDiagnostics(`${ genericElement }
+function bind<U extends number>(value: U) {
+	return html\`<my-element .label="\${value}"></my-element>\`;
+}
+	`);
+
+	hasDiagnostic(t, diagnostics, 'no-incompatible-type-binding');
+});
+
+// The property type is a free parameter, so the target is a wildcard and never its
+// constraint. The two constraints do not fit each other, so a constraint in target
+// position would report here.
+tsTest('Property binding: a property of a free parameter type accepts a constrained parameter', t => {
+	const { diagnostics } = getDiagnostics(`${ genericElement }
+function bind<U extends Base<string>>(value: U) {
+	return html\`<my-element .narrow="\${value}"></my-element>\`;
+}
+	`);
+
+	hasNoDiagnostics(t, diagnostics);
+});
+
+const freeParameterUnionElement = `
+class MyElement<T> extends HTMLElement {
+	either!: T | string;
+}
+customElements.define("my-element", MyElement);
+`;
+
+tsTest('Property binding: a union property with a free member accepts a value no other member fits', t => {
+	const { diagnostics } = getDiagnostics(`${ freeParameterUnionElement }
+html\`<my-element .either="\${123}"></my-element>\`;
 	`);
 
 	hasNoDiagnostics(t, diagnostics);

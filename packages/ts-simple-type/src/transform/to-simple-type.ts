@@ -21,6 +21,7 @@ import { getTypescriptModule } from '../ts-module.js';
 import { simplifySimpleTypes } from '../utils/simple-type-util.js';
 import {
 	getDeclaration,
+	getGenericParameterId,
 	getModifiersFromDeclaration,
 	getTypeArguments,
 	isArray,
@@ -83,7 +84,7 @@ export function toSimpleType(type: Type | Node | SimpleType, checker?: TypeCheck
 
 	if (isNode(type)) {
 		// "type" is a "Node", convert it to a "Type" and continue.
-		return toSimpleType(checker.getTypeAtLocation(type), checker);
+		return toSimpleType(checker.getTypeAtLocation(type), checker, options);
 	}
 
 	return toSimpleTypeCached(type, {
@@ -226,6 +227,10 @@ function liftGenericType(type: Type, options: ToSimpleTypeInternalOptions): { ge
 					};
 				}
 
+				// A non-generic alias discards `aliasType` on purpose. Measured on
+				// 2026-08-01: keeping it leaves every assignability answer the same, but
+				// turns every type string from the structure into the alias name, for
+				// example `A` in place of `number | undefined`. See ISS_6JQKH45APT9NJVRN9563Q0Q6JR.
 				return target;
 			},
 		};
@@ -539,6 +544,7 @@ function toSimpleTypeInternal(type: Type, options: ToSimpleTypeInternalOptions):
 		simpleType = {
 			kind:       'GENERIC_PARAMETER',
 			name:       symbol.getName(),
+			id:         getGenericParameterId(symbol, options.ts),
 			default:    defaultSimpleType,
 			constraint: constraintSimpleType,
 		} as SimpleTypeGenericParameter;

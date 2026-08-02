@@ -63,9 +63,10 @@ export function relaxType(type: SimpleType): SimpleType {
 		} as SimpleTypeEnumMember;
 
 	case 'ALIAS':
+	case 'GENERIC_ARGUMENTS':
 		return {
 			...type,
-			target: relaxType(type.target),
+			target: relaxType(getGenericTarget(type)),
 		};
 
 	case 'NULL':

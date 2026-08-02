@@ -1,4 +1,3 @@
-import { DEFAULT_GENERIC_PARAMETER_TYPE } from '../constants.js';
 import {
 	isSimpleTypeLiteral,
 	PRIMITIVE_TYPE_KINDS,
@@ -10,6 +9,7 @@ import {
 	SimpleTypeTuple,
 	SimpleTypeUndefined,
 } from '../simple-type.js';
+import { getGenericParameterKey } from './get-generic-parameter-key.js';
 import { getGenericTarget } from './get-generic-target.js';
 import { resolveType } from './resolve-type.js';
 
@@ -85,16 +85,29 @@ export function simplifySimpleTypes(types: SimpleType[]): SimpleType[] {
 	return newTypes;
 }
 
+/**
+ * Returns a partial map. A parameter with neither an argument nor a default gets no entry, which keeps it free
+ * so that `resolveGenericParameter` decides it by position.
+ */
 export function extendTypeParameterMap(genericType: SimpleTypeGenericArguments, existingMap: Map<string, SimpleType>) {
 	const target = resolveType(getGenericTarget(genericType), existingMap);
 
 	if ('typeParameters' in target) {
-		const parameterEntries = (target.typeParameters || []).map((parameter, i) => {
+		const parameterEntries = (target.typeParameters || []).flatMap((parameter, i) => {
 			const typeArg = genericType.typeArguments[i];
-			const resolvedTypeArg = typeArg == null ? /*parameter.default || */ DEFAULT_GENERIC_PARAMETER_TYPE : resolveType(typeArg, existingMap);
 
-			//return [parameter.name, genericType.typeArguments[i] || parameter.default || { kind: "ANY" }] as [string, SimpleType];
-			return [ parameter.name, resolvedTypeArg ] as [string, SimpleType];
+			// A default answers "the caller omitted the argument", so it applies here, at instantiation.
+			// With neither an argument nor a default the parameter stays free, so it gets no entry and
+			// `resolveGenericParameter` decides it by position.
+			if (typeArg == null && parameter.default == null)
+				return [];
+
+
+			const resolvedTypeArg = typeArg == null
+				? parameter.default!
+				: resolveType(typeArg, existingMap);
+
+			return [ [ getGenericParameterKey(parameter), resolvedTypeArg ] as [string, SimpleType] ];
 		});
 		const allParameterEntries = [ ...existingMap.entries(), ...parameterEntries ];
 
