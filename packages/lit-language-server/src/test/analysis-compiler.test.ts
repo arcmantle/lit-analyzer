@@ -61,11 +61,11 @@ describe('analysis compiler', () => {
 		expect(diagnostics).toEqual([]);
 	});
 
-	// The acceptance criterion "Verified against packages/dev/" is enforced here
+	// The acceptance criterion "Verified against the playground" is enforced here
 	// rather than by a one-off manual check, so a regression in either this
-	// module or packages/dev/tsconfig.json is caught automatically.
-	test("verified against packages/dev/: resolves the dogfood project's Program", () => {
-		const compiler = createAnalysisCompiler(path.join(repoRoot, 'packages', 'dev', 'tsconfig.json'));
+	// module or packages/playground/tsconfig.json is caught automatically.
+	test("verified against packages/playground/: resolves the playground project's Program", () => {
+		const compiler = createAnalysisCompiler(path.join(repoRoot, 'packages', 'playground', 'tsconfig.json'));
 
 		const rootFileNames = compiler.getRootFileNames().map(fileName => path.basename(fileName));
 		expect(rootFileNames.sort()).toEqual([ 'my-element-1.ts', 'my-element-2.js' ]);

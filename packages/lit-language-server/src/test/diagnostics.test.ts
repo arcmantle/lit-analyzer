@@ -70,12 +70,12 @@ describe('lit-language-server serves lit diagnostics over LSP', () => {
 		expect(diagnostic.range.start.character).toBeGreaterThan(0);
 	});
 
-	// The literal acceptance target: opening the repo's own dogfood file
+	// The literal acceptance target: opening the repo's own playground file
 	// produces a lit diagnostic, the same way it would with the setting on in
 	// the real extension.
-	test('verified against packages/dev/: opening packages/dev/src/my-element-1.ts publishes a lit diagnostic', async () => {
-		const devDir = path.join(repoRoot, 'packages', 'dev');
-		const devFile = path.join(devDir, 'src', 'my-element-1.ts');
+	test('verified against packages/playground/: opening packages/playground/src/my-element-1.ts publishes a lit diagnostic', async () => {
+		const playgroundDir = path.join(repoRoot, 'packages', 'playground');
+		const playgroundFile = path.join(playgroundDir, 'src', 'my-element-1.ts');
 
 		const client = connectToServer();
 		const published: PublishDiagnosticsParams[] = [];
@@ -83,8 +83,8 @@ describe('lit-language-server serves lit diagnostics over LSP', () => {
 			published.push(params);
 		});
 
-		await client.sendRequest('initialize', initializeParamsWithRoot(devDir));
-		await client.sendNotification('textDocument/didOpen', didOpenParams(devFile));
+		await client.sendRequest('initialize', initializeParamsWithRoot(playgroundDir));
+		await client.sendNotification('textDocument/didOpen', didOpenParams(playgroundFile));
 		await waitForPublishedDiagnostics(published);
 
 		expect(published).toHaveLength(1);

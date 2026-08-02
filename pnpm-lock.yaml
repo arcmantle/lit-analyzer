@@ -32,22 +32,6 @@ importers:
 
   internal/scripts: {}
 
-  packages/dev:
-    dependencies:
-      lit-element:
-        specifier: ^2.3.1
-        version: 2.5.1
-      lit-html:
-        specifier: ^1.2.1
-        version: 1.4.1
-      ts-lit-plugin:
-        specifier: workspace:*
-        version: link:../ts-lit-plugin
-    devDependencies:
-      typescript:
-        specifier: 'catalog:'
-        version: 6.0.3
-
   packages/lit-analyzer:
     dependencies:
       '@vscode/web-custom-data':
@@ -118,6 +102,22 @@ importers:
       vscode-jsonrpc:
         specifier: ^9.0.0
         version: 9.0.1
+
+  packages/playground:
+    dependencies:
+      lit-element:
+        specifier: ^2.3.1
+        version: 2.5.1
+      lit-html:
+        specifier: ^1.2.1
+        version: 1.4.1
+      ts-lit-plugin:
+        specifier: workspace:*
+        version: link:../ts-lit-plugin
+    devDependencies:
+      typescript:
+        specifier: 'catalog:'
+        version: 6.0.3
 
   packages/ts-lit-plugin:
     dependencies:
