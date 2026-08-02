@@ -47,5 +47,5 @@ jobs:
         uses: actions/upload-artifact@master
         if: matrix.os == 'ubuntu-latest' && matrix.node == 24
         with:
-          name: lit-analyzer.vsix
-          path: lit-analyzer.vsix
+          name: lit-plugin.vsix
+          path: lit-plugin.vsix

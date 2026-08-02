@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256"
+	height="256" role="img" aria-label="lit-plugin2">
+	<defs>
+		<linearGradient id="flame" x1="0" y1="0" x2="0.35" y2="1">
+			<stop offset="0" stop-color="#4ade80" />
+			<stop offset="0.45" stop-color="#22b8cf" />
+			<stop offset="1" stop-color="#2563eb" />
+		</linearGradient>
+		<linearGradient id="core" x1="0" y1="0" x2="0.2" y2="1">
+			<stop offset="0" stop-color="#a7f3d0" />
+			<stop offset="1" stop-color="#38bdf8" />
+		</linearGradient>
+	</defs>
+
+	<rect width="256" height="256" rx="56" fill="#0b1220" />
+
+	<!-- The lit flame, kept as the faceted silhouette the original used. -->
+	<g transform="translate(128 128) scale(1.02) translate(-128 -128)">
+		<path fill="url(#flame)" d="M128 26 74 92v72l54 66 54-66V92z" />
+		<path fill="#0b1220" fill-opacity="0.28" d="M128 26v204l54-66V92z" />
+		<path fill="url(#core)" d="M128 96l-28 34v34l28 34 28-34v-34z" />
+		<path fill="#0b1220" fill-opacity="0.22" d="M128 96v102l28-34v-34z" />
+	</g>
+</svg>

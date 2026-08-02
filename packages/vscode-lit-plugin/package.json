@@ -1,10 +1,11 @@
 {
 	"name": "lit-plugin",
 	"private": true,
-	"displayName": "lit-analyzer",
+	"displayName": "lit-plugin2",
 	"description": "Syntax highlighting, type checking and code completion for lit-html",
 	"version": "1.4.3",
-	"publisher": "runem",
+	"publisher": "arcmantle",
+	"author": "arcmantle",
 	"icon": "docs/assets/lit-plugin@256w.png",
 	"license": "MIT",
 	"engines": {
@@ -14,14 +15,13 @@
 	"categories": [
 		"Programming Languages"
 	],
-	"homepage": "https://github.com/runem/lit-analyzer",
+	"homepage": "https://github.com/arcmantle/lit-analyzer#readme",
 	"bugs": {
-		"url": "https://github.com/runem/lit-analyzer/issues",
-		"email": "runemehlsen@gmail.com"
+		"url": "https://github.com/arcmantle/lit-analyzer/issues"
 	},
 	"repository": {
 		"type": "git",
-		"url": "https://github.com/runem/lit-analyzer.git"
+		"url": "https://github.com/arcmantle/lit-analyzer.git"
 	},
 	"main": "bundle.js",
 	"scripts": {
@@ -30,11 +30,11 @@
 		"make-built-dir": "rm -rf built && pnpm run bundle && node ./copy-to-built.js",
 		"build": "pnpm run make-built-dir && tsc --build --pretty",
 		"rebuild": "rm -rf out && pnpm run make-built-dir && tsc --build --force --pretty",
-		"package": "pnpm run make-built-dir && cd built && vsce package -o ../../../lit-analyzer.vsix",
+		"package": "pnpm run make-built-dir && cd built && vsce package -o ../../../lit-plugin.vsix",
 		"publish": "pnpm run make-built-dir && cd built && vsce publish",
 		"test": "pnpm run build && vitest run",
 		"test:packaged": "pnpm run package && pnpm run unzip-vsix && LIT_PLUGIN_EXTENSION=packaged vitest run",
-		"unzip-vsix": "rm -rf out/packaged-extension && mkdir -p out/packaged-extension && unzip -qq ../../lit-analyzer.vsix -d out/packaged-extension"
+		"unzip-vsix": "rm -rf out/packaged-extension && mkdir -p out/packaged-extension && unzip -qq ../../lit-plugin.vsix -d out/packaged-extension"
 	},
 	"dependencies": {
 		"typescript": "catalog:"
@@ -71,7 +71,7 @@
 		{
 			"name": "You?",
 			"img": "https://joeschmoe.io/api/v1/random",
-			"url": "https://github.com/runem/lit-analyzer/blob/master/CONTRIBUTING.md"
+			"url": "https://github.com/arcmantle/lit-analyzer/blob/master/CONTRIBUTING.md"
 		}
 	],
 	"contributes": {

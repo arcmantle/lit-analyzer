@@ -12,7 +12,7 @@ beforeAll(async () => {
 
 describe(`lit-plugin in VS Code (${ extensionUnderTest() } extension)`, () => {
 	test('the extension is installed', () => {
-		expect(observations.installedExtensionIds).toContain('runem.lit-plugin');
+		expect(observations.installedExtensionIds).toContain('arcmantle.lit-plugin');
 	});
 
 	test('reports an element missing from HTMLElementTagNameMap', () => {
