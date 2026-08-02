@@ -6,7 +6,7 @@ Hi there, I really appreciate you considering contributing to this repository! T
 2. Install dependencies: `pnpm install`
 3. Run tests: `pnpm test`
 
-This is a [pnpm workspace](https://pnpm.io/workspaces), and it requires Node.js 24 or newer. TypeScript is declared once, as a [catalog](https://pnpm.io/catalogs) entry in `pnpm-workspace.yaml`, and every package consumes it with `"typescript": "catalog:"` — including `dev`. Change it there, not in the individual packages.
+This is a [pnpm workspace](https://pnpm.io/workspaces), and it requires Node.js 24 or newer. TypeScript is declared once, as a [catalog](https://pnpm.io/catalogs) entry in `pnpm-workspace.yaml`, and every package consumes it with `"typescript": "catalog:"` — including `packages/dev`. Change it there, not in the individual packages.
 
 ## Contributing to readmes
 
@@ -39,7 +39,7 @@ In order to debug `vscode-lit-plugin` you can open vscode from `packages/vscode-
 
 ### `pnpm package`
 
-You can use this script if you want to generate an installable package of vscode-lit-plugin. Afterwards, run `code --install-extension ./lit-analyzer.vsix` to install it.
+You can use this script if you want to generate an installable package of vscode-lit-plugin. Afterwards, run `code --install-extension ./lit-plugin.vsix` to install it.
 
 ## Releasing
 
