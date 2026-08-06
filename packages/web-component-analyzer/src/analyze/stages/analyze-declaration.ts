@@ -28,13 +28,6 @@ export function analyzeComponentDeclaration(
 		//throw new Error("Couldn't find main declaration node");
 
 
-	// Check if there exists a cached declaration for this node.
-	// If a cached declaration was found, test if it should be invalidated (by looking at inherited declarations)
-	const cachedDeclaration = baseContext.cache.componentDeclarationCache.get(mainDeclarationNode);
-	if (cachedDeclaration != null && !shouldInvalidateCachedDeclaration(cachedDeclaration, baseContext))
-		return cachedDeclaration;
-
-
 	options.visitedNodes = options.visitedNodes || new Set();
 
 	// Discover inheritance
@@ -132,9 +125,6 @@ export function analyzeComponentDeclaration(
 
 	Object.assign(baseDeclaration, refinedDeclaration);
 
-	// Update the cache
-	baseContext.cache.componentDeclarationCache.set(mainDeclarationNode, baseDeclaration);
-
 	return baseDeclaration;
 }
 
@@ -155,36 +145,6 @@ function shouldExcludeNode(node: Node, context: AnalyzerVisitContext): boolean {
 	if (name != null && context.config.excludedDeclarationNames?.includes(name))
 		return true;
 
-
-	return false;
-}
-
-/**
- * Returns if the declaration should be invalidated by testing
- *    if any of the inherited declarations in the tree has been invalidated
- * @param componentDeclaration
- * @param context
- */
-function shouldInvalidateCachedDeclaration(componentDeclaration: ComponentDeclaration, context: AnalyzerVisitContext): boolean {
-	for (const heritageClause of componentDeclaration.heritageClauses) {
-		if (heritageClause.declaration != null) {
-			// This declaration shouldn't be invalidated if the existing "node.getSourceFile()" is equal to the "program.getSourceFile(...)" with the same file name,
-			const node = heritageClause.declaration.node;
-			const oldSourceFile = node.getSourceFile();
-			const newSourceFile = context.program.getSourceFile(oldSourceFile.fileName);
-
-			const foundInCache = (newSourceFile != null && newSourceFile === oldSourceFile) ?? false;
-
-			// Return "true" that the declaration should invalidate if it wasn't found in the cache
-			if (!foundInCache)
-				return true;
-
-
-			// Test the inherited declarations recursively
-			if (shouldInvalidateCachedDeclaration(heritageClause.declaration, context))
-				return true;
-		}
-	}
 
 	return false;
 }

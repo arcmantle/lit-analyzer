@@ -1,5 +1,5 @@
 import { existsSync, readFileSync } from 'fs';
-import { SimpleType } from 'ts-simple-type';
+import { TypeChecker } from 'typescript';
 import { HTMLDataV1 } from 'vscode-html-languageservice';
 
 import { LitAnalyzerConfig } from '../lit-analyzer-config.js';
@@ -13,9 +13,8 @@ import {
 	mergeHtmlTags,
 } from '../parse/parse-html-data/html-tag.js';
 import { parseVscodeHtmlData } from '../parse/parse-html-data/parse-vscode-html-data.js';
-import { lazy } from '../util/general-util.js';
 
-export function getUserConfigHtmlCollection(config: LitAnalyzerConfig): HtmlDataCollection {
+export function getUserConfigHtmlCollection(config: LitAnalyzerConfig, checker: TypeChecker): HtmlDataCollection {
 	const collection = (() => {
 		let collection: HtmlDataCollection = { tags: [], global: {} };
 		for (const customHtmlData of Array.isArray(config.customHtmlData) ? config.customHtmlData : [ config.customHtmlData ]) {
@@ -62,7 +61,7 @@ export function getUserConfigHtmlCollection(config: LitAnalyzerConfig): HtmlData
 			({
 				name:    attrName,
 				kind:    'attribute',
-				getType: lazy(() => ({ kind: 'ANY' } as SimpleType)),
+				getType: checker => checker.getAnyType(),
 			} as HtmlAttr),
 	);
 
@@ -71,7 +70,7 @@ export function getUserConfigHtmlCollection(config: LitAnalyzerConfig): HtmlData
 			({
 				name:    eventName,
 				kind:    'event',
-				getType: lazy(() => ({ kind: 'ANY' } as SimpleType)),
+				getType: checker => checker.getAnyType(),
 			} as HtmlEvent),
 	);
 

@@ -1,6 +1,7 @@
-import { getGenericTarget, SimpleType } from 'ts-simple-type';
+import { SignatureKind, Type, TypeChecker, TypeFlags } from 'typescript';
+import { isTypeReference } from 'web-component-analyzer';
 
-const partTypeNames: ReadonlySet<string | undefined> = new Set([
+const partTypeNames: ReadonlySet<string> = new Set([
 	'Part',
 	'NodePart',
 	'AttributePart',
@@ -9,64 +10,60 @@ const partTypeNames: ReadonlySet<string | undefined> = new Set([
 	'EventPart',
 ]);
 
-/**
- * Checks whether a type is a lit-html 1.x or Lit 2 directive.
- */
-export function isLitDirective(type: SimpleType): boolean {
-	return isLit1Directive(type) || isLit2Directive(type);
+export function isLitDirectiveType(type: Type, checker: TypeChecker): boolean {
+	if (type.isUnion())
+		return type.types.some(member => isLitDirectiveType(member, checker));
+
+	return isLit1DirectiveTypeInternal(type, checker) || isLit2DirectiveType(type);
 }
 
-/**
- * Checks whether a type is a lit-html 1.x directive.
- */
-export function isLit1Directive(type: SimpleType): boolean {
-	switch (type.kind) {
-	case 'ALIAS':
-		return type.name === 'DirectiveFn' || isLit1Directive(getGenericTarget(type));
-	case 'OBJECT':
-		return type.call != null && isLit1Directive(type.call);
-	case 'FUNCTION': {
-		// We expect a directive to be a function with at least one argument that
-		// returns void.
-		if (
-			type.kind !== 'FUNCTION' ||
-				type.parameters == null ||
-				type.parameters.length === 0 ||
-				type.returnType == null ||
-				type.returnType.kind !== 'VOID'
-		)
+export function isLit2DirectiveType(type: Type): boolean {
+	if (getTypeName(type) === 'DirectiveResult')
+		return true;
+
+	if (isTypeReference(type))
+		return getTypeName(type.target) === 'DirectiveResult';
+
+	return false;
+}
+
+export function getLitDirectiveTypeArgument(type: Type, checker: TypeChecker): Type | undefined {
+	if (getTypeName(type) !== 'DirectiveFn' && !isLit1DirectiveTypeInternal(type, checker))
+		return undefined;
+
+	return getTypeArguments(type, checker)[0];
+}
+
+export function isLit1DirectiveTypeInternal(type: Type, checker: TypeChecker): boolean {
+	const typeName = getTypeName(type);
+	if (typeName === 'DirectiveFn' || typeName === 'Directive')
+		return true;
+
+	return checker.getSignaturesOfType(type, SignatureKind.Call).some(signature => {
+		if ((signature.getReturnType().flags & TypeFlags.Void) === 0 || signature.parameters.length === 0)
 			return false;
 
-		// And that one argument must all be lit Part types.
-		const firstArg = type.parameters[0].type;
-		if (firstArg.kind === 'UNION')
-			return firstArg.types.every(t => partTypeNames.has(t.name));
-
-		return partTypeNames.has(firstArg.name);
-	}
-	case 'GENERIC_ARGUMENTS': {
-		// Test for the built in type from lit-html: Directive<NodePart>
-		const target = getGenericTarget(type);
-
-		return (target.kind === 'FUNCTION' && target.name === 'Directive') || isLit1Directive(target);
-	}
-	default:
-		return false;
-	}
+		return isPartType(checker.getTypeOfSymbol(signature.parameters[0]));
+	});
 }
 
-/**
- * Checks whether a type is a Lit 2 directive.
- */
-export function isLit2Directive(type: SimpleType): boolean {
-	switch (type.kind) {
-	case 'INTERFACE': {
-		return type.name === 'DirectiveResult';
-	}
-	case 'GENERIC_ARGUMENTS': {
-		return isLit2Directive(getGenericTarget(type));
-	}
-	default:
-		return false;
-	}
+function isPartType(type: Type): boolean {
+	if (type.isUnion())
+		return type.types.every(isPartType);
+
+	return partTypeNames.has(getTypeName(type) || '');
+}
+
+function getTypeName(type: Type): string | undefined {
+	return type.aliasSymbol?.getName() ?? type.getSymbol()?.getName();
+}
+
+function getTypeArguments(type: Type, checker: TypeChecker): readonly Type[] {
+	if (type.aliasTypeArguments != null)
+		return type.aliasTypeArguments;
+
+	if (isTypeReference(type))
+		return checker.getTypeArguments(type);
+
+	return [];
 }

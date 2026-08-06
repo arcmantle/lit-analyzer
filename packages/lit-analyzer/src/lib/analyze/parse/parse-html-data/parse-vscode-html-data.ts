@@ -1,14 +1,16 @@
-import { SimpleType, SimpleTypeStringLiteral } from 'ts-simple-type';
+import { Type, TypeChecker } from 'typescript';
 import { HTMLDataV1, IAttributeData, ITagData, IValueData, IValueSet } from 'vscode-html-languageservice';
 import { MarkupContent } from 'vscode-languageserver-types';
+import { getUnionType } from 'web-component-analyzer';
 
-import { lazy } from '../../util/general-util.js';
 import { HtmlAttr, HtmlDataCollection, HtmlEvent, HtmlTag } from './html-tag.js';
 
 export interface ParseVscodeHtmlDataConfig {
 	builtIn?: boolean;
-	typeMap?: Map<string, SimpleType>;
+	typeMap?: Map<string, TypeFactory>;
 }
+
+export type TypeFactory = (checker: TypeChecker) => Type;
 
 export function parseVscodeHtmlData(data: HTMLDataV1, config: ParseVscodeHtmlDataConfig = {}): HtmlDataCollection {
 	switch (data.version) {
@@ -20,7 +22,7 @@ export function parseVscodeHtmlData(data: HTMLDataV1, config: ParseVscodeHtmlDat
 
 function parseVscodeDataV1(data: HTMLDataV1, config: ParseVscodeHtmlDataConfig): HtmlDataCollection {
 	const valueSetTypeMap = valueSetsToTypeMap(data.valueSets || []);
-	valueSetTypeMap.set('v', { kind: 'BOOLEAN' });
+	valueSetTypeMap.set('v', checker => checker.getBooleanType());
 
 	// Transfer existing typemap to new typemap
 	if (config.typeMap != null) {
@@ -76,28 +78,19 @@ function tagDataToHtmlTagAttr(tagDataAttr: IAttributeData, config: ParseVscodeHt
 		name,
 		description: stringOrMarkupContentToString(description),
 		fromTagName,
-		getType:     lazy(() => type || { kind: 'ANY' }),
+		getType:     checker => type == null ? checker.getAnyType() : type(checker),
 		builtIn:     config.builtIn,
 	};
 }
 
-function valueSetsToTypeMap(valueSets: IValueSet[]): Map<string, SimpleType> {
-	const entries = valueSets.map(valueSet => [ valueSet.name, attrValuesToUnion(valueSet.values) ] as [string, SimpleType]);
+function valueSetsToTypeMap(valueSets: IValueSet[]): Map<string, TypeFactory> {
+	const entries = valueSets.map(valueSet => [ valueSet.name, attrValuesToUnion(valueSet.values) ] as [string, TypeFactory]);
 
 	return new Map(entries);
 }
 
-function attrValuesToUnion(attrValues: IValueData[]): SimpleType {
-	return {
-		kind:  'UNION',
-		types: attrValues.map(
-			value =>
-				({
-					value: value.name,
-					kind:  'STRING_LITERAL',
-				} as SimpleTypeStringLiteral),
-		),
-	};
+function attrValuesToUnion(attrValues: IValueData[]): TypeFactory {
+	return checker => getUnionType(checker, attrValues.map(value => checker.getStringLiteralType(value.name)));
 }
 
 function stringOrMarkupContentToString(str: string | MarkupContent | undefined): string | undefined {
@@ -115,7 +108,7 @@ function attrsToEvents(htmlAttrs: HtmlAttr[]): HtmlEvent[] {
 			name:        htmlAttr.name.replace(/^on/, ''),
 			description: htmlAttr.description,
 			fromTagName: htmlAttr.fromTagName,
-			getType:     lazy(() => ({ kind: 'ANY' } as SimpleType)),
+			getType:     checker => checker.getAnyType(),
 			builtIn:     htmlAttr.builtIn,
 		}));
 }

@@ -1,7 +1,7 @@
 import { existsSync, readFileSync } from 'fs';
 import {
 	CompilerOptions,
-	createProgram,
+	createCompilerHost,
 	findConfigFile,
 	ModuleKind,
 	ModuleResolutionKind,
@@ -12,6 +12,8 @@ import {
 	SourceFile,
 	sys,
 } from 'typescript';
+import * as tsModule from 'typescript';
+import { createJSDocProgram } from 'web-component-analyzer';
 
 import { LitAnalyzerConfig } from '../analyze/lit-analyzer-config.js';
 
@@ -54,7 +56,7 @@ export interface CompileResult {
 export function compileTypescript(filePaths: string | string[]): CompileResult {
 	const options = getCompilerOptions();
 	filePaths = Array.isArray(filePaths) ? filePaths : [ filePaths ];
-	const program = createProgram(filePaths, options);
+	const program = createJSDocProgram(filePaths, options, createCompilerHost(options), tsModule);
 	const files = program
 		.getSourceFiles()
 		.filter(sf => filePaths.includes(sf.fileName))

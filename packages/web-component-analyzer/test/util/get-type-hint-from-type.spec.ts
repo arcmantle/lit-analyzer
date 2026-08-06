@@ -1,4 +1,3 @@
-import { toSimpleType } from 'ts-simple-type';
 import { expect, test } from 'vitest';
 
 import { getTypeHintFromType } from '../../src/util/get-type-hint-from-type.js';
@@ -28,7 +27,7 @@ function hints(inlineTypes: boolean): Record<string, string | undefined> {
 
 	return Object.fromEntries(members.map(member => [
 		member.propName!,
-		getTypeHintFromType(toSimpleType(member.type!(checker), checker), checker, config),
+		getTypeHintFromType(member.type!(checker), checker, config),
 	]));
 }
 
@@ -47,7 +46,5 @@ test('inlineTypes keeps a generic interface', () => {
 test('the default keeps the generic alias name', () => {
 	const result = hints(false);
 	expect(result.maybe).toBe('Maybe<number>');
-
-	// `toSimpleType` discards the ALIAS node for a non-generic alias, see ISS_6JQKH45APT9NJVRN9563Q0Q6JR
 	expect(result.plain).toBe('number | undefined');
 });

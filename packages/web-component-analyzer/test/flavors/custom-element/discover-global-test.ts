@@ -33,12 +33,12 @@ tsTest("Discovers global members on HTMLElement", t => {
 			{
 				kind: "property",
 				propName: "mdc-dialog-action",
-				type: () => ({ kind: "STRING" })
+				type: checker => checker.getStringType()
 			},
 			{
 				kind: "property",
 				propName: "myProp",
-				type: () => ({ kind: "BOOLEAN" })
+				type: checker => checker.getBooleanType()
 			},
 			{
 				kind: "property",

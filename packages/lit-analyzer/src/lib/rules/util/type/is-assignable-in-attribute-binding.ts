@@ -1,17 +1,18 @@
-import { isAssignableToType as _isAssignableToType, SimpleType, SimpleTypeComparisonOptions, typeToString } from 'ts-simple-type';
+import { Type, TypeChecker, TypeFlags } from 'typescript';
 
 import { HtmlNodeAttrAssignment, HtmlNodeAttrAssignmentKind } from '../../../analyze/types/html-node/html-node-attr-assignment-types.js';
 import { HtmlNodeAttr } from '../../../analyze/types/html-node/html-node-attr-types.js';
 import { RuleModuleContext } from '../../../analyze/types/rule/rule-module-context.js';
 import { documentRangeToSFRange, rangeFromHtmlNodeAttr } from '../../../analyze/util/range-util.js';
-import { isPrimitiveArrayType } from '../../../analyze/util/type-util.js';
-import { isLitDirective } from '../directive/is-lit-directive.js';
+import { isLitDirectiveType } from '../directive/is-lit-directive.js';
 import { isAssignableBindingUnderSecuritySystem } from './is-assignable-binding-under-security-system.js';
 import { isAssignableToType } from './is-assignable-to-type.js';
+import { isUnionType, typeToDisplayString } from './type-utils.js';
+
 
 export function isAssignableInAttributeBinding(
 	htmlAttr: HtmlNodeAttr,
-	{ typeA, typeB }: { typeA: SimpleType; typeB: SimpleType; },
+	{ typeA, typeB }: { typeA: Type; typeB: Type; },
 	context: RuleModuleContext,
 ): boolean | undefined {
 	const { assignment } = htmlAttr;
@@ -22,7 +23,8 @@ export function isAssignableInAttributeBinding(
 		if (!isAssignableToType({ typeA, typeB }, context)) {
 			context.report({
 				location: rangeFromHtmlNodeAttr(htmlAttr),
-				message:  `Type '${ typeToString(typeB) }' is not assignable to '${ typeToString(typeA) }'`,
+				message:  `Type '${ typeToDisplayString(typeB, context.program.getTypeChecker()) }' `
+				+ `is not assignable to '${ typeToDisplayString(typeA, context.program.getTypeChecker()) }'`,
 			});
 
 			return false;
@@ -50,10 +52,15 @@ export function isAssignableInAttributeBinding(
 			return primitiveArrayTypeResult;
 
 
-		if (!isAssignableToType({ typeA, typeB }, context, { isAssignable: isAssignableToTypeWithStringCoercion })) {
+		const checker = context.program.getTypeChecker();
+		if (isLitDirectiveType(typeB, checker))
+			return true;
+
+		if (!isAssignableToTypeWithStringCoercion(typeA, typeB, checker)) {
 			context.report({
 				location: rangeFromHtmlNodeAttr(htmlAttr),
-				message:  `Type '${ typeToString(typeB) }' is not assignable to '${ typeToString(typeA) }'`,
+				message:  `Type '${ typeToDisplayString(typeB, checker) }' is not assignable to `
+				+ `'${ typeToDisplayString(typeA, checker) }'`,
 			});
 
 			return false;
@@ -71,128 +78,52 @@ export function isAssignableInAttributeBinding(
  * @param options
  */
 export function isAssignableToTypeWithStringCoercion(
-	typeA: SimpleType,
-	typeB: SimpleType,
-	options: SimpleTypeComparisonOptions,
-): boolean | undefined {
-	const safeOptions = { ...options, isAssignable: undefined };
+	typeA: Type,
+	typeB: Type,
+	checker: TypeChecker,
+): boolean {
+	// A union is assignable only when every member is assignable after coercion.
+	if (isUnionType(typeB))
+		return typeB.types.every(member => isAssignableToTypeWithStringCoercion(typeA, member, checker));
 
-	switch (typeB.kind) {
-	/*case "NULL":
-		 return _isAssignableToType(typeA, { kind: "STRING_LITERAL", value: "null" }, safeOptions);
+	if (typeB.isStringLiteral()) {
+		const value = typeB.value;
 
-		 case "UNDEFINED":
-		 return _isAssignableToType(typeA, { kind: "STRING_LITERAL", value: "undefined" }, safeOptions);
-		 */
-	case 'ALIAS':
-	case 'FUNCTION':
-	case 'GENERIC_ARGUMENTS':
-		// Always return true if this is a lit directive
-		if (isLitDirective(typeB))
+		// An empty attribute value is the string form of true.
+		if (value.length === 0 && checker.isTypeAssignableTo(checker.getTrueType(), typeA))
 			return true;
 
-		break;
-
-	case 'OBJECT':
-	case 'CLASS':
-	case 'INTERFACE':
-		// This allows for types like: string | (part: Part) => void
-		return _isAssignableToType(
-			typeA,
-			{
-				kind:  'STRING_LITERAL',
-				value: '[object Object]',
-			},
-			safeOptions,
-		);
-
-	case 'STRING_LITERAL':
-		/*if (typeA.kind === "ARRAY" && typeA.type.kind === "STRING_LITERAL") {
-			}*/
-
-		// Take into account that the empty string is is equal to true
-		if (typeB.value.length === 0) {
-			if (_isAssignableToType(typeA, { kind: 'BOOLEAN_LITERAL', value: true }, safeOptions))
-				return true;
-		}
-
-		// Test if a potential string literal is a assignable to a number
-		// Example: max="123"
-		if (!isNaN(typeB.value as unknown as number)) {
-			if (
-				_isAssignableToType(
-					typeA,
-					{
-						kind:  'NUMBER_LITERAL',
-						value: Number(typeB.value),
-					},
-					safeOptions,
-				)
-			)
-				return true;
-		}
-
-		break;
-
-	case 'BOOLEAN':
-		// Test if a boolean coerced string is possible.
-		// Example: aria-expanded="${this.open}"
-		return _isAssignableToType(
-			typeA,
-			{
-				kind:  'UNION',
-				types: [
-					{
-						kind:  'STRING_LITERAL',
-						value: 'true',
-					},
-					{ kind: 'STRING_LITERAL', value: 'false' },
-				],
-			},
-			safeOptions,
-		);
-
-	case 'BOOLEAN_LITERAL':
-		/**
-			 * Test if a boolean literal coerced to string is possible
-			 * Example: aria-expanded="${this.open}"
-			 */
-		return _isAssignableToType(
-			typeA,
-			{
-				kind:  'STRING_LITERAL',
-				value: String(typeB.value),
-			},
-			safeOptions,
-		);
-
-	case 'NUMBER':
-		// Test if a number coerced to string is possible
-		// Example: value="${this.max}"
-		if (_isAssignableToType(typeA, { kind: 'STRING' }, safeOptions))
+		// Numeric string literals can bind to numeric attributes.
+		if (!Number.isNaN(Number(value)) && checker.isTypeAssignableTo(checker.getNumberLiteralType(Number(value)), typeA))
 			return true;
 
-		break;
-
-	case 'NUMBER_LITERAL':
-		// Test if a number literal coerced to string is possible
-		// Example: value="${this.max}"
-		if (
-			_isAssignableToType(
-				typeA,
-				{
-					kind:  'STRING_LITERAL',
-					value: String(typeB.value),
-				},
-				safeOptions,
-			)
-		)
-			return true;
-
-		break;
+		return checker.isTypeAssignableTo(typeB, typeA);
 	}
 
-	return undefined;
+	if ((typeB.flags & TypeFlags.BooleanLiteral) !== 0) {
+		return checker.isTypeAssignableTo(
+			checker.getStringLiteralType(typeB === checker.getTrueType() ? 'true' : 'false'),
+			typeA,
+		);
+	}
+
+	if ((typeB.flags & TypeFlags.BooleanLike) !== 0) {
+		// A boolean expression becomes either "true" or "false" in an attribute.
+		return checker.isTypeAssignableTo(checker.getStringLiteralType('true'), typeA)
+			&& checker.isTypeAssignableTo(checker.getStringLiteralType('false'), typeA);
+	}
+
+	if ((typeB.flags & TypeFlags.NumberLike) !== 0) {
+		// Keep normal number assignability, and allow stringification for string attributes.
+		return checker.isTypeAssignableTo(typeB, typeA)
+			|| checker.isTypeAssignableTo(checker.getStringType(), typeA);
+	}
+
+	if ((typeB.flags & TypeFlags.Object) !== 0 && isObjectCoercible(typeB, checker))
+		return checker.isTypeAssignableTo(checker.getStringLiteralType('[object Object]'), typeA);
+
+
+	return checker.isTypeAssignableTo(typeB, typeA);
 }
 
 /**
@@ -205,18 +136,22 @@ export function isAssignableToTypeWithStringCoercion(
  */
 export function isAssignableInPrimitiveArray(
 	assignment: HtmlNodeAttrAssignment,
-	{ typeA, typeB }: { typeA: SimpleType; typeB: SimpleType; },
+	{ typeA, typeB }: { typeA: Type; typeB: Type; },
 	context: RuleModuleContext,
 ): boolean | undefined {
 	// Only check "STRING" and "EXPRESSION" for now
 	if (assignment.kind !== HtmlNodeAttrAssignmentKind.STRING && assignment.kind !== HtmlNodeAttrAssignmentKind.EXPRESSION)
 		return undefined;
 
+	const target = context.htmlStore.getHtmlAttrTarget(assignment.htmlAttr);
+	if (target == null || !('primitiveArray' in target) || target.primitiveArray !== true)
+		return undefined;
 
-	// Check if typeA is marked as a "primitive array type"
-	if (isPrimitiveArrayType(typeA) && typeB.kind === 'STRING_LITERAL') {
+	const checker = context.program.getTypeChecker();
+	const stringValue = typeB.isStringLiteral() ? typeB.value : undefined;
+	if (stringValue != null) {
 		// Split a value like: "button listitem" into ["button", " ", "listitem"]
-		const valuesAndWhitespace = typeB.value.split(/(\s+)/g);
+		const valuesAndWhitespace = stringValue.split(/(\s+)/g);
 		const valuesNotAssignable: string[] = [];
 
 		const startOffset = assignment.location.start;
@@ -226,13 +161,7 @@ export function isAssignableInPrimitiveArray(
 			// Check all non-whitespace values
 			if (value.match(/\s+/) == null && value !== '') {
 				// Make sure that the the value is assignable to the union
-				if (
-					!isAssignableToType(
-						{ typeA, typeB: { kind: 'STRING_LITERAL', value } },
-						context,
-						{ isAssignable: isAssignableToTypeWithStringCoercion },
-					)
-				) {
+				if (!checker.isTypeAssignableTo(checker.getStringLiteralType(value), typeA)) {
 					valuesNotAssignable.push(value);
 
 					// If the assignment kind is "STRING" we can report diagnostics directly on the value in the HTML
@@ -242,7 +171,7 @@ export function isAssignableInPrimitiveArray(
 								start: startOffset + offset,
 								end:   startOffset + offset + value.length,
 							}),
-							message: `The value '${ value }' is not assignable to '${ typeToString(typeA) }'`,
+							message: `The value '${ value }' is not assignable to '${ typeToDisplayString(typeA, checker) }'`,
 						});
 					}
 				}
@@ -258,7 +187,7 @@ export function isAssignableInPrimitiveArray(
 				location: rangeFromHtmlNodeAttr(assignment.htmlAttr),
 				message:  `The value${ multiple ? 's' : '' } ${ valuesNotAssignable.map(v => `'${ v }'`).join(', ') } ${
 					multiple ? 'are' : 'is'
-				} not assignable to '${ typeToString(typeA) }'`,
+				} not assignable to '${ typeToDisplayString(typeA, context.program.getTypeChecker()) }'`,
 			});
 		}
 
@@ -266,4 +195,17 @@ export function isAssignableInPrimitiveArray(
 	}
 
 	return undefined;
+}
+
+function isObjectCoercible(type: Type, checker: TypeChecker): boolean {
+	if (checker.isArrayType(type) || checker.isTupleType(type))
+		return false;
+
+	const symbolName = type.getSymbol()?.getName();
+
+	return symbolName !== 'Date'
+		&& symbolName !== 'Promise'
+		&& symbolName !== 'PromiseLike'
+		&& type.getCallSignatures().length === 0
+		&& type.getConstructSignatures().length === 0;
 }

@@ -101,7 +101,9 @@ function startProject() {
 		const property = Array.from(context.htmlStore.getAllPropertiesForTag('my-element'))
 			.find(candidate => candidate.name === propertyName)!;
 
-		return property.getType(compiler.getProgram().getTypeChecker()).kind;
+		const checker = compiler.getProgram().getTypeChecker();
+
+		return checker.typeToString(property.getType(checker));
 	};
 
 	return { compiler, analyze, typeKindOf, rebuildCount: () => rebuilds };
@@ -110,23 +112,23 @@ function startProject() {
 test('A change to a base class file rebuilds the component', () => {
 	const project = startProject();
 
-	expect(project.typeKindOf('label')).toBe('STRING');
+	expect(project.typeKindOf('label')).toBe('string');
 
 	project.compiler.openDocument(BASE, 'export class BaseElement extends HTMLElement {\n\tlabel: number = 0;\n}\n');
 	project.analyze();
 
 	expect(project.rebuildCount()).toBe(1);
-	expect(project.typeKindOf('label')).toBe('NUMBER');
+	expect(project.typeKindOf('label')).toBe('number');
 });
 
 test('A change to a file the component only takes a type from does not rebuild it', () => {
 	const project = startProject();
 
-	expect(project.typeKindOf('value')).toBe('STRING');
+	expect(project.typeKindOf('value')).toBe('string');
 
 	project.compiler.openDocument(VALUE_TYPE, 'export type Value = number;\n');
 	project.analyze();
 
 	expect(project.rebuildCount()).toBe(0);
-	expect(project.typeKindOf('value')).toBe('NUMBER');
+	expect(project.typeKindOf('value')).toBe('number');
 });

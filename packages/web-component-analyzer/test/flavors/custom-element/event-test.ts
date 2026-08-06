@@ -1,4 +1,3 @@
-import { SimpleType, typeToString } from "ts-simple-type";
 import { analyzeTextWithCurrentTsModule } from "../../helpers/analyze-text-with-current-ts-module.js";
 import { tsTest } from "../../helpers/ts-test.js";
 
@@ -32,7 +31,7 @@ tsTest("Correctly discovers dispatched events and corresponding event types", t 
 			return;
 		}
 
-		t.is(typeToString(event.type!(program.getTypeChecker()) as SimpleType, program.getTypeChecker()), typeName);
+		t.is(program.getTypeChecker().typeToString(event.type!(program.getTypeChecker())), typeName);
 	};
 
 	t.is(events.length, 5);

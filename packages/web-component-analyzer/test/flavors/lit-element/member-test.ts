@@ -38,7 +38,7 @@ tsTest("LitElement: Discovers properties from 'static get properties'", t => {
 				},
 				default: "hello 123",
 				typeHint: "String",
-				type: () => ({ kind: "STRING" }),
+				type: checker => checker.getStringType(),
 				visibility: undefined,
 				reflect: "to-property",
 				deprecated: undefined,
@@ -48,6 +48,32 @@ tsTest("LitElement: Discovers properties from 'static get properties'", t => {
 		t,
 		checker
 	);
+});
+
+tsTest("LitElement: Resolves recovered object @type expressions through the Program", t => {
+	const {
+		results: [result],
+		checker
+	} = analyzeTextWithCurrentTsModule({
+		includeLib: true,
+		fileName: "file.ts",
+		text: `
+	/**
+	 * @element
+	 */
+	class MyElement extends HTMLElement {
+		static get properties() {
+			return {
+				/** @type {{foo: string}} */
+				items: {}
+			};
+		}
+	}
+	`
+	});
+
+	const member = result.componentDefinitions[0].declaration!.members[0];
+	t.truthy(checker.getPropertyOfType(member.type!(checker), "foo"));
 });
 
 tsTest("LitElement: Discovers properties from '@property'", t => {
@@ -86,12 +112,12 @@ tsTest("LitElement: Discovers properties from '@property'", t => {
 					description: "This is a comment"
 				},
 				default: "hello",
-				type: () => ({ kind: "STRING" }),
+				type: checker => checker.getStringType(),
 				visibility: "public",
 				deprecated: undefined,
 				required: undefined,
 				meta: {
-					type: { kind: "STRING" },
+					type: checker => checker.getStringType(),
 					attribute: "my-prop"
 				}
 			},
@@ -100,7 +126,7 @@ tsTest("LitElement: Discovers properties from '@property'", t => {
 				propName: "myProp2",
 				attrName: undefined,
 				default: undefined,
-				type: () => ({ kind: "NUMBER" }),
+				type: checker => checker.getNumberType(),
 				visibility: "protected",
 				deprecated: undefined,
 				required: undefined,
@@ -113,7 +139,7 @@ tsTest("LitElement: Discovers properties from '@property'", t => {
 				propName: "myProp3",
 				attrName: "myProp3",
 				default: undefined,
-				type: () => ({ kind: "ANY" }),
+				type: checker => checker.getAnyType(),
 				visibility: "public",
 				deprecated: undefined,
 				required: undefined,
@@ -124,12 +150,12 @@ tsTest("LitElement: Discovers properties from '@property'", t => {
 				propName: "myProp4",
 				attrName: "myProp4",
 				default: undefined,
-				type: () => ({ kind: "NUMBER" }),
+				type: checker => checker.getNumberType(),
 				visibility: "public",
 				deprecated: undefined,
 				required: undefined,
 				meta: {
-					type: { kind: "NUMBER" }
+					type: checker => checker.getNumberType()
 				}
 			}
 		],
@@ -169,7 +195,7 @@ tsTest("LitElement: Discovers properties from '@internalProperty'", t => {
 					description: "This is a comment"
 				},
 				default: "hello",
-				type: () => ({ kind: "STRING" }),
+				type: checker => checker.getStringType(),
 				visibility: "public",
 				deprecated: undefined,
 				required: undefined,
@@ -183,7 +209,7 @@ tsTest("LitElement: Discovers properties from '@internalProperty'", t => {
 				propName: "myProp2",
 				attrName: undefined,
 				default: undefined,
-				type: () => ({ kind: "NUMBER" }),
+				type: checker => checker.getNumberType(),
 				visibility: "private",
 				deprecated: undefined,
 				required: undefined,
@@ -229,7 +255,7 @@ tsTest("LitElement: Discovers properties from '@state'", t => {
 					description: "This is a comment"
 				},
 				default: "hello",
-				type: () => ({ kind: "STRING" }),
+				type: checker => checker.getStringType(),
 				visibility: "public",
 				deprecated: undefined,
 				required: undefined,
@@ -243,7 +269,7 @@ tsTest("LitElement: Discovers properties from '@state'", t => {
 				propName: "myProp2",
 				attrName: undefined,
 				default: undefined,
-				type: () => ({ kind: "NUMBER" }),
+				type: checker => checker.getNumberType(),
 				visibility: "private",
 				deprecated: undefined,
 				required: undefined,

@@ -1,9 +1,10 @@
-import { getGenericTarget, SimpleType, typeToString } from 'ts-simple-type';
+import { Type, TypeChecker, TypeFlags } from 'typescript';
 
 import { HtmlNodeAttr } from '../../../analyze/types/html-node/html-node-attr-types.js';
 import { RuleModuleContext } from '../../../analyze/types/rule/rule-module-context.js';
 import { rangeFromHtmlNodeAttr } from '../../../analyze/util/range-util.js';
-import { isLitDirective } from '../directive/is-lit-directive.js';
+import { isLitDirectiveType } from '../directive/is-lit-directive.js';
+import { hasFlag, typeToDisplayString } from './type-utils.js';
 
 /**
  * If the user's security policy overrides normal type checking for this
@@ -13,7 +14,7 @@ import { isLitDirective } from '../directive/is-lit-directive.js';
  */
 export function isAssignableBindingUnderSecuritySystem(
 	htmlAttr: HtmlNodeAttr,
-	{ typeA, typeB }: { typeA: SimpleType; typeB: SimpleType; },
+	{ typeA, typeB }: { typeA: Type; typeB: Type; },
 	context: RuleModuleContext,
 ): boolean | undefined {
 	const securityPolicy = context.config.securitySystem;
@@ -21,7 +22,7 @@ export function isAssignableBindingUnderSecuritySystem(
 	case 'off':
 		return undefined; // No security checks apply.
 	case 'ClosureSafeTypes':
-		return checkClosureSecurityAssignability(typeB, htmlAttr, context);
+		return checkClosureSecurityAssignability(typeB, htmlAttr, context, context.program.getTypeChecker());
 	default: {
 		const never: never = securityPolicy;
 		context.logger.error(`Unexpected security policy: ${ never }`);
@@ -63,9 +64,10 @@ const closureGlobalOverrides: SecurityOverrideMap = {
 };
 
 function checkClosureSecurityAssignability(
-	typeB: SimpleType,
+	typeB: Type,
 	htmlAttr: HtmlNodeAttr,
 	context: RuleModuleContext,
+	checker: TypeChecker,
 ): boolean | undefined {
 	const scopedOverride = closureScopedOverrides[htmlAttr.htmlNode.tagName];
 	const overriddenTypes = (scopedOverride && scopedOverride[htmlAttr.name]) || closureGlobalOverrides[htmlAttr.name];
@@ -73,26 +75,21 @@ function checkClosureSecurityAssignability(
 		return undefined;
 
 	// `any` is allowed to bind to anything.
-	if (typeB.kind === 'ANY')
+	if ((typeB.flags & TypeFlags.Any) !== 0)
 		return undefined;
 
 	// Directives are responsible for their own security.
-	if (isLitDirective(typeB))
+	if (isLitDirectiveType(typeB, checker))
 		return undefined;
 
 
 	const typeMatch = matchesAtLeastOneNominalType(overriddenTypes, typeB);
 	if (typeMatch === false) {
-		/*const nominalType: SimpleType = {
-			kind: SimpleTypeKind.INTERFACE,
-			members: [],
-			name: "A security type"
-		};*/
-
 		context.report({
 			location: rangeFromHtmlNodeAttr(htmlAttr),
-			message:  `Type '${ typeToString(typeB) }' is not assignable to '${ overriddenTypes.join(' | ') }'. This is due to \
-Closure Safe Type enforcement.`,
+			message:  `Type '${ typeToDisplayString(typeB, checker) }' `
+			+ `is not assignable to '${ overriddenTypes.join(' | ') }'. `
+			+ `This is due to Closure Safe Type enforcement.`,
 		});
 
 		return false;
@@ -112,28 +109,13 @@ function normalizeTypeName(typeName: string) {
 	return match[1];
 }
 
-function matchesAtLeastOneNominalType(typeNames: string[], typeB: SimpleType): boolean {
-	// Check if typeB.name is in typeNames, either before or after normalization.
-	const typeBName = typeB.name;
-	if (typeBName !== undefined) {
-		if (typeNames.includes(typeBName))
-			return true;
+function matchesAtLeastOneNominalType(typeNames: string[], typeB: Type): boolean {
+	const typeBName = typeB.aliasSymbol?.getName() ?? typeB.getSymbol()?.getName();
+	if (typeBName != null && (typeNames.includes(typeBName) || typeNames.includes(normalizeTypeName(typeBName) || '')))
+		return true;
 
-		const normalized = normalizeTypeName(typeBName);
-		if (normalized !== undefined && typeNames.includes(normalized))
-			return true;
-	}
+	if (typeB.isUnion())
+		return typeB.types.every(type => matchesAtLeastOneNominalType(typeNames, type));
 
-	// Otherwise, check for other cases beyond just a simple named type.
-	switch (typeB.kind) {
-	case 'UNION':
-		return typeB.types.every(t => matchesAtLeastOneNominalType(typeNames, t));
-	case 'STRING_LITERAL':
-	case 'STRING':
-		return typeNames.includes('string');
-	case 'GENERIC_ARGUMENTS':
-		return matchesAtLeastOneNominalType(typeNames, getGenericTarget(typeB));
-	default:
-		return false;
-	}
+	return hasFlag(typeB, TypeFlags.StringLike) && typeNames.includes('string');
 }

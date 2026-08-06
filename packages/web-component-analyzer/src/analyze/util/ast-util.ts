@@ -1,4 +1,3 @@
-import { isAssignableToSimpleTypeKind } from 'ts-simple-type';
 import type tsModule from 'typescript';
 import type {
 	Declaration,
@@ -11,6 +10,7 @@ import type {
 	SetAccessorDeclaration,
 	Symbol,
 	SyntaxKind,
+	Type,
 	TypeChecker,
 } from 'typescript';
 
@@ -18,6 +18,7 @@ import { ModifierKind } from '../types/modifier-kind.js';
 import { VisibilityKind } from '../types/visibility-kind.js';
 import { resolveNodeValue } from './resolve-node-value.js';
 import { isNamePrivate } from './text-util.js';
+import { hasFlag as hasTypeFlag } from './ts-type-util.js';
 
 export interface AstContext {
 	ts:      typeof tsModule;
@@ -98,9 +99,15 @@ export function resolveDeclarationsDeep(node: Node, context: { checker: TypeChec
 	const allDeclarations = resolveDeclarations(node, context);
 
 	for (const declaration of allDeclarations) {
-		if (context.ts.isVariableDeclaration(declaration) && declaration.initializer != null && context.ts.isIdentifier(declaration.initializer))
+		if (
+			context.ts.isVariableDeclaration(declaration)
+			&& declaration.initializer != null && context.ts.isIdentifier(declaration.initializer)
+		)
 			declarations.push(...resolveDeclarationsDeep(declaration.initializer, context));
-		else if (context.ts.isTypeAliasDeclaration(declaration) && declaration.type != null && context.ts.isIdentifier(declaration.type))
+		else if (
+			context.ts.isTypeAliasDeclaration(declaration)
+			&& declaration.type != null && context.ts.isIdentifier(declaration.type)
+		)
 			declarations.push(...resolveDeclarationsDeep(declaration.type, context));
 		else
 			declarations.push(declaration);
@@ -173,7 +180,12 @@ export function getMemberVisibilityFromNode(
 	node: PropertyDeclaration | PropertySignature | SetAccessorDeclaration | Node,
 	ts: typeof tsModule,
 ): VisibilityKind | undefined {
-	if (hasModifier(node, ts.SyntaxKind.PrivateKeyword, ts) || ('name' in node && ts.isIdentifier(node.name) && isNamePrivate(node.name.text))) {
+	if (
+		hasModifier(node, ts.SyntaxKind.PrivateKeyword, ts)
+		|| ('name' in node
+			&& ts.isIdentifier(node.name)
+			&& isNamePrivate(node.name.text))
+	) {
 		return 'private';
 	}
 	else if (hasModifier(node, ts.SyntaxKind.ProtectedKeyword, ts)) {
@@ -231,7 +243,11 @@ export function getInterfaceKeys(
 }
 
 // noinspection JSUnusedGlobalSymbols
-export function isPropertyRequired(property: PropertySignature | PropertyDeclaration, checker: TypeChecker, ts: typeof tsModule): boolean {
+export function isPropertyRequired(
+	property: PropertySignature | PropertyDeclaration,
+	checker: TypeChecker,
+	ts: typeof tsModule,
+): boolean {
 	const type = checker.getTypeAtLocation(property);
 
 	// Properties in external modules don't have initializers, so we cannot infer if the property is required or not
@@ -254,7 +270,7 @@ export function isPropertyRequired(property: PropertySignature | PropertyDeclara
 
 
 	// "any" or "unknown" should never be required
-	if (isAssignableToSimpleTypeKind(type, [ 'ANY', 'UNKNOWN' ], checker))
+	if (hasTypeFlag(type, ts.TypeFlags.Any | ts.TypeFlags.Unknown))
 		return false;
 
 
@@ -264,7 +280,7 @@ export function isPropertyRequired(property: PropertySignature | PropertyDeclara
 		return false;
 
 
-	return !isAssignableToSimpleTypeKind(type, [ 'UNDEFINED', 'NULL' ], checker);
+	return !hasTypeFlag(type, ts.TypeFlags.Undefined | ts.TypeFlags.Null);
 }
 
 /**
@@ -299,7 +315,11 @@ export function findChild<T extends Node = Node>(node: Node | undefined, test: (
  * @param test
  * @param emit
  */
-export function findChildren<T extends Node = Node>(node: Node | undefined, test: (node: Node) => node is T, emit: (node: T) => void): void {
+export function findChildren<T extends Node = Node>(
+	node: Node | undefined,
+	test: (node: Node) => node is T,
+	emit: (node: T) => void,
+): void {
 	if (!node)
 		return;
 	if (test(node))

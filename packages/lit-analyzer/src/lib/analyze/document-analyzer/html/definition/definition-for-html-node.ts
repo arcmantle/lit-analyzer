@@ -4,7 +4,10 @@ import { LitDefinition } from '../../../types/lit-definition.js';
 import { getNodeIdentifier } from '../../../util/ast-util.js';
 import { rangeFromHtmlNode } from '../../../util/range-util.js';
 
-export function definitionForHtmlNode(htmlNode: HtmlNode, { htmlStore, ts }: LitAnalyzerContext): LitDefinition | undefined {
+export function definitionForHtmlNode(
+	htmlNode: HtmlNode,
+	{ htmlStore, ts }: LitAnalyzerContext,
+): LitDefinition | undefined {
 	const tag = htmlStore.getHtmlTag(htmlNode);
 	if (tag == null || tag.declaration == null)
 		return undefined;

@@ -1,7 +1,6 @@
 import { basename, relative } from 'path';
-import { getGenericTarget, isSimpleType, toSimpleType } from 'ts-simple-type';
 import * as tsModule from 'typescript';
-import { Node, Program, SourceFile, Type, TypeChecker } from 'typescript';
+import { Node, ObjectFlags, Program, SourceFile, Type, TypeChecker, TypeFlags, TypeReference } from 'typescript';
 
 import { AnalyzerResult } from '../../analyze/types/analyzer-result.js';
 import { ComponentDeclaration, ComponentHeritageClause } from '../../analyze/types/component-declaration.js';
@@ -52,7 +51,11 @@ interface TransformerContext {
  * @param program
  * @param config
  */
-export const json2Transformer: TransformerFunction = (results: AnalyzerResult[], program: Program, config: TransformerConfig): string => {
+export const json2Transformer: TransformerFunction = (
+	results: AnalyzerResult[],
+	program: Program,
+	config: TransformerConfig,
+): string => {
 	const context: TransformerContext = {
 		config,
 		checker: program.getTypeChecker(),
@@ -182,7 +185,10 @@ function getVariableDocsFromAnalyzerResult(result: AnalyzerResult, context: Tran
  * @param result
  * @param context
  */
-function getClassDocsFromAnalyzerResult(result: AnalyzerResult, context: TransformerContext): (ClassDoc | CustomElementDoc | MixinDoc)[] {
+function getClassDocsFromAnalyzerResult(
+	result: AnalyzerResult,
+	context: TransformerContext,
+): (ClassDoc | CustomElementDoc | MixinDoc)[] {
 	const classDocs: ClassDoc[] = [];
 
 	// Convert all declarations to class docs
@@ -263,20 +269,28 @@ function getExportsDocFromDeclaration(
  * @param declaration
  * @param context
  */
-function getEventDocsFromDeclaration(declaration: ComponentDeclaration, context: TransformerContext): EventDoc[] {
+function getEventDocsFromDeclaration(
+	declaration: ComponentDeclaration,
+	context: TransformerContext,
+): EventDoc[] {
 	return filterVisibility(context.config.visibility, declaration.events).map(event => {
-		const type = event.type?.(context.checker) || { kind: 'ANY' };
-		const simpleType = isSimpleType(type) ? type : toSimpleType(type, context.checker);
-
-		const typeName = simpleType.kind === 'GENERIC_ARGUMENTS' ? getGenericTarget(simpleType).name : simpleType.name;
-		const customEventDetailType = typeName === 'CustomEvent' && simpleType.kind === 'GENERIC_ARGUMENTS' ? simpleType.typeArguments[0] : undefined;
+		const type = event.type?.(context.checker) || context.checker.getAnyType();
+		const typeName = type.symbol?.name;
+		const customEventDetailType
+			= typeName === 'CustomEvent'
+			&& (type.flags & TypeFlags.Object) !== 0
+			&& ((type as TypeReference).objectFlags & ObjectFlags.Reference) !== 0
+				? context.checker.getTypeArguments(type as TypeReference)[0]
+				: undefined;
 
 		return {
 			description:   event.jsDoc?.description,
 			name:          event.name,
 			inheritedFrom: getInheritedFromReference(declaration, event, context),
-			type:          typeName == null || simpleType.kind === 'ANY' ? 'Event' : typeName,
-			detailType:    customEventDetailType != null ? getTypeHintFromType(customEventDetailType, context.checker, context.config) : undefined,
+			type:          typeName == null || (type.flags & TypeFlags.Any) !== 0 ? 'Event' : typeName,
+			detailType:    customEventDetailType != null
+				? getTypeHintFromType(customEventDetailType, context.checker, context.config)
+				: undefined,
 		};
 	});
 }
@@ -562,7 +576,10 @@ function getReturnFromJsDoc(jsDoc: JsDoc | undefined): { description?: string; t
  * @param heritage
  * @param context
  */
-function getReferenceFromHeritageClause(heritage: ComponentHeritageClause, context: TransformerContext): Reference | { name: string; } | undefined {
+function getReferenceFromHeritageClause(
+	heritage: ComponentHeritageClause,
+	context: TransformerContext,
+): Reference | { name: string; } | undefined {
 	const node = heritage.declaration?.node;
 	const identifier = heritage.identifier;
 
@@ -570,18 +587,15 @@ function getReferenceFromHeritageClause(heritage: ComponentHeritageClause, conte
 	if (node != null)
 		return getReferenceForNode(node, context);
 
-
 	// Try to get declaration of the identifier if no node was found
 	const [ declaration ] = resolveDeclarations(identifier, context);
 	if (declaration != null)
 		return getReferenceForNode(declaration, context);
 
-
 	// Just return the name of the reference if nothing could be resolved
 	const name = getNodeName(identifier, context);
 	if (name != null)
 		return { name };
-
 
 	return undefined;
 }

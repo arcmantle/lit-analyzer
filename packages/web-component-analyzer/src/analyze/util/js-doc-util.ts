@@ -1,12 +1,10 @@
-import { SimpleType, SimpleTypeStringLiteral } from 'ts-simple-type';
 import type tsModule from 'typescript';
-import { JSDoc, JSDocParameterTag, JSDocTypeTag, Node, Program } from 'typescript';
+import { JSDoc, JSDocParameterTag, JSDocTag, JSDocTypeTag, Node, Program, type Type, type TypeChecker, TypeFlags } from 'typescript';
 
 import { arrayDefined } from '../../util/array-util.js';
 import { JsDoc, JsDocTag, JsDocTagParsed } from '../types/js-doc.js';
 import { getLeadingCommentForNode } from './ast-util.js';
 import { lazy } from './lazy.js';
-import { getLibTypeWithName } from './type-util.js';
 
 /**
  * Returns typescript jsdoc node for a given node
@@ -73,17 +71,20 @@ export function getJsDoc(node: Node, ts: typeof tsModule, tagNames?: string[]): 
 						// If Typescript generated a "type expression" or "name", comment will not include those.
 						// We can't just use what typescript parsed because it doesn't include things like optional jsdoc: name notation [...]
 						// Therefore we need to manually get the text and remove newlines/*
-						const typeExpressionPart = 'typeExpression' in node ? (node as JSDocTypeTag).typeExpression?.getText() : undefined;
+						const typeExpressionPart = 'typeExpression' in node
+							? (node as JSDocTypeTag).typeExpression?.getText()
+							: undefined;
 						const namePart = 'name' in node ? (node as JSDocParameterTag).name?.getText() : undefined;
 
 						const fullComment = typeExpressionPart?.startsWith('@')
-							? // To make matters worse, if Typescript can't parse a certain jsdoc, it will include the rest of the jsdocs tag from there in "typeExpressionPart"
-						// Therefore we check if there are multiple jsdoc tags in the string to only take the first one
-						// This will discard the following jsdocs, but at least we don't crash :-)
+							? // Typescript can include the rest of the jsdocs tag in "typeExpressionPart" when parsing fails.
+						// Keep only the first tag in that case.
 							typeExpressionPart.split(/\n\s*\*\s?@/)[0] || ''
-							: `@${ tag }${ typeExpressionPart != null ? ` ${ typeExpressionPart } ` : '' }${ namePart != null ? ` ${ namePart } ` : '' } ${
-										node.comment || ''
-								  }`;
+							: `@${ tag }${ typeExpressionPart != null ? ` ${ typeExpressionPart } ` : '' }${
+								namePart != null ? ` ${ namePart } ` : ''
+							} ${
+									node.comment || ''
+							  }`;
 
 						const comment = typeof node.comment === 'string' ? node.comment.replace(/^\s*-\s*/, '').trim() : '';
 
@@ -98,152 +99,227 @@ export function getJsDoc(node: Node, ts: typeof tsModule, tagNames?: string[]): 
 	};
 }
 
-/**
- * Converts a given string to a SimpleType
- * Defaults to ANY
- * See http://usejsdoc.org/tags-type.html
- * @param str
- * @param context
- */
-export function parseSimpleJsDocTypeExpression(str: string, context: { program: Program; ts: typeof tsModule; }): SimpleType {
-	// Fail safe if "str" is somehow undefined
-	if (str == null)
-		return { kind: 'ANY' };
+const JSDOC_TYPE_SOURCE_FILE = '__jsdoc_type__.ts';
 
+export function splitTopLevel(expression: string, separator: string): string[] {
+	const parts: string[] = [];
+	let start = 0;
+	let depth = 0;
+	let quote: string | undefined;
 
-	// Parse normal types
-	switch (str.toLowerCase()) {
-	case 'undefined':
-		return { kind: 'UNDEFINED' };
-	case 'null':
-		return { kind: 'NULL' };
-	case 'string':
-		return { kind: 'STRING' };
-	case 'number':
-		return { kind: 'NUMBER' };
-	case 'boolean':
-		return { kind: 'BOOLEAN' };
+	for (let index = 0; index < expression.length; index++) {
+		const character = expression[index];
+		if (quote != null) {
+			if (character === quote && expression[index - 1] !== '\\')
+				quote = undefined;
+		}
+		else if (character === '"' || character === "'") {
+			quote = character;
+		}
+		else if ('<[{('.includes(character)) {
+			depth++;
+		}
+		else if ('>]})'.includes(character)) {
+			depth--;
+		}
+		else if (character === separator && depth === 0) {
+			parts.push(expression.slice(start, index));
+			start = index + 1;
+		}
+	}
+
+	if (parts.length === 0)
+		return [ expression ];
+
+	parts.push(expression.slice(start));
+
+	return parts;
+}
+
+function parseTypeScriptTypeExpression(str: string, context: { ts: typeof tsModule; checker: TypeChecker; }): Type {
+	const sourceFile = context.ts.createSourceFile(
+		JSDOC_TYPE_SOURCE_FILE,
+		`type __JsDocType = ${ str };`,
+		context.ts.ScriptTarget.Latest,
+		true,
+		context.ts.ScriptKind.TS,
+	);
+	const declaration = sourceFile.statements[0];
+
+	if (!context.ts.isTypeAliasDeclaration(declaration))
+		return context.checker.getAnyType();
+
+	return context.checker.getTypeFromTypeNode(declaration.type);
+}
+
+export interface JsDocTypeNormalizationContext {
+	ts:                      typeof tsModule;
+	checker?:                TypeChecker;
+	isResolvableIdentifier?: (identifier: string) => boolean;
+}
+
+export function normalizeJsDocTypeExpression(str: string, context: JsDocTypeNormalizationContext): string {
+	const expression = str.trim();
+	if (expression.length === 0)
+		return 'any';
+
+	switch (expression.toLowerCase()) {
 	case 'array':
-		return { kind: 'ARRAY', type: { kind: 'ANY' } };
-	case 'object':
-		return { kind: 'OBJECT', members: [] };
-	case 'any':
+		return 'any[]';
 	case '*':
-		return { kind: 'ANY' };
+		return 'any';
 	}
 
-	// Match
-	//  {  string  }
-	if (str.startsWith(' ') || str.endsWith(' '))
-		return parseSimpleJsDocTypeExpression(str.trim(), context);
-
-
-	// Match:
-	//   {string|number}
-	if (str.includes('|')) {
-		return {
-			kind:  'UNION',
-			types: str.split('|').map(str => {
-				const childType = parseSimpleJsDocTypeExpression(str, context);
-
-				// Convert ANY types to string literals so that {on|off} is "on"|"off" and not ANY|ANY
-				if (childType.kind === 'ANY') {
-					return {
-						kind:  'STRING_LITERAL',
-						value: str,
-					} as SimpleTypeStringLiteral;
-				}
-
-				return childType;
-			}),
-		};
-	}
-
-	// Match:
-	//  {?number}       (nullable)
-	//  {!number}       (not nullable)
-	//  {...number}     (array of)
-	const prefixMatch = str.match(/^(\?|!|(\.\.\.))(.+)$/);
-
+	const prefixMatch = expression.match(/^(\?|!|(\.\.\.))(.+)$/);
 	if (prefixMatch != null) {
-		const modifier = prefixMatch[1];
-		const type = parseSimpleJsDocTypeExpression(prefixMatch[3], context);
-		switch (modifier) {
+		const type = normalizeJsDocTypeExpression(prefixMatch[3], context);
+		switch (prefixMatch[1]) {
 		case '?':
-			return {
-				kind:  'UNION',
-				types: [
-					{
-						kind: 'NULL',
-					},
-					type,
-				],
-			};
+			return `(${ type }) | null`;
 		case '!':
 			return type;
 		case '...':
-			return {
-				kind: 'ARRAY',
-				type,
-			};
+			return `(${ type })[]`;
 		}
 	}
 
-	// Match:
-	//  {(......)}
-	const parenMatch = str.match(/^\((.+)\)$/);
-	if (parenMatch != null)
-		return parseSimpleJsDocTypeExpression(parenMatch[1], context);
+	const arrayMatch = expression.match(/^\[(.+)]$/);
+	if (arrayMatch != null)
+		return `(${ normalizeJsDocTypeExpression(arrayMatch[1], context) })[]`;
 
+	const unionParts = splitTopLevel(expression, '|');
+	if (unionParts.length > 1) {
+		return unionParts
+			.map(part => {
+				const normalizedPart = normalizeJsDocTypeExpression(part, context);
+				const trimmedPart = part.trim();
+				if (/^[A-Za-z_$][\w$-]*$/.test(trimmedPart)) {
+					const isResolvable = context.isResolvableIdentifier?.(trimmedPart);
+					const type = context.checker == null
+						? undefined
+						: parseTypeScriptTypeExpression(normalizedPart, context as { ts: typeof tsModule; checker: TypeChecker; });
 
-	// Match
-	//   {"red"}
-	const stringLiteralMatch = str.match(/^["'](.+)["']$/);
-	if (stringLiteralMatch != null) {
-		return {
-			kind:  'STRING_LITERAL',
-			value: stringLiteralMatch[1],
-		};
+					if (
+						isResolvable === false
+						|| (isResolvable == null && type != null && (type.flags & context.ts.TypeFlags.Any) !== 0)
+					)
+						return JSON.stringify(trimmedPart);
+				}
+
+				return normalizedPart;
+			})
+			.join(' | ');
 	}
 
-	// Match
-	//   {[number]}
-	const arrayMatch = str.match(/^\[(.+)]$/);
-	if (arrayMatch != null) {
-		return {
-			kind: 'ARRAY',
-			type: parseSimpleJsDocTypeExpression(arrayMatch[1], context),
-		};
+	return expression;
+}
+
+function getPrimitiveJsDocType(expression: string, checker: TypeChecker): Type | undefined {
+	switch (expression.trim().toLowerCase()) {
+	case 'string':
+		return checker.getStringType();
+	case 'number':
+		return checker.getNumberType();
+	case 'boolean':
+		return checker.getBooleanType();
+	case 'any':
+	case '*':
+		return checker.getAnyType();
+	case 'null':
+		return checker.getNullType();
+	case 'undefined':
+		return checker.getUndefinedType();
 	}
 
-	// Match
-	//   CustomEvent<string>
-	//   MyInterface<string, number>
-	//   MyInterface<{foo: string, bar: string}, number>
-	const genericArgsMatch = str.match(/^(.*)<(.*)>$/);
-	if (genericArgsMatch != null) {
-		// Here we split generic arguments by "," and
-		//   afterwards remerge parts that were incorrectly split
-		// For example: "{foo: string, bar: string}, number" would result in
-		//   ["{foo: string", "bar: string}", "number"]
-		// The correct way to improve "parseSimpleJsDocTypeExpression" is to build a custom lexer/parser.
-		const typeArgStrings: string[] = [];
-		for (const part of genericArgsMatch[2].split(/\s*,\s*/)) {
-			if (part.match(/[}:]/) != null && typeArgStrings.length > 0)
-				typeArgStrings[typeArgStrings.length - 1] += `, ${ part }`;
-			else
-				typeArgStrings.push(part);
+	return undefined;
+}
+
+/**
+ * Converts a JSDoc type expression to a checker-backed Type.
+ * @param str
+ * @param context
+ */
+export function parseSimpleJsDocTypeExpression(
+	str: string,
+	context: { program: Program; ts: typeof tsModule; checker: TypeChecker; },
+	tagNode?: JSDocTag,
+	ownerNode?: Node,
+	tagIndex = -1,
+): Type | undefined {
+	if (str == null)
+		return context.checker.getAnyType();
+
+	if (tagNode != null || ownerNode != null) {
+		const typeExpression = tagNode != null && 'typeExpression' in tagNode
+			? (tagNode as JSDocTypeTag).typeExpression.type
+			: undefined;
+		if (
+			typeExpression != null &&
+			!context.ts.isTypeLiteralNode(typeExpression) &&
+			typeExpression.getText() === str &&
+			!hasOverlappingDiagnostic(context.program, typeExpression)
+		) {
+			const type = context.checker.getTypeFromTypeNode(typeExpression);
+
+			return isUnresolvedAny(type, str) ? undefined : type;
 		}
 
-		return {
-			kind:          'GENERIC_ARGUMENTS',
-			target:        parseSimpleJsDocTypeExpression(genericArgsMatch[1], context),
-			typeArguments: typeArgStrings.map(typeArg => parseSimpleJsDocTypeExpression(typeArg, context)),
-		};
+		const owner = tagNode?.parent?.parent ?? ownerNode;
+		const leadingComment = owner == null ? undefined : getLeadingCommentForNode(owner, context.ts);
+		const commentStart = owner == null
+			? undefined
+			: context.ts.getLeadingCommentRanges(owner.getSourceFile().text, owner.pos)?.[0]?.pos;
+		const resolvedTagIndex = tagNode != null && context.ts.isJSDoc(tagNode.parent)
+			? tagNode.parent.tags?.indexOf(tagNode) ?? tagIndex
+			: tagIndex;
+		if (leadingComment != null && commentStart != null && resolvedTagIndex >= 0) {
+			const virtualSourceFile = context.program.getSourceFile(`${ owner!.getSourceFile().fileName }.__lit_jsdoc__.d.ts`);
+			const aliasName = `__lit_jsdoc_${ commentStart }_${ resolvedTagIndex }`;
+			const alias = virtualSourceFile?.statements.find(
+				(statement): statement is import('typescript').TypeAliasDeclaration =>
+					context.ts.isTypeAliasDeclaration(statement) && statement.name.text === aliasName,
+			);
+			if (alias != null && !hasOverlappingDiagnostic(context.program, alias.type)) {
+				const type = context.checker.getTypeAtLocation(alias.type);
+
+				return isUnresolvedAny(type, str) ? undefined : type;
+			}
+		}
 	}
 
-	// If nothing else, try to find the type in Typescript global lib or else return "any"
-	return getLibTypeWithName(str, context) || { kind: 'ANY' };
+	const primitiveType = getPrimitiveJsDocType(str, context.checker);
+	if (primitiveType != null)
+		return primitiveType;
+
+	if (tagNode != null || ownerNode != null)
+		return undefined;
+
+	const type = parseTypeScriptTypeExpression(normalizeJsDocTypeExpression(str, context), context);
+
+	return (type.flags & context.ts.TypeFlags.Any) !== 0 ? undefined : type;
+}
+
+function hasOverlappingDiagnostic(program: Program, node: Node): boolean {
+	const sourceFile = node.getSourceFile();
+	const nodeStart = node.getStart(sourceFile);
+	const nodeEnd = node.getEnd();
+	const diagnostics = [
+		...program.getSyntacticDiagnostics(sourceFile),
+		...program.getSemanticDiagnostics(sourceFile),
+	];
+
+	return diagnostics.some(diagnostic => {
+		if (diagnostic.start == null || diagnostic.length == null)
+			return false;
+
+		const diagnosticEnd = diagnostic.start + diagnostic.length;
+
+		return diagnostic.start < nodeEnd && diagnosticEnd > nodeStart;
+	});
+}
+
+function isUnresolvedAny(type: Type, expression: string): boolean {
+	return (type.flags & TypeFlags.Any) !== 0 && expression.trim().toLowerCase() !== 'any';
 }
 
 /**
@@ -251,16 +327,20 @@ export function parseSimpleJsDocTypeExpression(str: string, context: { program: 
  * @param jsDoc
  * @param context
  */
-export function getJsDocType(jsDoc: JsDoc, context: { program: Program; ts: typeof tsModule; }): SimpleType | undefined {
+export function getJsDocType(
+	jsDoc: JsDoc,
+	context: { program: Program; ts: typeof tsModule; checker: TypeChecker; },
+	ownerNode?: Node,
+): Type | undefined {
 	if (jsDoc.tags != null) {
-		const typeJsDocTag = jsDoc.tags.find(t => t.tag === 'type');
+		const typeTagIndex = jsDoc.tags.findIndex(t => t.tag === 'type');
+		const typeJsDocTag = typeTagIndex < 0 ? undefined : jsDoc.tags[typeTagIndex];
 
 		if (typeJsDocTag != null) {
-			// We get the text of the node because typescript strips the type jsdoc tag under certain circumstances
-			const parsedJsDoc = parseJsDocTagString(typeJsDocTag.node?.getText() || '');
+			const parsedJsDoc = typeJsDocTag.parsed();
 
 			if (parsedJsDoc.type != null)
-				return parseSimpleJsDocTypeExpression(parsedJsDoc.type, context);
+				return parseSimpleJsDocTypeExpression(parsedJsDoc.type, context, typeJsDocTag.node, ownerNode, typeTagIndex);
 		}
 	}
 }
@@ -381,7 +461,9 @@ function parseJsDocTagString(str: string): JsDocTagParsed {
 
 			// A name is needed some jsdoc tags making it possible to include omit "-"
 			// Therefore we don't look for "-" or line end if the name is required - in that case we only need to eat the first word to find the name.
-			const regex = JSDOC_TAGS_WITH_REQUIRED_NAME.includes(jsDocTag.tag) ? /^(\s*(\S+))/ : /^(\s*(\S+))((\s*-[\s\S]+)|\s*)($|[\r\n])/;
+			const regex = JSDOC_TAGS_WITH_REQUIRED_NAME
+				.includes(jsDocTag.tag) ? /^(\s*(\S+))/ : /^(\s*(\S+))((\s*-[\s\S]+)|\s*)($|[\r\n])/;
+
 			const nameResult = str.match(regex);
 			if (nameResult != null) {
 				// Move string to end of match

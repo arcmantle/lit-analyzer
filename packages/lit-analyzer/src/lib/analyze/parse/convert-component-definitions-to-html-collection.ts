@@ -1,8 +1,6 @@
-import { isSimpleType, SimpleType, SimpleTypeAny, toSimpleType } from 'ts-simple-type';
-import { TypeChecker } from 'typescript';
 import { AnalyzerResult, ComponentDeclaration, ComponentDefinition, ComponentFeatures } from 'web-component-analyzer';
 
-import { HtmlDataCollection, HtmlDataFeatures, HtmlTag } from './parse-html-data/html-tag.js';
+import { HtmlDataCollection, HtmlDataFeatures, type HtmlProp, HtmlTag } from './parse-html-data/html-tag.js';
 
 export interface AnalyzeResultConversionOptions {
 	addDeclarationPropertiesAsAttributes?: boolean;
@@ -95,10 +93,9 @@ export function convertComponentFeaturesToHtml(
 				const type = event.type?.(checker);
 
 				if (type == null)
-					return { kind: 'ANY' };
+					return checker.getAnyType();
 
-
-				return isSimpleType(type) ? type : toSimpleType(type, checker);
+				return type;
 			},
 			fromTagName,
 			builtIn,
@@ -108,13 +105,13 @@ export function convertComponentFeaturesToHtml(
 			kind:        'attribute',
 			name:        `on${ event.name }`,
 			description: event.jsDoc?.description,
-			getType:     () => ({ kind: 'STRING' } as SimpleType),
+			getType:     checker => checker.getStringType(),
 			declaration: {
 				attrName: `on${ event.name }`,
 				jsDoc:    event.jsDoc,
 				kind:     'attribute',
 				node:     event.node,
-				type:     () => ({ kind: 'ANY' }),
+				type:     checker => checker.getAnyType(),
 			},
 			builtIn,
 			fromTagName,
@@ -154,32 +151,28 @@ export function convertComponentFeaturesToHtml(
 		if (member.visibility != null && member.visibility !== 'public')
 			continue;
 
-
 		// Only add non-static members
 		if (member.modifiers?.has('static'))
 			continue;
-
 
 		// Only add writable members
 		if (member.modifiers?.has('readonly'))
 			continue;
 
-
 		const base = {
 			declaration: member,
 			description: member.jsDoc?.description,
-			getType:     (checker: TypeChecker) => {
+			getType:     checker => {
 				const type = member.type?.(checker);
 
 				if (type == null)
-					return { kind: 'ANY' } as SimpleTypeAny;
+					return checker.getAnyType();
 
-
-				return isSimpleType(type) ? type : toSimpleType(type, checker);
+				return type;
 			},
 			builtIn,
 			fromTagName,
-		};
+		} satisfies Partial<HtmlProp>;
 
 		if (member.kind === 'property') {
 			result.properties.push({

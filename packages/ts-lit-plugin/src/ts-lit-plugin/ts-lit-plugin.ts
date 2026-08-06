@@ -34,7 +34,7 @@ export class TsLitPlugin {
 	private litAnalyzer: LitAnalyzer;
 
 	private get program(): Program {
-		return this.prevLangService.getProgram()!;
+		return this.context.program;
 	}
 
 	constructor(private prevLangService: LanguageService, readonly context: LitPluginContext) {

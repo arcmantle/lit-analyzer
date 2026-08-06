@@ -1,12 +1,12 @@
-import { isAssignableToPrimitiveType, typeToString } from 'ts-simple-type';
-
 import { HtmlNodeAttrAssignmentKind } from '../analyze/types/html-node/html-node-attr-assignment-types.js';
 import { HtmlNodeAttrKind } from '../analyze/types/html-node/html-node-attr-types.js';
 import { RuleModule } from '../analyze/types/rule/rule-module.js';
 import { rangeFromHtmlNodeAttr } from '../analyze/util/range-util.js';
-import { isLitDirective } from './util/directive/is-lit-directive.js';
+import { isLitDirectiveType } from './util/directive/is-lit-directive.js';
 import { extractBindingTypes } from './util/type/extract-binding-types.js';
 import { isAssignableBindingUnderSecuritySystem } from './util/type/is-assignable-binding-under-security-system.js';
+import { isPrimitiveType, typeToDisplayString } from './util/type/type-utils.js';
+
 
 /**
  * This rule validates that complex types are not used within an expression in an attribute binding.
@@ -29,19 +29,20 @@ const rule: RuleModule = {
 		const { typeA, typeB } = extractBindingTypes(assignment, context);
 
 		// Don't validate directives in this rule, because they are assignable even though they are complex types (functions).
-		if (isLitDirective(typeB))
+		const checker = context.program.getTypeChecker();
+		if (isLitDirectiveType(typeB, checker))
 			return;
 
 		// Only primitive types should be allowed as "typeB"
-		if (!isAssignableToPrimitiveType(typeB)) {
+		if (!isPrimitiveType(typeB)) {
 			if (isAssignableBindingUnderSecuritySystem(htmlAttr, { typeA, typeB }, context) !== undefined) {
 				// This is binding via a security sanitization system, let it do
 				// this check. Apparently complex values are OK to assign here.
 				return;
 			}
 
-			const message = `You are binding a non-primitive type '${ typeToString(typeB) }'. This could result in binding the \
-string "[object Object]".`;
+			const message = `You are binding a non-primitive type `
+			+ `'${ typeToDisplayString(typeB, checker) }'. This could result in binding the string "[object Object]".`;
 			const newModifier = '.';
 
 			context.report({
@@ -62,9 +63,9 @@ string "[object Object]".`;
 		}
 
 		// Only primitive types should be allowed as "typeA"
-		else if (!isAssignableToPrimitiveType(typeA)) {
-			const message = `You are assigning the primitive '${ typeToString(typeB) }' to a non-primitive type \
-'${ typeToString(typeA) }'.`;
+		else if (!isPrimitiveType(typeA)) {
+			const message = `You are assigning the primitive '${ typeToDisplayString(typeB, checker) }' `
+								+ `to a non-primitive type '${ typeToDisplayString(typeA, checker) }'.`;
 			const newModifier = '.';
 
 			context.report({

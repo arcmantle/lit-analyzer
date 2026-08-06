@@ -71,5 +71,8 @@ export interface AnalyzerFlavor {
 	discoverFeatures?:       Partial<FeatureDiscoverVisitMap<AnalyzerDeclarationVisitContext>>;
 	discoverGlobalFeatures?: Partial<FeatureDiscoverVisitMap<AnalyzerVisitContext>>;
 	refineFeature?:          Partial<FeatureRefineVisitMap>;
-	refineDeclaration?(declaration: ComponentDeclaration, context: AnalyzerDeclarationVisitContext): ComponentDeclaration | undefined;
+	refineDeclaration?(
+		declaration: ComponentDeclaration,
+		context: AnalyzerDeclarationVisitContext
+	): ComponentDeclaration | undefined;
 }

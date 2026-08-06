@@ -1,5 +1,4 @@
-import { toSimpleType } from 'ts-simple-type';
-import { BinaryExpression, ExpressionStatement, Node, ReturnStatement } from 'typescript';
+import { BinaryExpression, ExpressionStatement, Node } from 'typescript';
 
 import { ComponentMember } from '../../types/features/component-member.js';
 import { getMemberVisibilityFromNode, getModifiersFromNode, hasModifier } from '../../util/ast-util.js';
@@ -29,7 +28,7 @@ export function discoverMembers(node: Node, context: AnalyzerDeclarationVisitCon
 
 			// Find either the first "return" statement or the first "array literal expression"
 			const arrayLiteralExpression =
-				(node.body.statements.find(statement => ts.isReturnStatement(statement)) as ReturnStatement | undefined)?.expression ??
+				node.body.statements.find(statement => ts.isReturnStatement(statement))?.expression ??
 				node.body.statements.find(statement => ts.isArrayLiteralExpression(statement));
 
 			if (arrayLiteralExpression != null && ts.isArrayLiteralExpression(arrayLiteralExpression)) {
@@ -45,7 +44,7 @@ export function discoverMembers(node: Node, context: AnalyzerDeclarationVisitCon
 						jsDoc:    getJsDoc(attrNameNode, ts),
 						kind:     'attribute',
 						attrName,
-						type:     undefined, // () => ({ kind: "ANY" } as SimpleType),
+						type:     undefined,
 					});
 				}
 			}
@@ -99,12 +98,14 @@ export function discoverMembers(node: Node, context: AnalyzerDeclarationVisitCon
 
 			return [
 				{
-					priority:   'high',
+					priority: 'high',
 					node,
-					jsDoc:      getJsDoc(node, ts),
-					kind:       'property',
-					propName:   name.text,
-					type:       checker => (parameter == null ? checker.getTypeAtLocation(node) : checker.getTypeAtLocation(parameter)),
+					jsDoc:    getJsDoc(node, ts),
+					kind:     'property',
+					propName: name.text,
+					type:     checker => parameter == null
+						? checker.getTypeAtLocation(node)
+						: checker.getTypeAtLocation(parameter),
 					visibility: getMemberVisibilityFromNode(node, ts),
 					modifiers:  getModifiersFromNode(node, ts),
 				},
@@ -137,7 +138,7 @@ export function discoverMembers(node: Node, context: AnalyzerDeclarationVisitCon
 							kind:       'property',
 							propName,
 							default:    def,
-							type:       checker => relaxType(toSimpleType(checker.getTypeAtLocation(right), checker)),
+							type:       checker => relaxType(checker.getTypeAtLocation(right), checker),
 							jsDoc:      getJsDoc(assignment.parent, ts),
 							visibility: isNamePrivate(propName) ? 'private' : undefined,
 						});

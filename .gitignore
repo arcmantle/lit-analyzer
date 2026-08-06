@@ -22,3 +22,5 @@ out
 /packages/*/out
 
 /packages/vscode-lit-plugin/built
+
+graphify-out

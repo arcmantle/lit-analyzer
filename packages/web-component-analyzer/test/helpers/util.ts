@@ -1,12 +1,20 @@
-import { isAssignableToType, typeToString } from "ts-simple-type";
-import { TypeChecker } from "typescript";
+import { Type, TypeChecker } from "typescript";
 import { ComponentMember, ComponentMemberProperty } from "../../src/analyze/types/features/component-member.js";
 import { arrayDefined } from "../../src/util/array-util.js";
 import { TestContext } from "./ts-test.js";
 
+type ExpectedTypeFactory = (checker: TypeChecker) => Type;
+type ExpectedMeta = Omit<NonNullable<ComponentMember["meta"]>, "type"> & {
+	type?: ExpectedTypeFactory;
+};
+type ExpectedComponentMember = Omit<Partial<ComponentMember>, "type" | "meta"> & {
+	type?: ExpectedTypeFactory;
+	meta?: ExpectedMeta;
+};
+
 export function assertHasMembers(
 	actualMembers: ComponentMember[],
-	expectedMembers: Partial<ComponentMember>[],
+	expectedMembers: ExpectedComponentMember[],
 	t: TestContext,
 	checker?: TypeChecker
 ): void {
@@ -40,26 +48,44 @@ export function assertHasMembers(
 		"jsDoc" in expectedMember && t.is(actualMember?.jsDoc?.description, expectedMember?.jsDoc?.description, `JSDoc for ${name} doesn't match`);
 		if ("meta" in expectedMember) {
 			const metaWithoutNode = { ...(actualMember?.meta || {}) };
+			const expectedMetaType = expectedMember.meta?.type;
+			if (
+				expectedMetaType != null
+				&& actualMember?.meta?.type != null
+				&& typeof actualMember.meta.type !== "string"
+			) {
+				if (checker == null)
+					throw new Error("Type checker is not given to assert util!");
+
+				t.truthy(isAssignableToExpectedType(actualMember.meta.type, expectedMetaType(checker), checker));
+				delete metaWithoutNode.type;
+			}
 			delete metaWithoutNode.node;
-			t.deepEqual(metaWithoutNode, expectedMember?.meta, `Meta for ${name} doesn't match`);
+			const expectedMetaWithoutType = { ...(expectedMember?.meta || {}) };
+			delete expectedMetaWithoutType.type;
+			t.deepEqual(metaWithoutNode, expectedMetaWithoutType, `Meta for ${name} doesn't match`);
 		}
 
 		if ("type" in expectedMember) {
 			t.is(typeof actualMember.type, typeof expectedMember.type);
 
 			if (expectedMember.type != null && actualMember.type != null) {
-				if (checker == null) {
+				if (checker == null)
 					throw new Error("Type checker is not given to assert util!");
-				}
+
 				const typeA = actualMember.type(checker);
-				const typeB = expectedMember.type(checker);
-				t.truthy(
-					isAssignableToType(typeA, typeB, checker),
-					`Type for ${name} doesn't match: ${typeToString(typeA, checker)} === ${typeToString(typeB, checker)}`
-				);
+				const expectedType = expectedMember.type(checker);
+				t.truthy(isAssignableToExpectedType(typeA, expectedType, checker), `Type for ${name} is not assignable to the expected type (flags: ${typeA.flags})`);
 			}
 		}
 	}
+}
+
+function isAssignableToExpectedType(type: Type, expectedType: Type, checker: TypeChecker): boolean {
+	if (type.isUnion())
+		return type.types.some(member => checker.isTypeAssignableTo(member, expectedType));
+
+	return checker.isTypeAssignableTo(type, expectedType);
 }
 
 export function getComponentProp(members: ComponentMember[], propName: string): ComponentMemberProperty | undefined {

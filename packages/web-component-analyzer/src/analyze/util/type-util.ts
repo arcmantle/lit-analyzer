@@ -1,134 +1,59 @@
-import { getGenericTarget, SimpleType, SimpleTypeEnumMember, toSimpleType } from 'ts-simple-type';
-import type tsModule from 'typescript';
-import { Node, Program } from 'typescript';
+import { ObjectFlags, SignatureKind, Type, TypeChecker, TypeFlags, TypeReference } from 'typescript';
+
+import { getUnionType, isTypeReference } from './ts-type-util.js';
+
+type TypeWithAliasArguments = Type & {
+	aliasTypeArguments?:    readonly Type[];
+	resolvedTypeArguments?: readonly Type[];
+};
+
+function relaxTypeArguments(type: Type, checker: TypeChecker): Type | undefined {
+	const typeArguments = isTypeReference(type)
+		? checker.getTypeArguments(type)
+		: (type as TypeWithAliasArguments).aliasTypeArguments ?? [];
+	if (typeArguments.length === 0)
+		return undefined;
+
+	const relaxedTypeArguments = typeArguments.map(typeArgument => relaxType(typeArgument, checker));
+	const typeWithArguments = type as TypeWithAliasArguments;
+
+	return {
+		...type,
+		aliasTypeArguments:    typeWithArguments.aliasTypeArguments == null ? undefined : relaxedTypeArguments,
+		resolvedTypeArguments: relaxedTypeArguments,
+	} as Type;
+}
 
 /**
  * Relax the type so that for example "string literal" become "string" and "function" become "any"
  * This is used for javascript files to provide type checking with Typescript type inferring
  * @param type
  */
-export function relaxType(type: SimpleType): SimpleType {
-	switch (type.kind) {
-	case 'INTERSECTION':
-	case 'UNION':
-		return {
-			...type,
-			types: type.types.map(t => relaxType(t)),
-		};
+export function relaxType(type: Type, checker: TypeChecker): Type {
+	if (type.isUnion())
+		return getUnionType(checker, type.types.map(member => relaxType(member, checker)));
 
-	case 'ENUM':
-		return {
-			...type,
-			types: type.types.map(t => relaxType(t) as SimpleTypeEnumMember),
-		};
+	if (type.isIntersection())
+		return { ...type, types: type.types.map(member => relaxType(member, checker)) } as Type;
 
-	case 'ARRAY':
-		return {
-			...type,
-			type: relaxType(type.type),
-		};
+	if ((type.flags & TypeFlags.Literal) !== 0)
+		return checker.getBaseTypeOfLiteralType(type);
 
-	case 'PROMISE':
-		return {
-			...type,
-			type: relaxType(type.type),
-		};
+	if ((type.flags & (TypeFlags.Null | TypeFlags.Undefined)) !== 0)
+		return checker.getAnyType();
 
-	case 'OBJECT':
-		return {
-			name: type.name,
-			kind: 'OBJECT',
-		};
-	case 'INTERFACE':
-	case 'FUNCTION':
-	case 'CLASS':
-		return {
-			name: type.name,
-			kind: 'ANY',
-		};
+	if ((type.flags & TypeFlags.Object) !== 0
+		&& ((type as TypeReference).objectFlags & (ObjectFlags.Interface | ObjectFlags.Class)) !== 0)
+		return checker.getAnyType();
 
-	case 'NUMBER_LITERAL':
-		return { kind: 'NUMBER' };
-	case 'STRING_LITERAL':
-		return { kind: 'STRING' };
-	case 'BOOLEAN_LITERAL':
-		return { kind: 'BOOLEAN' };
-	case 'BIG_INT_LITERAL':
-		return { kind: 'BIG_INT' };
-
-	case 'ENUM_MEMBER':
-		return {
-			...type,
-			type: relaxType(type.type),
-		} as SimpleTypeEnumMember;
-
-	case 'ALIAS':
-	case 'GENERIC_ARGUMENTS':
-		return {
-			...type,
-			target: relaxType(getGenericTarget(type)),
-		};
-
-	case 'NULL':
-	case 'UNDEFINED':
-		return { kind: 'ANY' };
-
-	default:
-		return type;
-	}
-}
-
-// Only search in "lib.dom.d.ts" performance reasons for now
-const LIB_FILE_NAMES = [ 'lib.dom.d.ts' ];
-
-// Map "tsModule => name => SimpleType"
-const LIB_TYPE_CACHE: WeakMap<typeof tsModule, Map<string, SimpleType | undefined>> = new Map();
-
-/**
- * Return a Typescript library type with a specific name
- * @param name
- * @param ts
- * @param program
- */
-export function getLibTypeWithName(name: string, { ts, program }: { program: Program; ts: typeof tsModule; }): SimpleType | undefined {
-	const nameTypeCache = LIB_TYPE_CACHE.get(ts) || new Map();
-
-	if (nameTypeCache.has(name))
-		return nameTypeCache.get(name);
-	else
-		LIB_TYPE_CACHE.set(ts, nameTypeCache);
-
-
-	let node: Node | undefined;
-
-	for (const libFileName of LIB_FILE_NAMES) {
-		const sourceFile = program.getSourceFile(libFileName) || program.getSourceFiles().find(f => f.fileName.endsWith(libFileName));
-		if (sourceFile == null)
-			continue;
-
-
-		for (const statement of sourceFile.statements) {
-			if (ts.isInterfaceDeclaration(statement) && statement.name?.text === name) {
-				node = statement;
-				break;
-			}
-		}
-
-		if (node != null)
-			break;
+	if (isTypeReference(type) || (type as TypeWithAliasArguments).aliasTypeArguments != null) {
+		const relaxedType = relaxTypeArguments(type, checker);
+		if (relaxedType != null)
+			return relaxedType;
 	}
 
-	const checker = program.getTypeChecker();
-	let type = node == null ? undefined : toSimpleType(node, checker);
-
-	if (type != null) {
-		// Apparently Typescript wraps the type in "generic arguments" when take the type from the interface declaration
-		// Remove "generic arguments" here
-		if (type.kind === 'GENERIC_ARGUMENTS')
-			type = getGenericTarget(type);
-	}
-
-	nameTypeCache.set(name, type);
+	if (checker.getSignaturesOfType(type, SignatureKind.Call).length > 0)
+		return checker.getAnyType();
 
 	return type;
 }

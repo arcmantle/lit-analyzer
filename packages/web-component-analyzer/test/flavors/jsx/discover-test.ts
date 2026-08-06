@@ -32,7 +32,7 @@ tsTest("Discovers elements defined JSX.IntrinsicElements", t => {
 				propName: "bar",
 				attrName: undefined,
 				jsDoc: undefined,
-				type: () => ({ kind: "BOOLEAN" }),
+				type: checker => checker.getBooleanType(),
 				reflect: undefined,
 				deprecated: undefined,
 				required: undefined,

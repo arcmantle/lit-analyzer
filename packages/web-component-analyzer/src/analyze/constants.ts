@@ -1,6 +1,4 @@
-import type { Node, Program } from 'typescript';
-
-import { AnalyzerFlavor, ComponentFeatureCollection } from './flavors/analyzer-flavor.js';
+import { AnalyzerFlavor } from './flavors/analyzer-flavor.js';
 import { CustomElementFlavor } from './flavors/custom-element/custom-element-flavor.js';
 import { JsDocFlavor } from './flavors/js-doc/js-doc-flavor.js';
 import { JSXFlavor } from './flavors/jsx/jsx-flavor.js';
@@ -20,25 +18,3 @@ export const DEFAULT_FLAVORS: AnalyzerFlavor[] = [
 	new JsDocFlavor(),
 	new JSXFlavor(),
 ];
-
-export interface AnalyzerCaches {
-	featureCollection:         WeakMap<Node, ComponentFeatureCollection>;
-	componentDeclarationCache: WeakMap<Node, ComponentDeclaration>;
-}
-
-const CACHES_FOR_PROGRAM: WeakMap<Program, AnalyzerCaches> = new WeakMap();
-
-/**
- * A cached declaration holds the types its own program's checker gave it, and a
- * node keeps its object identity when a program reuses an unchanged file. One
- * cache per program stops a later program from reading those earlier types.
- */
-export function analyzerCachesForProgram(program: Program): AnalyzerCaches {
-	const caches = CACHES_FOR_PROGRAM.get(program) ?? {
-		featureCollection:         new WeakMap<Node, ComponentFeatureCollection>(),
-		componentDeclarationCache: new WeakMap<Node, ComponentDeclaration>(),
-	};
-	CACHES_FOR_PROGRAM.set(program, caches);
-
-	return caches;
-}

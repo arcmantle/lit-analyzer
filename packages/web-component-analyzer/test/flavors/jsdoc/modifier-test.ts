@@ -27,7 +27,7 @@ tsTest("jsDoc: Handles @readonly on members", t => {
 				kind: "property",
 				propName: "myProp",
 				modifiers: new Set(["readonly"]),
-				type: () => ({ kind: "STRING" })
+				type: checker => checker.getStringType()
 			}
 		],
 		t,

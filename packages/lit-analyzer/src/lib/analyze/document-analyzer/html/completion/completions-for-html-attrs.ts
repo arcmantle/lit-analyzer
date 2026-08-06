@@ -1,6 +1,6 @@
-import { isAssignableToSimpleTypeKind, SimpleType } from 'ts-simple-type';
 import { TypeChecker } from 'typescript';
 
+import { isBooleanType } from '../../../../rules/util/type/type-utils.js';
 import {
 	LIT_HTML_BOOLEAN_ATTRIBUTE_MODIFIER,
 	LIT_HTML_EVENT_LISTENER_ATTRIBUTE_MODIFIER,
@@ -50,7 +50,7 @@ export function completionsForHtmlAttrs(
 			htmlStore.getAllAttributesForTag(htmlNode),
 			prop => !alreadyUsedAttrNames.includes(prop.name),
 		);
-		const booleanAttributes = iterableFilter(unusedAttrs, prop => isAssignableToBoolean(prop.getType(checker)));
+		const booleanAttributes = iterableFilter(unusedAttrs, prop => isBooleanType(prop.getType(checker), checker, { matchAny: true }));
 
 		return Array.from(
 			iterableMap(booleanAttributes, attr =>
@@ -89,12 +89,6 @@ export function completionsForHtmlAttrs(
 	return Array.from(iterableMap(unusedAttrs, prop => targetToCompletion(prop, checker, { modifier: '', onTagName })));
 }
 
-function isAssignableToBoolean(type: SimpleType, { matchAny } = { matchAny: true }): boolean {
-	return isAssignableToSimpleTypeKind(type, [ 'BOOLEAN', 'BOOLEAN_LITERAL' ], {
-		matchAny,
-	});
-}
-
 function targetToCompletion(
 	target: HtmlAttrTarget,
 	checker: TypeChecker,
@@ -102,7 +96,7 @@ function targetToCompletion(
 ): LitCompletion {
 	if (modifier == null) {
 		if (isHtmlAttr(target)) {
-			if (isAssignableToBoolean(target.getType(checker), { matchAny: false }))
+			if (isBooleanType(target.getType(checker), checker))
 				modifier = LIT_HTML_BOOLEAN_ATTRIBUTE_MODIFIER;
 			else
 				modifier = '';

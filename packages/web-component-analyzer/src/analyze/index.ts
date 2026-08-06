@@ -23,6 +23,9 @@ export * from './types/modifier-kind.js';
 export * from './types/visibility-kind.js';
 export * from './util/component-declaration-util.js';
 export * from './util/js-doc-util.js';
+export * from './util/jsdoc-compiler-host.js';
+export * from './util/ts-type-util.js';
+export * from './util/virtual-compiler-host.js';
 /*
 export * from "./flavors/custom-element/custom-element-flavor.js";
 export * from "./flavors/jsx/jsx-flavor.js";

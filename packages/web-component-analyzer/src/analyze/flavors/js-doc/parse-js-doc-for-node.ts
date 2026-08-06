@@ -15,15 +15,18 @@ import { getJsDoc } from '../../util/js-doc-util.js';
 export function parseJsDocForNode<T>(
 	node: Node,
 	tagNames: string[],
-	transform: (tagNode: JSDocTag | undefined, parsed: JsDocTagParsed) => T | undefined,
+	transform: (tagNode: JSDocTag | undefined, parsed: JsDocTagParsed, tagIndex: number) => T | undefined,
 	context: AnalyzerVisitContext,
 ): T[] | undefined {
-	const { tags } = getJsDoc(node, context.ts, tagNames) || {};
+	const { tags } = getJsDoc(node, context.ts) || {};
 
 	if (tags != null && tags.length > 0) {
 		context.emitContinue?.();
 
-		return arrayDefined(tags.map(tag => transform(tag.node, tag.parsed())));
+		return arrayDefined(
+			tags.flatMap((tag, tagIndex) =>
+				tagNames.includes(tag.tag) ? [ transform(tag.node, tag.parsed(), tagIndex) ] : []),
+		);
 	}
 
 	return undefined;

@@ -4,6 +4,7 @@ import * as ts from 'typescript';
 import { CompilerOptions } from 'typescript';
 import * as tsServer from 'typescript/lib/tsserverlibrary.js';
 import { VERSION as WCA_VERSION } from 'web-component-analyzer';
+import { createJSDocLanguageServiceHost } from 'web-component-analyzer';
 
 import { decorateLanguageService } from './decorate-language-service.js';
 import { logger } from './logger.js';
@@ -51,10 +52,17 @@ export function init({ typescript }: { typescript: typeof ts; }): tsServer.serve
 
 			// Extend existing language service with the plugin functions
 			try {
+				const jsDocHost = createJSDocLanguageServiceHost(info.languageServiceHost, typescript);
+				Object.assign(info.languageServiceHost, jsDocHost.host);
+
 				context = new LitPluginContext({
 					ts:         typescript,
 					getProgram: () => {
-						return info.languageService.getProgram()!;
+						let program = info.languageService.getProgram()!;
+						if (jsDocHost.update(program))
+							program = info.languageService.getProgram()!;
+
+						return program;
 					},
 					getProject: () => {
 						return info.project;

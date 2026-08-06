@@ -8,6 +8,14 @@ tsTest('Complex types are not assignable using an attribute binding', t => {
 	hasDiagnostic(t, diagnostics, 'no-complex-attribute-binding');
 });
 
+tsTest('Free type parameters are assignable using an attribute binding', t => {
+	const { diagnostics } = getDiagnostics(
+		'function render<T>(value: T) { return html`<input placeholder="${value}" />`; }',
+		{ rules: { 'no-incompatible-type-binding': false } },
+	);
+	hasNoDiagnostics(t, diagnostics);
+});
+
 tsTest('Complex types are assignable using a property binding', t => {
 	const { diagnostics } = getDiagnostics('html`<input .onclick="${() => {}}" />`');
 	hasNoDiagnostics(t, diagnostics);

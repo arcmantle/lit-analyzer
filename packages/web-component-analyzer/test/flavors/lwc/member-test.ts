@@ -30,7 +30,7 @@ tsTest("LWC: Discovers properties from '@api'", t => {
 				attrName: "my-prop",
 				default: "hello 123",
 				typeHint: undefined,
-				type: () => ({ kind: "STRING" }),
+				type: checker => checker.getStringType(),
 				visibility: "public",
 				reflect: undefined,
 				deprecated: undefined,
@@ -72,7 +72,7 @@ tsTest("LWC: doesn't process non-LWC element'", t => {
 				propName: "myProp",
 				default: undefined,
 				typeHint: undefined,
-				type: () => ({ kind: "STRING" }),
+				type: checker => checker.getStringType(),
 				visibility: "public",
 				reflect: undefined,
 				deprecated: undefined,
@@ -109,7 +109,7 @@ tsTest("LWC: Discovers properties without @api'", t => {
 				attrName: undefined,
 				default: "hello 123",
 				typeHint: undefined,
-				type: () => ({ kind: "STRING" }),
+				type: checker => checker.getStringType(),
 				visibility: "protected",
 				reflect: undefined,
 				deprecated: undefined,
@@ -147,7 +147,7 @@ tsTest("LWC: Discovers properties from '@track'", t => {
 				attrName: undefined,
 				default: "hello 123",
 				typeHint: undefined,
-				type: () => ({ kind: "STRING" }),
+				type: checker => checker.getStringType(),
 				visibility: "protected",
 				reflect: undefined,
 				deprecated: undefined,
@@ -246,7 +246,7 @@ tsTest("LWC: Discovers properties. all in one'", t => {
 					description: "This is a comment"
 				},
 				default: "hello",
-				type: () => ({ kind: "STRING" }),
+				type: checker => checker.getStringType(),
 				visibility: "public",
 				deprecated: undefined,
 				required: undefined
@@ -256,7 +256,7 @@ tsTest("LWC: Discovers properties. all in one'", t => {
 				propName: "myProp2",
 				attrName: "my-prop2",
 				default: 123,
-				type: () => ({ kind: "NUMBER" }),
+				type: checker => checker.getNumberType(),
 				visibility: "public",
 				deprecated: undefined,
 				required: undefined
@@ -266,7 +266,7 @@ tsTest("LWC: Discovers properties. all in one'", t => {
 				propName: "myProp3",
 				attrName: "my-prop3",
 				default: undefined,
-				type: () => ({ kind: "ANY" }),
+				type: checker => checker.getVoidType(),
 				visibility: "public",
 				deprecated: undefined,
 				required: undefined
@@ -276,7 +276,7 @@ tsTest("LWC: Discovers properties. all in one'", t => {
 				propName: "myProp4",
 				attrName: undefined,
 				default: "not public",
-				type: () => ({ kind: "ANY" }),
+				type: checker => checker.getStringType(),
 				visibility: "protected",
 				deprecated: undefined,
 				required: undefined
@@ -286,7 +286,7 @@ tsTest("LWC: Discovers properties. all in one'", t => {
 				propName: "myProp5",
 				attrName: undefined,
 				default: undefined,
-				type: () => ({ kind: "ANY" }),
+				type: checker => checker.getAnyType(),
 				visibility: "protected",
 				deprecated: undefined,
 				required: undefined
@@ -296,7 +296,7 @@ tsTest("LWC: Discovers properties. all in one'", t => {
 				propName: "myProp6",
 				attrName: undefined,
 				default: undefined,
-				type: () => ({ kind: "ANY" }),
+				type: checker => checker.getVoidType(),
 				visibility: "protected",
 				deprecated: undefined,
 				required: undefined
@@ -306,7 +306,7 @@ tsTest("LWC: Discovers properties. all in one'", t => {
 				propName: "accessKey",
 				attrName: "accesskey",
 				default: undefined,
-				type: () => ({ kind: "ANY" }),
+				type: checker => checker.getAnyType(),
 				visibility: "public",
 				deprecated: undefined,
 				required: undefined
@@ -316,7 +316,7 @@ tsTest("LWC: Discovers properties. all in one'", t => {
 				propName: "htmlFor",
 				attrName: "for",
 				default: undefined,
-				type: () => ({ kind: "ANY" }),
+				type: checker => checker.getVoidType(),
 				visibility: "public",
 				deprecated: undefined,
 				required: undefined
@@ -326,7 +326,7 @@ tsTest("LWC: Discovers properties. all in one'", t => {
 				propName: "Upper",
 				attrName: "-upper",
 				default: undefined,
-				type: () => ({ kind: "ANY" }),
+				type: checker => checker.getAnyType(),
 				visibility: "public",
 				deprecated: undefined,
 				required: undefined
@@ -336,7 +336,7 @@ tsTest("LWC: Discovers properties. all in one'", t => {
 				propName: "noValidate",
 				attrName: undefined,
 				default: undefined,
-				type: () => ({ kind: "ANY" }),
+				type: checker => checker.getAnyType(),
 				visibility: "protected",
 				deprecated: undefined,
 				required: undefined

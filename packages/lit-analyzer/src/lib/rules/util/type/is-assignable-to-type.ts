@@ -1,18 +1,26 @@
-import { isAssignableToType as _isAssignableToType, SimpleType, SimpleTypeComparisonOptions } from 'ts-simple-type';
+import { Type, TypeFlags } from 'typescript';
 
 import { RuleModuleContext } from '../../../analyze/types/rule/rule-module-context.js';
+import { isUnionType } from './type-utils.js';
+
 
 export function isAssignableToType(
-	{ typeA, typeB }: { typeA: SimpleType; typeB: SimpleType; },
+	{ typeA, typeB }: { typeA: Type; typeB: Type; },
 	context: RuleModuleContext,
-	options?: SimpleTypeComparisonOptions,
 ): boolean {
-	const inJsFile = context.file.fileName.endsWith('.js');
-	const expandedOptions = {
-		...(inJsFile ? { strict: false } : {}),
-		options: context.ts,
-		...(options || {}),
-	};
+	const checker = context.program.getTypeChecker();
+	if (hasFreeTypeParameter(typeA))
+		return true;
 
-	return _isAssignableToType(typeA, typeB, context.program, expandedOptions);
+	return checker.isTypeAssignableTo(typeB, typeA);
+}
+
+function hasFreeTypeParameter(type: Type): boolean {
+	if ((type.flags & TypeFlags.TypeParameter) !== 0)
+		return true;
+
+	if (isUnionType(type))
+		return type.types.some(hasFreeTypeParameter);
+
+	return type.isIntersection() && type.types.some(hasFreeTypeParameter);
 }

@@ -1,4 +1,3 @@
-import { SimpleType } from 'ts-simple-type';
 import { Node, Type, TypeChecker } from 'typescript';
 
 import { PriorityKind } from '../../flavors/analyzer-flavor.js';
@@ -17,7 +16,7 @@ export interface ComponentMemberBase extends ComponentFeatureBase {
 	priority?: PriorityKind;
 
 	typeHint?: string;
-	type:      undefined | ((checker: TypeChecker) => Type | SimpleType);
+	type:      undefined | ((checker: TypeChecker) => Type);
 
 	meta?: LitElementPropertyConfig;
 

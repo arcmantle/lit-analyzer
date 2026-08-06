@@ -1,7 +1,8 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 
-import * as ts from 'typescript';
+import ts from 'typescript';
+import { createJSDocLanguageServiceHost } from 'web-component-analyzer';
 
 import { parseTsconfig } from './tsconfig-file.js';
 
@@ -110,13 +111,20 @@ function createLanguageServiceCompiler(source: LanguageServiceSource): AnalysisC
 		getDirectories:         ts.sys.getDirectories,
 	};
 
-	const languageService = ts.createLanguageService(host);
+	const jsDocHost = createJSDocLanguageServiceHost(host, ts);
+	const languageService = ts.createLanguageService(jsDocHost.host);
 
 	return {
 		getProgram(): ts.Program {
-			const program = languageService.getProgram();
+			let program = languageService.getProgram();
 			if (!program)
 				throw new Error(`The language service could not build a Program for ${ source.describeProject() }`);
+
+			if (jsDocHost.update(program)) {
+				program = languageService.getProgram();
+				if (!program)
+					throw new Error(`The language service could not build a Program for ${ source.describeProject() }`);
+			}
 
 			return program;
 		},

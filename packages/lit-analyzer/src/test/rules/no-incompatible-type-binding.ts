@@ -12,13 +12,13 @@ const lit2DirectiveSetup = `
 
 	export type DirectiveParameters<C extends Directive> = Parameters<C['render']>;
 
-	// TODO (justinfagnani): ts-simple-type has a bug, so I remove the generic
-	export interface DirectiveResult {
-		values: unknown[];
+	export interface DirectiveResult<C extends DirectiveClass = DirectiveClass> {
+		['_$litDirective$']: C;
+		values: DirectiveParameters<InstanceType<C>>;
 	}
 
 	export const directive = <C extends DirectiveClass>(c: C) =>
-		(...values: DirectiveParameters<InstanceType<C>>): DirectiveResult => ({
+		(...values: DirectiveParameters<InstanceType<C>>): DirectiveResult<C> => ({
     ['_$litDirective$']: c,
     values,
   });
@@ -54,6 +54,59 @@ const myDirective = directive(MyDirective);
 
 html\`<input \${myDirective()} />\`
 	`);
+	hasNoDiagnostics(t, diagnostics);
+});
+
+tsTest('Element binding: Lit 2 directive results with BindDirective are allowed', t => {
+	const { diagnostics } = getDiagnostics([
+		{
+			fileName: 'lit/async-directive.d.ts',
+			text:     `
+import type { Directive } from './directive.js';
+export declare class AsyncDirective extends Directive { }
+export interface DirectiveResult<C extends import('./directive.js').DirectiveClass = import('./directive.js').DirectiveClass> { }
+export type Alias1<C extends import('./directive.js').DirectiveClass> = DirectiveResult<C>;
+export type Alias2<C extends import('./directive.js').DirectiveClass> = Alias1<C>;
+export type Alias3<C extends import('./directive.js').DirectiveClass> = Alias2<C>;
+export type Alias4<C extends import('./directive.js').DirectiveClass> = Alias3<C>;
+`,
+		},
+		{
+			fileName: 'lit/directive.d.ts',
+			text:     `
+export interface PartInfo { }
+export type DirectiveClass = new (part: PartInfo) => Directive;
+export type DirectiveParameters<C extends Directive> = Parameters<C['render']>;
+export declare abstract class Directive {
+	constructor(part: PartInfo);
+	abstract render(...props: Array<unknown>): unknown;
+}
+export declare const directive: <C extends DirectiveClass>(c: C) =>
+	(...values: DirectiveParameters<InstanceType<C>>): import('./async-directive.js').DirectiveResult<C>;
+`,
+		},
+		{
+			fileName: 'source.ts',
+			entry:    true,
+			text:     `
+import { type Alias4, AsyncDirective } from 'lit/async-directive.js';
+import { directive, type PartInfo } from 'lit/directive.js';
+
+class BindDirective extends AsyncDirective {
+	constructor(part: PartInfo) {
+		super(part);
+	}
+	render(obj: object, path: string, target?: object): Alias4<typeof BindDirective> {
+		return {} as Alias4<typeof BindDirective>;
+	}
+}
+
+const bind = directive(BindDirective) as BindDirective['render'];
+declare const value: object;
+html\`<input \${bind(value, 'value')} />\`;
+`,
+		},
+	]);
 	hasNoDiagnostics(t, diagnostics);
 });
 

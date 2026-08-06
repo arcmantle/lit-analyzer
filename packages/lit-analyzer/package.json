@@ -50,7 +50,6 @@
 		"didyoumean2": "7.0.4",
 		"fast-glob": "^3.2.11",
 		"parse5": "8.0.1",
-		"ts-simple-type": "workspace:*",
 		"vscode-css-languageservice": "6.3.7",
 		"vscode-html-languageservice": "5.5.1",
 		"vscode-languageserver-types": "^3.17.5",

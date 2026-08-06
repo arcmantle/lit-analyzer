@@ -91,8 +91,8 @@ export class DefaultLitAnalyzerContext implements LitAnalyzerContext {
 		if (this.currentRunningTime > this._currentTimeout) {
 			if (!this._hasRequestedCancellation) {
 				this.logger.error(
-					`Cancelling current operation because it has been running for more than ${ this._currentTimeout }ms \
-(${ this.currentRunningTime }ms)`,
+					`Cancelling current operation because it has been running for `
+					+ `more than ${ this._currentTimeout }ms (${ this.currentRunningTime }ms)`,
 				);
 			}
 
@@ -162,7 +162,7 @@ export class DefaultLitAnalyzerContext implements LitAnalyzerContext {
 		})();
 
 		// Add user configured HTML5 collection
-		const collection = getUserConfigHtmlCollection(config);
+		const collection = getUserConfigHtmlCollection(config, this.checker);
 		this.htmlStore.absorbCollection(collection, HtmlDataSourceKind.USER);
 	}
 
@@ -263,10 +263,9 @@ export class DefaultLitAnalyzerContext implements LitAnalyzerContext {
 			if (this.isCancellationRequested)
 				break;
 
-
 			seenFiles.add(sourceFile);
 
-			// All components definitions that use this file must be invidalited
+			// All components definitions that use this file must be invalidated
 			this.definitionStore.getDefinitionsWithDeclarationInFile(sourceFile).forEach(definition => {
 				const sf = this.program.getSourceFile(definition.sourceFile.fileName);
 				if (sf != null)

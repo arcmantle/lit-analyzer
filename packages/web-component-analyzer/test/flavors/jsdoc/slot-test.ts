@@ -63,3 +63,29 @@ tsTest("jsdoc: Discovers permitted tag names on @slot", t => {
 	t.is(slot2.permittedTagNames!.length, 1);
 	t.deepEqual(slot2.permittedTagNames, ["li"]);
 });
+
+tsTest("jsdoc: Resolves imported types in @slot unions", t => {
+	const {
+		results: [result],
+	} = analyzeTextWithCurrentTsModule([
+		{
+			fileName: "component.ts",
+			text: `
+			import type { AllowedTag } from "./tags.js";
+			/**
+			 * @element
+			 * @slot {AllowedTag|"span"} content
+			 */
+			class MyElement extends HTMLElement {}
+			`,
+		},
+		{
+			fileName: "tags.ts",
+			text: 'export type AllowedTag = "div";',
+		},
+	]);
+
+	const [slot] = result.componentDefinitions[0].declaration!.slots;
+
+	t.deepEqual(slot.permittedTagNames, ["div", "span"]);
+});

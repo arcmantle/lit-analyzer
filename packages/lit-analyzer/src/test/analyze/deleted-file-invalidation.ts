@@ -110,5 +110,6 @@ test('A component in a file that stayed keeps working after another file left th
 	// A read on a dead node gives a wrong type or throws, so this covers both.
 	const node = property!.declaration!.node;
 	expect(context.program.getSourceFile(node.getSourceFile().fileName)).toBe(node.getSourceFile());
-	expect(property!.getType(context.program.getTypeChecker()).kind).toBe('STRING');
+	const checker = context.program.getTypeChecker();
+	expect(checker.typeToString(property!.getType(checker))).toBe('string');
 });

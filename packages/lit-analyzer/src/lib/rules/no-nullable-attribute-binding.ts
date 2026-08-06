@@ -1,10 +1,9 @@
-import { isAssignableToSimpleTypeKind, typeToString } from 'ts-simple-type';
-
 import { HtmlNodeAttrAssignmentKind } from '../analyze/types/html-node/html-node-attr-assignment-types.js';
 import { HtmlNodeAttrKind } from '../analyze/types/html-node/html-node-attr-types.js';
 import { RuleModule } from '../analyze/types/rule/rule-module.js';
 import { rangeFromHtmlNodeAttr } from '../analyze/util/range-util.js';
 import { extractBindingTypes } from './util/type/extract-binding-types.js';
+import { hasFlag, typeToDisplayString } from './util/type/type-utils.js';
 
 /**
  * This rule validates that "null" and "undefined" types are not bound in an attribute binding.
@@ -25,13 +24,14 @@ const rule: RuleModule = {
 			return;
 
 		const { typeB } = extractBindingTypes(assignment, context);
-		const isAssignableToNull = isAssignableToSimpleTypeKind(typeB, 'NULL');
+		const checker = context.program.getTypeChecker();
+		const isAssignableToNull = hasFlag(typeB, checker.getNullType().flags);
 
 		// Test if removing "undefined" or "null" from typeB would work and suggest using "ifDefined".
-		if (isAssignableToNull || isAssignableToSimpleTypeKind(typeB, 'UNDEFINED')) {
+		if (isAssignableToNull || hasFlag(typeB, checker.getUndefinedType().flags)) {
 			context.report({
 				location: rangeFromHtmlNodeAttr(htmlAttr),
-				message:  `This attribute binds the type '${ typeToString(typeB) }' which can end up binding the string '${
+				message:  `This attribute binds the type '${ typeToDisplayString(typeB, checker) }' which can end up binding the string '${
 					isAssignableToNull ? 'null' : 'undefined'
 				}'.`,
 				fixMessage: "Use the 'ifDefined' directive?",

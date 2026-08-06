@@ -1,6 +1,5 @@
-import { SimpleType } from 'ts-simple-type';
 import type tsModule from 'typescript';
-import { CallExpression, Node, PropertyAssignment } from 'typescript';
+import { CallExpression, Node, PropertyAssignment, Type, TypeChecker } from 'typescript';
 
 import { AnalyzerVisitContext } from '../../analyzer-visit-context.js';
 import { LitElementPropertyConfig } from '../../types/features/lit-element-property-config.js';
@@ -9,7 +8,8 @@ import { resolveNodeValue } from '../../util/resolve-node-value.js';
 
 export type LitElementPropertyDecoratorKind = 'property' | 'internalProperty' | 'state';
 
-export const LIT_ELEMENT_PROPERTY_DECORATOR_KINDS: LitElementPropertyDecoratorKind[] = [ 'property', 'internalProperty', 'state' ];
+export const LIT_ELEMENT_PROPERTY_DECORATOR_KINDS: LitElementPropertyDecoratorKind[]
+	= [ 'property', 'internalProperty', 'state' ];
 
 /**
  * Returns a potential lit element property decorator.
@@ -43,7 +43,10 @@ export function getLitElementPropertyDecorator(
  * @param node
  * @param context
  */
-export function getLitElementPropertyDecoratorConfig(node: Node, context: AnalyzerVisitContext): undefined | LitElementPropertyConfig {
+export function getLitElementPropertyDecoratorConfig(
+	node: Node,
+	context: AnalyzerVisitContext,
+): undefined | LitElementPropertyConfig {
 	// Get reference to a possible "@property" decorator.
 	const decorator = getLitElementPropertyDecorator(node, context);
 
@@ -81,7 +84,7 @@ export function getLitElementPropertyDecoratorConfig(node: Node, context: Analyz
  * @param obj
  * @param key
  */
-function hasOwnProperty<T extends string>(obj: object, key: T): obj is { [K in T]: unknown } {
+function hasOwnProperty<T extends string>(obj: object, key: T): obj is Record<T, unknown> {
 	return Object.prototype.hasOwnProperty.call(obj, key);
 }
 
@@ -91,29 +94,35 @@ function hasOwnProperty<T extends string>(obj: object, key: T): obj is { [K in T
  * @param ts
  * @param node
  */
-export function getLitPropertyType(ts: typeof tsModule, node: Node): SimpleType | string {
+export function getLitPropertyType(ts: typeof tsModule, node: Node, checker: TypeChecker): Type | string {
 	const value = ts.isIdentifier(node) ? node.text : undefined;
 
 	switch (value) {
 	case 'String':
 	case 'StringConstructor':
-		return { kind: 'STRING' };
+		return checker.getStringType();
 	case 'Number':
 	case 'NumberConstructor':
-		return { kind: 'NUMBER' };
+		return checker.getNumberType();
 	case 'Boolean':
 	case 'BooleanConstructor':
-		return { kind: 'BOOLEAN' };
+		return checker.getBooleanType();
 	case 'Array':
 	case 'ArrayConstructor':
-		return { kind: 'ARRAY', type: { kind: 'ANY' } };
+		return getDeclaredTypeOfBuiltinConstructor(checker, node, node.getText());
 	case 'Object':
 	case 'ObjectConstructor':
-		return { kind: 'OBJECT', members: [] };
+		return getDeclaredTypeOfBuiltinConstructor(checker, node, node.getText());
 	default:
 		// This is an unknown type, so set the name as a string
 		return node.getText();
 	}
+}
+
+function getDeclaredTypeOfBuiltinConstructor(checker: TypeChecker, node: Node, fallback: string): Type | string {
+	const symbol = checker.getSymbolAtLocation(node);
+
+	return symbol != null ? checker.getDeclaredTypeOfSymbol(symbol) : fallback;
 }
 
 /**
@@ -150,12 +159,17 @@ export function getLitPropertyOptions(
 			result.default = object.value;
 
 
-		if (hasOwnProperty(object, 'attribute') && (typeof object.attribute === 'boolean' || typeof object.attribute === 'string')) {
+		if (
+			hasOwnProperty(object, 'attribute')
+			&& (typeof object.attribute === 'boolean' || typeof object.attribute === 'string')
+		) {
 			result.attribute = object.attribute;
 
 			if (ts.isObjectLiteralExpression(node)) {
 				const prop = node.properties.find(
-					(p): p is PropertyAssignment => ts.isPropertyAssignment(p) && ts.isIdentifier(p.name) && p.name.text === 'attribute',
+					(p): p is PropertyAssignment => ts.isPropertyAssignment(p)
+						&& ts.isIdentifier(p.name)
+						&& p.name.text === 'attribute',
 				);
 				if (prop)
 					attributeInitializer = prop.initializer;
@@ -165,12 +179,14 @@ export function getLitPropertyOptions(
 
 	if (ts.isObjectLiteralExpression(node)) {
 		const typeProp = node.properties.find(
-			(p): p is PropertyAssignment => ts.isPropertyAssignment(p) && ts.isIdentifier(p.name) && p.name.text === 'type',
+			(p): p is PropertyAssignment => ts.isPropertyAssignment(p)
+				&& ts.isIdentifier(p.name)
+				&& p.name.text === 'type',
 		);
 
 		if (typeProp) {
 			typeInitializer = typeProp.initializer;
-			result.type = getLitPropertyType(ts, typeProp.initializer);
+			result.type = getLitPropertyType(ts, typeProp.initializer, context.checker);
 		}
 	}
 

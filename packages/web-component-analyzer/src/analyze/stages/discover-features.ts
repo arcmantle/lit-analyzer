@@ -12,11 +12,6 @@ import { mergeFeatures } from './merge/merge-features.js';
  * @param context
  */
 export function discoverFeatures(node: Node, context: AnalyzerDeclarationVisitContext): ComponentFeatureCollection {
-	// Return the result if we already found this node
-	if (context.cache.featureCollection.has(node))
-		return context.cache.featureCollection.get(node)!;
-
-
 	const { collection, refineEmitMap } = prepareRefineEmitMap();
 
 	// Discovers features for "node" using flavors
@@ -31,9 +26,6 @@ export function discoverFeatures(node: Node, context: AnalyzerDeclarationVisitCo
 
 	// Merge features that were found
 	const mergedCollection = mergeFeatures(collection, context);
-
-	// Cache the features for this node
-	context.cache.featureCollection.set(node, mergedCollection);
 
 	return mergedCollection;
 }

@@ -1,19 +1,12 @@
-import { getGenericTarget, isAssignableToSimpleTypeKind, SimpleType } from 'ts-simple-type';
+import { Type, TypeChecker, TypeFlags } from 'typescript';
 
-export function removeUndefinedFromType(type: SimpleType): SimpleType {
-	switch (type.kind) {
-	case 'ALIAS':
-	case 'GENERIC_ARGUMENTS':
-		return {
-			...type,
-			target: removeUndefinedFromType(getGenericTarget(type)),
-		};
-	case 'UNION':
-		return {
-			...type,
-			types: type.types.filter(t => !isAssignableToSimpleTypeKind(t, 'UNDEFINED')),
-		};
-	}
+export function removeUndefinedFromType(type: Type, checker: TypeChecker): Type {
+	const containsNull = (type.isUnion() ? type.types : [ type ])
+		.some(member => (member.flags & TypeFlags.Null) !== 0);
 
-	return type;
+	const nonNullableType = checker.getNonNullableType(type);
+
+	return containsNull
+		? checker.getNullableType(nonNullableType, TypeFlags.Null)
+		: nonNullableType;
 }

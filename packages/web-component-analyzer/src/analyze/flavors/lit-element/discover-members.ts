@@ -1,8 +1,8 @@
-import { GetAccessorDeclaration, Node, PropertyDeclaration, PropertySignature, ReturnStatement, SetAccessorDeclaration } from 'typescript';
+import { GetAccessorDeclaration, Node, PropertyDeclaration, PropertySignature, ReturnStatement, SetAccessorDeclaration, TypeFlags } from 'typescript';
 
 import { ComponentMember } from '../../types/features/component-member.js';
 import { LitElementPropertyConfig } from '../../types/features/lit-element-property-config.js';
-import { getMemberVisibilityFromNode, getModifiersFromNode, getNodeSourceFileLang, hasModifier } from '../../util/ast-util.js';
+import { getMemberVisibilityFromNode, getModifiersFromNode, hasModifier } from '../../util/ast-util.js';
 import { getJsDoc, getJsDocType } from '../../util/js-doc-util.js';
 import { resolveNodeValue } from '../../util/resolve-node-value.js';
 import { camelToDashCase, isNamePrivate } from '../../util/text-util.js';
@@ -79,9 +79,15 @@ function parsePropertyDecorator(
 				attrName,
 				type:     checker => {
 					const propType = checker.getTypeAtLocation(node);
-					const inJavascriptFile = getNodeSourceFileLang(node) === 'js';
+					const configType = litConfig.node?.type != null
+						? getLitPropertyType(ts, litConfig.node.type, checker)
+						: litConfig.type;
 
-					return inJavascriptFile && typeof litConfig.type === 'object' && litConfig.type.kind === 'ANY' ? litConfig.type : propType;
+					return typeof configType === 'object'
+						&& configType != null
+						&& (propType.flags & TypeFlags.Any) !== 0
+						? configType
+						: propType;
 				},
 				node,
 				default:    def,
@@ -105,26 +111,19 @@ function parsePropertyDecorator(
 function inPolymerFlavorContext(context: AnalyzerDeclarationVisitContext): boolean {
 	const declaration = context.getDeclaration();
 
-	// TODO: find a better way to construct a cache key
-	const cacheKey = `isPolymerFlavorContext:${ context.sourceFile?.fileName || 'unknown' }`;
-
-	if (context.cache.general.has(cacheKey))
-		return context.cache.general.get(cacheKey) as boolean;
-
-
 	let result = false;
 
 	// Use "@polymer" jsdoc tag to indicate that this is polymer context
 	if (declaration.jsDoc?.tags?.some(t => t.tag === 'polymer' || t.tag === 'polymerElement'))
 		result = true;
 
-
-	// TODO: This only checks the immediate inheritance. Make it recursive to go throught the entire inheritance chain.
-	if (context.getDeclaration().heritageClauses.some(c => [ 'PolymerElement', 'Polymer.Element' ].includes(c.identifier.getText())))
+	// TODO: This only checks the immediate inheritance. Make it recursive to go through the entire inheritance chain.
+	if (
+		context.getDeclaration().heritageClauses
+			.some(c => [ 'PolymerElement', 'Polymer.Element' ]
+				.includes(c.identifier.getText()))
+	)
 		result = true;
-
-
-	context.cache.general.set(cacheKey, result);
 
 	return result;
 }
@@ -135,7 +134,11 @@ function inPolymerFlavorContext(context: AnalyzerDeclarationVisitContext): boole
  * @param litConfig
  * @param context
  */
-function getLitAttributeName(propName: string, litConfig: LitElementPropertyConfig, context: AnalyzerDeclarationVisitContext): string | undefined {
+function getLitAttributeName(
+	propName: string,
+	litConfig: LitElementPropertyConfig,
+	context: AnalyzerDeclarationVisitContext,
+): string | undefined {
 	// Don't emit attribute if the value is specifically "false"
 	if (litConfig.attribute === false)
 		return undefined;
@@ -177,7 +180,7 @@ function parseStaticProperties(returnStatement: ReturnStatement, context: Analyz
 			let litConfig: LitElementPropertyConfig = {};
 			if (ts.isPropertyAssignment(propNode)) {
 				if (inPolymerFlavorContext(context) && !ts.isObjectLiteralExpression(propNode.initializer)) {
-					litConfig = { type: getLitPropertyType(ts, propNode.initializer) };
+					litConfig = { type: getLitPropertyType(ts, propNode.initializer, context.checker) };
 				}
 				else {
 					const resolved = resolveNodeValue(propNode.initializer, context);
@@ -196,9 +199,9 @@ function parseStaticProperties(returnStatement: ReturnStatement, context: Analyz
 			const emitAttribute = litConfig.attribute !== false;
 
 			// Resolved here, not on read, because a jsdoc type comes from the tag text, not from a node.
-			const declaredType = (jsDoc && getJsDocType(jsDoc, context))
+			const declaredType = (jsDoc && getJsDocType(jsDoc, context, propNode))
 				|| (typeof litConfig.type === 'object' && litConfig.type)
-				|| { kind: 'ANY' as const };
+				|| context.checker.getAnyType();
 
 			// Emit either the attribute or the property
 			memberResults.push({

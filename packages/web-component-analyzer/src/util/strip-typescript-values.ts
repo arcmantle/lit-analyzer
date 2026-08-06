@@ -1,5 +1,4 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { isSimpleType, typeToString } from 'ts-simple-type';
 import { Node, SourceFile, Type, TypeChecker } from 'typescript';
 
 function isTypescriptNode(value: any): value is Node {
@@ -45,9 +44,6 @@ export function stripTypescriptValues(input: unknown, checker: TypeChecker, seen
 			return '{TYPE}';
 
 		return `{TYPE:${ checker.typeToString(input) }}`;
-	}
-	else if (isSimpleType(input)) {
-		return `{SIMPLE_TYPE:${ typeToString(input) }}`;
 	}
 	else if (Array.isArray(input)) {
 		return input.map(i => stripTypescriptValues(i, checker, seenValues));

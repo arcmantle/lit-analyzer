@@ -1,5 +1,4 @@
-import { SimpleTypeStringLiteral } from 'ts-simple-type';
-import { Node } from 'typescript';
+import { Node, Type } from 'typescript';
 
 import { AnalyzerVisitContext } from '../../analyzer-visit-context.js';
 import { ComponentCssPart } from '../../types/features/component-css-part.js';
@@ -54,17 +53,19 @@ export const discoverFeatures: Partial<FeatureDiscoverVisitMap<AnalyzerVisitCont
 			return parseJsDocForNode(
 				node,
 				[ 'event', 'fires', 'emits' ],
-				(tagNode, { name, description, type }) => {
-					if (name != null && name.length > 0 && tagNode != null) {
+				(tagNode, { name, description, type }, tagIndex) => {
+					if (name != null && name.length > 0) {
 						// Resolved here, not on read, because a jsdoc type comes from the tag text, not from a node.
-						const jsDocType = type != null ? parseSimpleJsDocTypeExpression(type, context) || { kind: 'ANY' as const } : undefined;
+						const jsDocType = type != null
+							? parseSimpleJsDocTypeExpression(type, context, tagNode, node, tagIndex)
+							: undefined;
 
 						return {
 							name:     name,
 							jsDoc:    description != null ? { description } : undefined,
 							type:     jsDocType == null ? undefined : () => jsDocType,
 							typeHint: type,
-							node:     tagNode,
+							node:     tagNode ?? node,
 						};
 					}
 				},
@@ -77,30 +78,33 @@ export const discoverFeatures: Partial<FeatureDiscoverVisitMap<AnalyzerVisitCont
 			return parseJsDocForNode(
 				node,
 				[ 'slot' ],
-				(tagNode, { name, type, description }) => {
+				(tagNode, { name, type, description }, tagIndex) => {
 					// Treat "-" as unnamed slot
 					if (name === '-')
 						name = undefined;
 
-
 					// Grab the type from jsdoc and use it to find permitted tag names
 					// Example: @slot {"div"|"span"} myslot
-					const permittedTagNameType = type == null ? undefined : parseSimpleJsDocTypeExpression(type, context);
+					const permittedTagNameType = type == null
+						? undefined
+						: parseSimpleJsDocTypeExpression(type, context, tagNode, node, tagIndex);
 					const permittedTagNames: string[] | undefined = (() => {
 						if (permittedTagNameType == null)
 							return undefined;
 
+						const stringLiterals = (type: Type): string[] => {
+							if (type.isStringLiteral())
+								return [ type.value ];
 
-						switch (permittedTagNameType.kind) {
-						case 'STRING_LITERAL':
-							return [ permittedTagNameType.value ];
-						case 'UNION':
-							return permittedTagNameType.types
-								.filter((type): type is SimpleTypeStringLiteral => type.kind === 'STRING_LITERAL')
-								.map(type => type.value);
-						default:
-							return undefined;
-						}
+							if (type.isUnion())
+								return type.types.flatMap(stringLiterals);
+
+							return [];
+						};
+
+						const values = stringLiterals(permittedTagNameType);
+
+						return values.length > 0 ? values : undefined;
 					})();
 
 					return {
@@ -120,9 +124,11 @@ export const discoverFeatures: Partial<FeatureDiscoverVisitMap<AnalyzerVisitCont
 			const properties = parseJsDocForNode(
 				node,
 				[ 'prop', 'property' ],
-				(tagNode, { name, default: def, type, description }) => {
+				(tagNode, { name, default: def, type, description }, tagIndex) => {
 					if (name != null && name.length > 0) {
-						const jsDocType = (type && parseSimpleJsDocTypeExpression(type, context)) || { kind: 'ANY' as const };
+						const jsDocType = type == null
+							? undefined
+							: parseSimpleJsDocTypeExpression(type, context, tagNode, node, tagIndex);
 
 						return {
 							priority,
@@ -130,14 +136,14 @@ export const discoverFeatures: Partial<FeatureDiscoverVisitMap<AnalyzerVisitCont
 							propName:   name,
 							jsDoc:      description != null ? { description } : undefined,
 							typeHint:   type,
-							type:       () => jsDocType,
-							node:       tagNode,
+							type:       jsDocType == null ? undefined : () => jsDocType,
+							node:       tagNode ?? node,
 							default:    def,
 							visibility: undefined,
 							reflect:    undefined,
 							required:   undefined,
 							deprecated: undefined,
-						} as ComponentMemberProperty;
+						} satisfies ComponentMemberProperty;
 					}
 				},
 				context,
@@ -146,18 +152,20 @@ export const discoverFeatures: Partial<FeatureDiscoverVisitMap<AnalyzerVisitCont
 			const attributes = parseJsDocForNode(
 				node,
 				[ 'attr', 'attribute' ],
-				(tagNode, { name, default: def, type, description }) => {
+				(tagNode, { name, default: def, type, description }, tagIndex) => {
 					if (name != null && name.length > 0) {
-						const jsDocType = (type && parseSimpleJsDocTypeExpression(type, context)) || { kind: 'ANY' as const };
+						const jsDocType = type == null
+							? context.checker.getStringType()
+							: parseSimpleJsDocTypeExpression(type, context, tagNode, node, tagIndex);
 
 						return {
 							priority,
 							kind:       'attribute',
 							attrName:   name,
 							jsDoc:      description != null ? { description } : undefined,
-							type:       () => jsDocType,
+							type:       jsDocType == null ? undefined : () => jsDocType,
 							typeHint:   type,
-							node:       tagNode,
+							node:       tagNode ?? node,
 							default:    def,
 							visibility: undefined,
 							reflect:    undefined,

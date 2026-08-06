@@ -1,35 +1,44 @@
-import { SimpleType, typeToString } from 'ts-simple-type';
+import { Type } from 'typescript';
 
 import { HtmlNodeAttr } from '../../../analyze/types/html-node/html-node-attr-types.js';
 import { RuleModuleContext } from '../../../analyze/types/rule/rule-module-context.js';
 import { rangeFromHtmlNodeAttr } from '../../../analyze/util/range-util.js';
 import { isAssignableToType } from './is-assignable-to-type.js';
+import { typeToDisplayString } from './type-utils.js';
+
 
 export function isAssignableInBooleanBinding(
 	htmlAttr: HtmlNodeAttr,
-	{ typeA, typeB }: { typeA: SimpleType; typeB: SimpleType; },
+	{ typeA, typeB }: { typeA: Type; typeB: Type; },
 	context: RuleModuleContext,
 ): boolean | undefined {
+	const checker = context.program.getTypeChecker();
+	const typeBIsAssignableToBooleanBinding = [
+		checker.getBooleanType(),
+		checker.getUndefinedType(),
+		checker.getNullType(),
+	].some(target => checker.isTypeAssignableTo(typeB, target));
+
 	// Test if the user is trying to use ? modifier on a non-boolean type.
-	if (
-		!isAssignableToType(
-			{ typeA: { kind: 'UNION', types: [ { kind: 'BOOLEAN' }, { kind: 'UNDEFINED' }, { kind: 'NULL' } ] }, typeB },
-			context,
-		)
-	) {
+	if (!typeBIsAssignableToBooleanBinding) {
 		context.report({
 			location: rangeFromHtmlNodeAttr(htmlAttr),
-			message:  `Type '${ typeToString(typeB) }' is not assignable to 'boolean'`,
+			message:  `Type '${ typeToDisplayString(typeB, checker) }' is not assignable to 'boolean'`,
 		});
 
 		return false;
 	}
 
 	// Test if the user is trying to use the ? modifier on a non-boolean type.
-	if (!isAssignableToType({ typeA, typeB: { kind: 'BOOLEAN' } }, context)) {
+	const booleanIsAssignableToTypeA = isAssignableToType(
+		{ typeA, typeB: checker.getBooleanType() },
+		context,
+	);
+
+	if (!booleanIsAssignableToTypeA) {
 		context.report({
 			location: rangeFromHtmlNodeAttr(htmlAttr),
-			message:  `You are using a boolean binding on a non boolean type '${ typeToString(typeA) }'`,
+			message:  `You are using a boolean binding on a non boolean type '${ typeToDisplayString(typeA, checker) }'`,
 			fix:      () => {
 				const htmlAttrTarget = context.htmlStore.getHtmlAttrTarget(htmlAttr);
 				const newModifier = htmlAttrTarget == null ? '.' : '';

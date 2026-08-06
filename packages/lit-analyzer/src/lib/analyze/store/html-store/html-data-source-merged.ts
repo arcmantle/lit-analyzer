@@ -1,4 +1,4 @@
-import { SimpleType, SimpleTypeUnion } from 'ts-simple-type';
+import { getUnionType } from 'web-component-analyzer';
 
 import {
 	HtmlAttr,
@@ -461,65 +461,13 @@ function mergeRelatedMembers<T extends HtmlMember>(members: Iterable<T>): Readon
 				required:    existingMember.required && member.required,
 				builtIn:     existingMember.required && member.required,
 				fromTagName: existingMember.fromTagName || member.fromTagName,
-				getType:     checker => mergeRelatedTypeToUnionCached(prevType(checker), member.getType(checker)),
+				getType:     checker => getUnionType(checker, [ prevType(checker), member.getType(checker) ]),
 				related:     existingMember.related == null ? [ existingMember, member ] : [ ...existingMember.related, member ],
 			});
 		}
 	}
 
 	return mergedMembers;
-}
-
-/**
- * A merged union is a new object on every call, so it is memoized on its inputs to keep
- * a stable identity for the assignability cache. The inputs belong to the current program,
- * so an entry is collected with it.
- */
-const MERGED_UNION_CACHE: WeakMap<SimpleType, WeakMap<SimpleType, SimpleType>> = new WeakMap();
-
-function mergeRelatedTypeToUnionCached(typeA: SimpleType, typeB: SimpleType): SimpleType {
-	let mergedForTypeA = MERGED_UNION_CACHE.get(typeA);
-	if (mergedForTypeA == null) {
-		mergedForTypeA = new WeakMap();
-		MERGED_UNION_CACHE.set(typeA, mergedForTypeA);
-	}
-
-	const existing = mergedForTypeA.get(typeB);
-	if (existing != null)
-		return existing;
-
-
-	const merged = mergeRelatedTypeToUnion(typeA, typeB);
-	mergedForTypeA.set(typeB, merged);
-
-	return merged;
-}
-
-function mergeRelatedTypeToUnion(typeA: SimpleType, typeB: SimpleType): SimpleType {
-	if (typeA.kind === typeB.kind) {
-		switch (typeA.kind) {
-		case 'ANY':
-			return typeA;
-		}
-	}
-
-	switch (typeA.kind) {
-	case 'UNION':
-		if (typeB.kind === 'ANY' && typeA.types.find(t => t.kind === 'ANY') != null) {
-			return typeA;
-		}
-		else {
-			return {
-				...typeA,
-				types: [ ...typeA.types, typeB ],
-			};
-		}
-	}
-
-	return {
-		kind:  'UNION',
-		types: [ typeA, typeB ],
-	} as SimpleTypeUnion;
 }
 
 function mergeNamedRelated<T extends { name: string; related?: T[]; }>(items: Iterable<T>): ReadonlyMap<string, T> {
@@ -573,7 +521,7 @@ function mergeRelatedEvents(events: Iterable<HtmlEvent>): ReadonlyMap<string, Ht
 				...existingEvent,
 				global:      existingEvent.global && event.global,
 				description: undefined,
-				getType:     checker => mergeRelatedTypeToUnionCached(prevType(checker), event.getType(checker)),
+				getType:     checker => getUnionType(checker, [ prevType(checker), event.getType(checker) ]),
 				related:     existingEvent.related == null ? [ existingEvent, event ] : [ ...existingEvent.related, event ],
 				fromTagName: existingEvent.fromTagName || event.fromTagName,
 			});

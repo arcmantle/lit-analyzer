@@ -94,7 +94,8 @@ function applyJsDocDeprecated<T extends Partial<Pick<ComponentMember, 'deprecate
  * @param jsDoc
  */
 function applyJsDocVisibility<T extends Partial<Pick<ComponentMember, 'visibility'>>>(feature: T, jsDoc: JsDoc): T {
-	const visibilityTag = jsDoc.tags?.find(tag => [ 'public', 'protected', 'private', 'package', 'access' ].includes(tag.tag)); // member + method
+	const visibilityTag = jsDoc.tags?.find(tag =>
+		[ 'public', 'protected', 'private', 'package', 'access' ].includes(tag.tag)); // member + method
 
 	if (visibilityTag != null) {
 		return {
@@ -136,7 +137,9 @@ function applyJsDocVisibility<T extends Partial<Pick<ComponentMember, 'visibilit
  * @param jsDoc
  * @param context
  */
-function applyJsDocAttribute<T extends Partial<Pick<ComponentMember, 'propName' | 'attrName' | 'default' | 'type' | 'typeHint'>>>(
+function applyJsDocAttribute<
+	T extends Partial<Pick<ComponentMember, 'node' | 'propName' | 'attrName' | 'default' | 'type' | 'typeHint'>>,
+>(
 	feature: T,
 	jsDoc: JsDoc,
 	context: AnalyzerVisitContext,
@@ -154,9 +157,10 @@ function applyJsDocAttribute<T extends Partial<Pick<ComponentMember, 'propName' 
 
 		// @attr jsdoc tag can also include the type of attribute
 		if (parsed.type != null && result.typeHint == null) {
-			const jsDocType = parseSimpleJsDocTypeExpression(parsed.type, context);
+			const tagIndex = jsDoc.tags?.indexOf(attributeTag) ?? -1;
+			const jsDocType = parseSimpleJsDocTypeExpression(parsed.type, context, attributeTag.node, feature.node, tagIndex);
 			result.typeHint = parsed.type;
-			result.type = feature.type ?? (() => jsDocType);
+			result.type = jsDocType == null ? undefined : () => jsDocType;
 		}
 
 		return result;
@@ -254,14 +258,19 @@ function applyJsDocReflect<T extends Partial<Pick<ComponentMember, 'reflect'>>>(
  * @param jsDoc
  * @param context
  */
-function applyJsDocType<T extends Partial<Pick<ComponentMember, 'type' | 'typeHint'>>>(feature: T, jsDoc: JsDoc, context: AnalyzerVisitContext): T {
+function applyJsDocType<T extends Partial<Pick<ComponentMember, 'node' | 'type' | 'typeHint'>>>(
+	feature: T,
+	jsDoc: JsDoc,
+	context: AnalyzerVisitContext,
+): T {
 	const typeTag = jsDoc.tags?.find(tag => tag.tag === 'type');
 
 	if (typeTag != null && feature.typeHint == null) {
 		const parsed = typeTag.parsed();
 
 		if (parsed.type != null && parsed.type.length > 0) {
-			const jsDocType = parseSimpleJsDocTypeExpression(parsed.type, context);
+			const tagIndex = jsDoc.tags?.indexOf(typeTag) ?? -1;
+			const jsDocType = parseSimpleJsDocTypeExpression(parsed.type, context, typeTag.node, feature.node, tagIndex);
 
 			return {
 				...feature,

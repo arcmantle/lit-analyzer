@@ -8,6 +8,7 @@ import { arrayDefined } from '../util/array-util.js';
 import { analyzeSourceFile } from './analyze-source-file.js';
 import { AnalyzerOptions } from './types/analyzer-options.js';
 import { AnalyzerResult } from './types/analyzer-result.js';
+import { createJSDocProgram } from './util/jsdoc-compiler-host.js';
 
 export interface IVirtualSourceFile {
 	fileName:    string;
@@ -80,46 +81,43 @@ export function analyzeText(inputFiles: VirtualSourceFile[] | VirtualSourceFile,
 		strictNullChecks: true,
 	};
 
-	const program = ts.createProgram({
-		rootNames: files.map(file => file.fileName),
-		options:   compilerOptions,
-		host:      {
-			writeFile: () => {},
-			readFile,
-			fileExists,
-			getSourceFile(fileName: string, languageVersion: ScriptTarget): SourceFile | undefined {
-				const sourceText = this.readFile(fileName);
-				if (sourceText == null)
-					return undefined;
+	const host = {
+		writeFile: () => {},
+		readFile,
+		fileExists,
+		getSourceFile(fileName: string, languageVersion: ScriptTarget): SourceFile | undefined {
+			const sourceText = readFile(fileName);
+			if (sourceText == null)
+				return undefined;
 
-				return ts.createSourceFile(fileName, sourceText, languageVersion, true, fileName.endsWith('.js') ? ScriptKind.JS : ScriptKind.TS);
-			},
-
-			getCurrentDirectory() {
-				return '.';
-			},
-
-			getDirectories(directoryName: string) {
-				return system?.getDirectories(directoryName) ?? [];
-			},
-
-			getDefaultLibFileName(options: CompilerOptions): string {
-				return ts.getDefaultLibFileName(options);
-			},
-
-			getCanonicalFileName(fileName: string): string {
-				return this.useCaseSensitiveFileNames() ? fileName : fileName.toLowerCase();
-			},
-
-			getNewLine(): string {
-				return system?.newLine ?? '\n';
-			},
-
-			useCaseSensitiveFileNames() {
-				return system?.useCaseSensitiveFileNames ?? false;
-			},
+			return ts.createSourceFile(fileName, sourceText, languageVersion, true, fileName.endsWith('.js') ? ScriptKind.JS : ScriptKind.TS);
 		},
-	});
+
+		getCurrentDirectory() {
+			return '.';
+		},
+
+		getDirectories(directoryName: string) {
+			return system?.getDirectories(directoryName) ?? [];
+		},
+
+		getDefaultLibFileName(options: CompilerOptions): string {
+			return ts.getDefaultLibFileName(options);
+		},
+
+		getCanonicalFileName(fileName: string): string {
+			return this.useCaseSensitiveFileNames() ? fileName : fileName.toLowerCase();
+		},
+
+		getNewLine(): string {
+			return system?.newLine ?? '\n';
+		},
+
+		useCaseSensitiveFileNames() {
+			return system?.useCaseSensitiveFileNames ?? false;
+		},
+	};
+	const program = createJSDocProgram(files.map(file => file.fileName), compilerOptions, host, ts);
 
 	const checker = program.getTypeChecker();
 

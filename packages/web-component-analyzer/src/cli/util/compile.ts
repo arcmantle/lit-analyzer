@@ -1,4 +1,7 @@
-import { CompilerOptions, createProgram, ModuleKind, ModuleResolutionKind, Program, ScriptTarget, SourceFile } from 'typescript';
+import * as tsModule from 'typescript';
+import { CompilerOptions, createCompilerHost, ModuleKind, ModuleResolutionKind, Program, ScriptTarget, SourceFile } from 'typescript';
+
+import { createJSDocProgram } from '../../analyze/util/jsdoc-compiler-host.js';
 
 /**
  * The most general version of compiler options.
@@ -35,7 +38,7 @@ export interface CompileResult {
  */
 export function compileTypescript(filePaths: string | string[], options: CompilerOptions = defaultOptions): CompileResult {
 	filePaths = Array.isArray(filePaths) ? filePaths : [ filePaths ];
-	const program = createProgram(filePaths, options);
+	const program = createJSDocProgram(filePaths, options, createCompilerHost(options), tsModule);
 	const files = program
 		.getSourceFiles()
 		.filter(sf => filePaths.includes(sf.fileName))

@@ -234,7 +234,6 @@ export class LitAnalyzer {
 			if (this.context.isCancellationRequested)
 				break;
 
-
 			diagnostics.push(...this.componentAnalyzer.getDiagnostics(definition, this.context));
 		}
 
@@ -244,7 +243,6 @@ export class LitAnalyzer {
 			if (this.context.isCancellationRequested)
 				break;
 
-
 			diagnostics.push(...this.componentAnalyzer.getDiagnostics(declaration, this.context));
 		}
 
@@ -252,7 +250,6 @@ export class LitAnalyzer {
 		for (const document of documents) {
 			if (this.context.isCancellationRequested)
 				break;
-
 
 			if (document instanceof CssDocument)
 				diagnostics.push(...this.litCssDocumentAnalyzer.getDiagnostics(document, this.context));

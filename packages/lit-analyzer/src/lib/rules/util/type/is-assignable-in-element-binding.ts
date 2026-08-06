@@ -1,9 +1,10 @@
-import { SimpleType, typeToString } from 'ts-simple-type';
+import { Type, TypeFlags } from 'typescript';
 
 import { HtmlNodeAttr } from '../../../analyze/types/html-node/html-node-attr-types.js';
 import { RuleModuleContext } from '../../../analyze/types/rule/rule-module-context.js';
 import { rangeFromHtmlNodeAttr } from '../../../analyze/util/range-util.js';
-import { isLit1Directive, isLit2Directive } from '../directive/is-lit-directive.js';
+import { isLit1DirectiveTypeInternal, isLit2DirectiveType } from '../directive/is-lit-directive.js';
+import { typeToDisplayString } from './type-utils.js';
 
 /**
  * Checks that the type represents a Lit 2 directive, which is the only valid
@@ -11,22 +12,27 @@ import { isLit1Directive, isLit2Directive } from '../directive/is-lit-directive.
  */
 export function isAssignableInElementBinding(
 	htmlAttr: HtmlNodeAttr,
-	type: SimpleType,
+	type: Type,
 	context: RuleModuleContext,
 ): boolean | undefined {
+	const checker = context.program.getTypeChecker();
+	const isLit2 = isLit2DirectiveType(type);
+	const isLit1 = isLit1DirectiveTypeInternal(type, checker);
+	const isAny = (type.flags & TypeFlags.Any) !== 0;
+
 	// TODO (justinfagnani): is there a better way to determine if the
 	// type *contains* any, rather than *is* any?
-	if (!isLit2Directive(type) && type.kind !== 'ANY') {
-		if (isLit1Directive(type)) {
+	if (!isLit2 && !isAny) {
+		if (isLit1) {
 			context.report({
 				location: rangeFromHtmlNodeAttr(htmlAttr),
-				message:  `Type '${ typeToString(type) }' is a lit-html 1.0 directive, not a Lit 2 directive'`,
+				message:  `Type '${ typeToDisplayString(type, checker) }' is a lit-html 1.0 directive, not a Lit 2 directive'`,
 			});
 		}
 		else {
 			context.report({
 				location: rangeFromHtmlNodeAttr(htmlAttr),
-				message:  `Type '${ typeToString(type) }' is not a Lit 2 directive'`,
+				message:  `Type '${ typeToDisplayString(type, checker) }' is not a Lit 2 directive'`,
 			});
 		}
 

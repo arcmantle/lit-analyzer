@@ -1,7 +1,7 @@
-import { isAssignableToSimpleTypeKind, SimpleType, typeToString } from 'ts-simple-type';
-import { TypeChecker } from 'typescript';
+import { Type, TypeChecker, TypeFlags } from 'typescript';
 import { ComponentCssPart, ComponentCssProperty, ComponentDeclaration, ComponentEvent, ComponentMember, ComponentSlot } from 'web-component-analyzer';
 
+import { hasFlag, isBooleanType, typeToDisplayString } from '../../../rules/util/type/type-utils.js';
 import {
 	LIT_HTML_BOOLEAN_ATTRIBUTE_MODIFIER,
 	LIT_HTML_EVENT_LISTENER_ATTRIBUTE_MODIFIER,
@@ -39,15 +39,16 @@ export interface HtmlTag extends HtmlDataFeatures {
 export type HtmlTagMemberKind = 'attribute' | 'property';
 
 export interface HtmlMemberBase {
-	kind:         HtmlTagMemberKind;
-	builtIn?:     boolean;
-	required?:    boolean;
-	description?: string;
-	declaration?: ComponentMember;
-	name?:        string;
-	fromTagName?: string;
-	related?:     HtmlMember[];
-	getType(checker: TypeChecker): SimpleType;
+	kind:            HtmlTagMemberKind;
+	builtIn?:        boolean;
+	required?:       boolean;
+	primitiveArray?: boolean;
+	description?:    string;
+	declaration?:    ComponentMember;
+	name?:           string;
+	fromTagName?:    string;
+	related?:        HtmlMember[];
+	getType(checker: TypeChecker): Type;
 }
 
 export interface HtmlAttr extends HtmlMemberBase {
@@ -72,7 +73,7 @@ export interface HtmlEvent {
 	global?:      boolean;
 	fromTagName?: string;
 	related?:     HtmlEvent[];
-	getType(checker: TypeChecker): SimpleType;
+	getType(checker: TypeChecker): Type;
 }
 
 export interface HtmlSlot {
@@ -120,7 +121,7 @@ export function isHtmlEvent(target: HtmlAttrTarget): target is HtmlEvent {
 
 export function litAttributeModifierForTarget(target: HtmlAttrTarget, checker: TypeChecker): string {
 	if (isHtmlAttr(target)) {
-		if (isAssignableToSimpleTypeKind(target.getType(checker), 'BOOLEAN'))
+		if (isBooleanType(target.getType(checker), checker))
 			return LIT_HTML_BOOLEAN_ATTRIBUTE_MODIFIER;
 
 		return '';
@@ -239,11 +240,11 @@ export function targetKindAndTypeText(
 ): string {
 	const prefix = `(${ targetKindText(target) }) ${ options.modifier || '' }${ target.name }`;
 
-	if (isAssignableToSimpleTypeKind(target.getType(checker), 'ANY'))
+	if (hasFlag(target.getType(checker), TypeFlags.Any))
 		return `${ prefix }`;
 
 
-	return `${ prefix }: ${ typeToString(target.getType(checker)) }`;
+	return `${ prefix }: ${ typeToDisplayString(target.getType(checker), checker) }`;
 }
 
 export function targetKindText(target: HtmlAttrTarget): string {

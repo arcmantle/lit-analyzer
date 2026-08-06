@@ -1,15 +1,10 @@
 import htmlDataJson from '@vscode/web-custom-data/data/browsers.html-data.json' with { type: 'json' };
-import { SimpleType } from 'ts-simple-type';
-import { TypeChecker } from 'typescript';
 import { HTMLDataV1 } from 'vscode-html-languageservice';
+import { getUnionType } from 'web-component-analyzer';
 
 import { HtmlAttr, HtmlDataCollection } from '../parse/parse-html-data/html-tag.js';
 import { parseVscodeHtmlData } from '../parse/parse-html-data/parse-vscode-html-data.js';
-import { lazy } from '../util/general-util.js';
-import { EXTRA_HTML5_EVENTS, hasTypeForAttrName, html5TagAttrType } from './extra-html-data.js';
-
-/** Built-in data is read before any program exists, and none of its type functions read the checker. */
-const NO_CHECKER = undefined as unknown as TypeChecker;
+import { EXTRA_HTML5_EVENTS, hasTypeForAttrName, html5TagAttrType, isPrimitiveArrayAttr } from './extra-html-data.js';
 
 export function getBuiltInHtmlCollection(): HtmlDataCollection {
 	const vscodeHtmlData = htmlDataJson as HTMLDataV1;
@@ -154,13 +149,7 @@ The value must be a comma-separated list of part mappings:
 				name:        'value',
 				builtIn:     true,
 				fromTagName: 'textarea',
-				getType:     lazy(
-					() =>
-						({
-							kind:  'UNION',
-							types: [ { kind: 'STRING' }, { kind: 'NULL' } ],
-						} as SimpleType),
-				),
+				getType:     checker => getUnionType(checker, [ checker.getStringType(), checker.getNullType() ]),
 			});
 			break;
 
@@ -170,23 +159,11 @@ The value must be a comma-separated list of part mappings:
 				name:        'loading',
 				builtIn:     true,
 				fromTagName: 'img',
-				getType:     lazy(
-					() =>
-						({
-							kind:  'UNION',
-							types: [
-								{
-									kind:  'STRING_LITERAL',
-									value: 'lazy',
-								},
-								{
-									kind:  'STRING_LITERAL',
-									value: 'auto',
-								},
-								{ kind: 'STRING_LITERAL', value: 'eager' },
-							],
-						} as SimpleType),
-				),
+				getType:     checker => getUnionType(checker, [
+					checker.getStringLiteralType('lazy'),
+					checker.getStringLiteralType('auto'),
+					checker.getStringLiteralType('eager'),
+				]),
 			});
 			break;
 
@@ -196,13 +173,7 @@ The value must be a comma-separated list of part mappings:
 				name:        'value',
 				builtIn:     true,
 				fromTagName: 'input',
-				getType:     lazy(
-					() =>
-						({
-							kind:  'UNION',
-							types: [ { kind: 'STRING' }, { kind: 'NULL' } ],
-						} as SimpleType),
-				),
+				getType:     checker => getUnionType(checker, [ checker.getStringType(), checker.getNullType() ]),
 			});
 			break;
 		}
@@ -214,7 +185,7 @@ The value must be a comma-separated list of part mappings:
 		{
 			builtIn:     true,
 			description: `This attribute specifies a "styleable" part on the element in your shadow tree.`,
-			getType:     () => ({ kind: 'STRING' }),
+			getType:     checker => checker.getStringType(),
 			kind:        'property',
 			name:        'part',
 		},
@@ -237,12 +208,11 @@ The value must be a comma-separated list of part mappings:
 
 function addMissingAttrTypes(attrs: HtmlAttr[]): HtmlAttr[] {
 	return attrs.map(attr => {
-		if (hasTypeForAttrName(attr.name) || attr.getType(NO_CHECKER).kind === 'ANY') {
-			const newType = html5TagAttrType(attr.name);
-
+		if (hasTypeForAttrName(attr.name)) {
 			return {
 				...attr,
-				getType: lazy(() => newType),
+				primitiveArray: isPrimitiveArrayAttr(attr.name),
+				getType:        checker => html5TagAttrType(attr.name, checker),
 			};
 		}
 

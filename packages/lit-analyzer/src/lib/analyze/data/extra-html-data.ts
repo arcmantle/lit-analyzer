@@ -1,6 +1,5 @@
-import { SimpleType, SimpleTypeStringLiteral, SimpleTypeUnion } from 'ts-simple-type';
-
-import { makePrimitiveArrayType } from '../util/type-util.js';
+import { Type, TypeChecker } from 'typescript';
+import { getUnionType } from 'web-component-analyzer';
 
 const HTML_5_ATTR_TYPES: { [key: string]: string | string[] | [string[]]; } = {
 	onafterprint:            'string',
@@ -243,44 +242,46 @@ export function hasTypeForAttrName(attrName: string): boolean {
 	return HTML_5_ATTR_TYPES[attrName] != null && HTML_5_ATTR_TYPES[attrName].length > 0;
 }
 
-export function html5TagAttrType(attrName: string): SimpleType {
-	return stringToSimpleType(HTML_5_ATTR_TYPES[attrName] || '', attrName);
+export function isPrimitiveArrayAttr(attrName: string): boolean {
+	const type = HTML_5_ATTR_TYPES[attrName];
+
+	return Array.isArray(type) && Array.isArray(type[0]);
 }
 
-function stringToSimpleType(typeString: string | string[] | [string[]], name?: string): SimpleType {
+export function html5TagAttrType(attrName: string, checker: TypeChecker): Type {
+	return stringToType(HTML_5_ATTR_TYPES[attrName] || '', checker);
+}
+
+function stringToType(typeString: string | string[] | [string[]], checker: TypeChecker): Type {
 	if (Array.isArray(typeString)) {
-		if (Array.isArray(typeString[0]))
-			return makePrimitiveArrayType(stringToSimpleType(typeString[0]) as SimpleTypeUnion);
+		const firstValue = typeString[0];
+		if (typeof firstValue !== 'string')
+			return getUnionType(checker, firstValue.map(value => checker.getStringLiteralType(value)));
 
-
-		return {
-			kind:  'UNION',
-			types: (typeString as string[]).map(value => ({ kind: 'STRING_LITERAL', value } as SimpleTypeStringLiteral)),
-		};
+		return getUnionType(
+			checker,
+			(typeString as string[]).map(value => checker.getStringLiteralType(value)),
+		);
 	}
 
-	if (typeString.includes('|')) {
-		return {
-			kind:  'UNION',
-			types: typeString.split('|').map(typeStr => stringToSimpleType(typeStr)),
-		};
-	}
+	if (typeString.includes('|'))
+		return getUnionType(checker, typeString.split('|').map(typeStr => stringToType(typeStr, checker)));
+
+	if (typeString.startsWith('"') && typeString.endsWith('"'))
+		return checker.getStringLiteralType(typeString.slice(1, -1));
 
 	switch (typeString) {
 	case 'number':
-		return { kind: 'NUMBER', name };
+		return checker.getNumberType();
 	case 'boolean':
-		return { kind: 'BOOLEAN', name };
+		return checker.getBooleanType();
 	case 'string':
-		return { kind: 'STRING', name };
+		return checker.getStringType();
 	default:
-		return { kind: 'ANY', name };
+		return checker.getAnyType();
 	}
 }
 
-/**
- * Data from vscode-html-languageservice
- */
 export const EXTRA_HTML5_EVENTS = [
 	{
 		name:        'onanimationend',

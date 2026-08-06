@@ -1,6 +1,14 @@
+import type { LitPropertyTypeKind } from '../../lib/rules/no-incompatible-property-type.js';
 import { getDiagnostics } from '../helpers/analyze.js';
 import { hasDiagnostic, hasNoDiagnostics } from '../helpers/assert.js';
 import { tsTest } from '../helpers/ts-test.js';
+
+const supportedLitPropertyTypeKind: LitPropertyTypeKind = 'STRING';
+// @ts-expect-error Invalid Lit converter kinds must not compile.
+const invalidLitPropertyTypeKind: LitPropertyTypeKind = 'DATE';
+
+void supportedLitPropertyTypeKind;
+void invalidLitPropertyTypeKind;
 
 tsTest("'no-incompatible-property-type' is not emitted for string types without configuration", t => {
 	const { diagnostics } = getDiagnostics(
@@ -90,6 +98,38 @@ tsTest("'no-incompatible-property-type' is not emitted for number types with Num
 	 */
 	class MyElement extends LitElement {
 		@property({type: Number}) color: number;
+	}
+	`,
+		{ rules: { 'no-incompatible-property-type': 'on' } },
+	);
+
+	hasNoDiagnostics(t, diagnostics);
+});
+
+tsTest("'no-incompatible-property-type' is not emitted for array types with Array configuration", t => {
+	const { diagnostics } = getDiagnostics(
+		`
+  /**
+   * @element
+	 */
+	class MyElement extends LitElement {
+		@property({type: Array}) items: string[];
+	}
+	`,
+		{ rules: { 'no-incompatible-property-type': 'on' } },
+	);
+
+	hasNoDiagnostics(t, diagnostics);
+});
+
+tsTest("'no-incompatible-property-type' is not emitted for object types with Object configuration", t => {
+	const { diagnostics } = getDiagnostics(
+		`
+  /**
+   * @element
+	 */
+	class MyElement extends LitElement {
+		@property({type: Object}) value: { ready: boolean };
 	}
 	`,
 		{ rules: { 'no-incompatible-property-type': 'on' } },
