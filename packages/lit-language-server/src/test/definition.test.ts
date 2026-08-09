@@ -41,17 +41,23 @@ beforeAll(async () => {
 	if (result.emitSkipped)
 		throw new Error('Could not emit the declaration-map test fixture');
 
-	componentHarness = await startServer(componentProjectDir);
-	await componentHarness.openFile(componentPath);
-	await componentHarness.openFile(consumerPath);
-
-	libraryHarness = await startServer(libraryDefinitionProjectDir);
-	await libraryHarness.openFile(libraryDefinitionConsumerPath);
-
-	definitionHarness = await startServer(definitionProjectDir);
-	await definitionHarness.openFile(definitionComponentPath);
-	await definitionHarness.openFile(definitionConsumerPath);
-});
+	await Promise.all([
+		(async () => {
+			componentHarness = await startServer(componentProjectDir);
+			await componentHarness.openFile(componentPath);
+			await componentHarness.openFile(consumerPath);
+		})(),
+		(async () => {
+			libraryHarness = await startServer(libraryDefinitionProjectDir);
+			await libraryHarness.openFile(libraryDefinitionConsumerPath);
+		})(),
+		(async () => {
+			definitionHarness = await startServer(definitionProjectDir);
+			await definitionHarness.openFile(definitionComponentPath);
+			await definitionHarness.openFile(definitionConsumerPath);
+		})(),
+	]);
+}, 30_000);
 
 afterAll(() => {
 	componentHarness?.dispose();
