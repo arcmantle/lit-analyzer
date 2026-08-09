@@ -94,35 +94,38 @@ function hasOwnProperty<T extends string>(obj: object, key: T): obj is Record<T,
  * @param ts
  * @param node
  */
-export function getLitPropertyType(ts: typeof tsModule, node: Node, checker: TypeChecker): Type | string {
+export function getLitPropertyType(
+	ts: typeof tsModule,
+	node: Node,
+): NonNullable<LitElementPropertyConfig['type']> {
 	const value = ts.isIdentifier(node) ? node.text : undefined;
 
 	switch (value) {
 	case 'String':
 	case 'StringConstructor':
-		return checker.getStringType();
+		return checker => checker.getStringType();
 	case 'Number':
 	case 'NumberConstructor':
-		return checker.getNumberType();
+		return checker => checker.getNumberType();
 	case 'Boolean':
 	case 'BooleanConstructor':
-		return checker.getBooleanType();
+		return checker => checker.getBooleanType();
 	case 'Array':
 	case 'ArrayConstructor':
-		return getDeclaredTypeOfBuiltinConstructor(checker, node, node.getText());
+		return checker => getDeclaredTypeOfBuiltinConstructor(checker, node);
 	case 'Object':
 	case 'ObjectConstructor':
-		return getDeclaredTypeOfBuiltinConstructor(checker, node, node.getText());
+		return checker => getDeclaredTypeOfBuiltinConstructor(checker, node);
 	default:
 		// This is an unknown type, so set the name as a string
 		return node.getText();
 	}
 }
 
-function getDeclaredTypeOfBuiltinConstructor(checker: TypeChecker, node: Node, fallback: string): Type | string {
+function getDeclaredTypeOfBuiltinConstructor(checker: TypeChecker, node: Node): Type {
 	const symbol = checker.getSymbolAtLocation(node);
 
-	return symbol != null ? checker.getDeclaredTypeOfSymbol(symbol) : fallback;
+	return symbol != null ? checker.getDeclaredTypeOfSymbol(symbol) : checker.getAnyType();
 }
 
 /**
@@ -186,7 +189,7 @@ export function getLitPropertyOptions(
 
 		if (typeProp) {
 			typeInitializer = typeProp.initializer;
-			result.type = getLitPropertyType(ts, typeProp.initializer, context.checker);
+			result.type = getLitPropertyType(ts, typeProp.initializer);
 		}
 	}
 

@@ -1,0 +1,8 @@
+{
+	"scopeName": "source.lit-analyzer-typescript-library",
+	"patterns": [
+		{
+			"include": "source.ts"
+		}
+	]
+}

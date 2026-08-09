@@ -5,9 +5,7 @@ import type * as ts from 'typescript';
 import { CodeAction, CodeActionKind, Range, TextEdit, WorkspaceEdit } from 'vscode-languageserver/node';
 
 /**
- * Translates lit-analyzer's own `LitCodeFix[]` into LSP `CodeAction[]`,
- * mirroring what `ts-lit-plugin`'s `translate-code-fixes.ts` does for the
- * tsserver plugin's `CodeFixAction[]`.
+ * Translates lit-analyzer's own `LitCodeFix[]` into LSP `CodeAction[]`.
  *
  * Every `LitCodeFixAction` in a `LitCodeFix` edits `sourceFile` -- the same
  * file the request's position was in -- so each fix becomes one

@@ -28,7 +28,7 @@ export const discoverGlobalFeatures: AnalyzerFlavor['discoverGlobalFeatures'] = 
 							kind:     'property',
 							propName: name,
 							attrName: name,
-							type:     () => context.checker.getTypeAtLocation(member),
+							type:     checker => checker.getTypeAtLocation(member),
 						});
 					}
 				}

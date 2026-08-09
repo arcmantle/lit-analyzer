@@ -26,8 +26,7 @@ export interface AnalysisCompiler {
 	 * invoked inside a template) needs no lit-specific handling, only the tag
 	 * function's own signature (from `html`/`css`) needs filtering out, which
 	 * the caller does. `triggerReason` is forwarded as-is from the client's own
-	 * request, the same way `ts-lit-plugin` forwards tsserver's, so a
-	 * retrigger (e.g. typing `,` to move to the next parameter) keeps the
+	 * request, so a retrigger (e.g. typing `,` to move to the next parameter) keeps the
 	 * active signature stable instead of resetting it.
 	 */
 	getSignatureHelpItems(
@@ -35,6 +34,8 @@ export interface AnalysisCompiler {
 		position: number,
 		triggerReason?: ts.SignatureHelpTriggerReason,
 	): ts.SignatureHelpItems | undefined;
+	/** Maps a generated declaration position back to library source when a declaration map exists. */
+	getSourcePosition(fileName: string, position: number): { fileName: string; position: number; } | undefined;
 	/** The root file names resolved from the tsconfig, before type-checking. */
 	getRootFileNames(): readonly string[];
 	/** The compiler options resolved from the tsconfig. */
@@ -77,7 +78,7 @@ interface LanguageServiceSource {
  * are tracked in memory and take priority over disk content; a closed
  * document falls back to disk again.
  */
-function createLanguageServiceCompiler(source: LanguageServiceSource): AnalysisCompiler {
+function createLanguageServiceCompiler(source: LanguageServiceSource, log?: (message: string) => void): AnalysisCompiler {
 	const openDocuments: Map<string, TrackedDocument> = new Map();
 
 	const host: ts.LanguageServiceHost = {
@@ -111,19 +112,31 @@ function createLanguageServiceCompiler(source: LanguageServiceSource): AnalysisC
 		getDirectories:         ts.sys.getDirectories,
 	};
 
+	const languageServiceStartTime = Date.now();
 	const jsDocHost = createJSDocLanguageServiceHost(host, ts);
 	const languageService = ts.createLanguageService(jsDocHost.host);
+	log?.(`lit-language-server compiler created language service in ${ Date.now() - languageServiceStartTime }ms: ${ source.describeProject() }`);
+	let hasBuiltProgram = false;
+	let jsDocProgram: ts.Program | undefined;
 
 	return {
 		getProgram(): ts.Program {
+			const programStartTime = Date.now();
 			let program = languageService.getProgram();
 			if (!program)
 				throw new Error(`The language service could not build a Program for ${ source.describeProject() }`);
 
-			if (jsDocHost.update(program)) {
+			if (program !== jsDocProgram && jsDocHost.update(program)) {
 				program = languageService.getProgram();
 				if (!program)
 					throw new Error(`The language service could not build a Program for ${ source.describeProject() }`);
+			}
+
+			jsDocProgram = program;
+
+			if (!hasBuiltProgram) {
+				hasBuiltProgram = true;
+				log?.(`lit-language-server compiler built first program in ${ Date.now() - programStartTime }ms: ${ source.describeProject() }`);
 			}
 
 			return program;
@@ -134,6 +147,16 @@ function createLanguageServiceCompiler(source: LanguageServiceSource): AnalysisC
 			triggerReason?: ts.SignatureHelpTriggerReason,
 		): ts.SignatureHelpItems | undefined {
 			return languageService.getSignatureHelpItems(fileName, position, triggerReason && { triggerReason });
+		},
+		getSourcePosition(fileName: string, position: number): { fileName: string; position: number; } | undefined {
+			const sourceMapper = (languageService as unknown as {
+				getSourceMapper(): {
+					tryGetSourcePosition(location: { fileName: string; pos: number; }): { fileName: string; pos: number; } | undefined;
+				};
+			}).getSourceMapper();
+			const sourcePosition = sourceMapper.tryGetSourcePosition({ fileName, pos: position });
+
+			return sourcePosition == null ? undefined : { fileName: sourcePosition.fileName, position: sourcePosition.pos };
 		},
 		getRootFileNames:   () => source.getRootFileNames(),
 		getCompilerOptions: () => source.getCompilerOptions(),
@@ -153,16 +176,20 @@ function createLanguageServiceCompiler(source: LanguageServiceSource): AnalysisC
 	};
 }
 
-export function createAnalysisCompiler(tsconfigPath: string): AnalysisCompiler {
+export function createAnalysisCompiler(tsconfigPath: string, log?: (message: string) => void): AnalysisCompiler {
 	const configDirectory = path.dirname(tsconfigPath);
+	const parseStartTime = Date.now();
 	const parsedConfig = parseTsconfig(tsconfigPath);
+	log?.(
+		`lit-language-server compiler parsed tsconfig in ${ Date.now() - parseStartTime }ms (${ parsedConfig.fileNames.length } root files): ${ tsconfigPath }`,
+	);
 
 	return createLanguageServiceCompiler({
 		getRootFileNames:    () => parsedConfig.fileNames,
 		getCompilerOptions:  () => parsedConfig.options,
 		getCurrentDirectory: () => configDirectory,
 		describeProject:     () => tsconfigPath,
-	});
+	}, log);
 }
 
 /**
@@ -188,11 +215,11 @@ const INFERRED_PROJECT_COMPILER_OPTIONS: ts.CompilerOptions = {
  * from a tsconfig that doesn't exist, just enough to give this one file
  * useful diagnostics.
  */
-export function createInferredAnalysisCompiler(fileName: string): AnalysisCompiler {
+export function createInferredAnalysisCompiler(fileName: string, log?: (message: string) => void): AnalysisCompiler {
 	return createLanguageServiceCompiler({
 		getRootFileNames:    () => [ fileName ],
 		getCompilerOptions:  () => INFERRED_PROJECT_COMPILER_OPTIONS,
 		getCurrentDirectory: () => path.dirname(fileName),
 		describeProject:     () => `the inferred project for ${ fileName }`,
-	});
+	}, log);
 }

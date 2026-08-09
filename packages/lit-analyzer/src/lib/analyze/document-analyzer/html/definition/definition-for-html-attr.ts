@@ -1,3 +1,5 @@
+import { Node, Symbol as TypeScriptSymbol, TypeChecker } from 'typescript';
+
 import { LitAnalyzerContext } from '../../../lit-analyzer-context.js';
 import { isHtmlEvent, isHtmlMember } from '../../../parse/parse-html-data/html-tag.js';
 import { HtmlNodeAttr } from '../../../types/html-node/html-node-attr-types.js';
@@ -5,39 +7,75 @@ import { LitDefinition } from '../../../types/lit-definition.js';
 import { getNodeIdentifier } from '../../../util/ast-util.js';
 import { rangeFromHtmlNodeAttr } from '../../../util/range-util.js';
 
-export function definitionForHtmlAttr(htmlAttr: HtmlNodeAttr, { htmlStore, ts }: LitAnalyzerContext): LitDefinition | undefined {
+const HTML_ATTRIBUTE_PROPERTY_ALIASES: Readonly<Record<string, string>> = {
+	class: 'className',
+	for:   'htmlFor',
+};
+
+export function definitionForHtmlAttr(
+	htmlAttr: HtmlNodeAttr,
+	context: LitAnalyzerContext,
+): LitDefinition | undefined {
+	const { htmlStore, program, ts } = context;
 	const target = htmlStore.getHtmlAttrTarget(htmlAttr);
 	if (target == null)
 		return undefined;
 
-	if (isHtmlMember(target) && target.declaration != null) {
-		const node = target.declaration.node;
+	if ((isHtmlMember(target) || isHtmlEvent(target)) && target.declaration != null)
+		return definitionForNode(htmlAttr, target.declaration.node, target.name, ts);
 
-		return {
-			fromRange: rangeFromHtmlNodeAttr(htmlAttr),
-			targets:   [
-				{
-					kind: 'node',
-					node: getNodeIdentifier(node, ts) || node,
-					name: target.name,
-				},
-			],
-		};
-	}
-	else if (isHtmlEvent(target) && target.declaration != null) {
-		const node = target.declaration.node;
+	if (isHtmlMember(target) && target.builtIn) {
+		const propertySymbol = findBuiltInHtmlProperty(htmlAttr, program.getTypeChecker(), context.currentFile, ts);
+		const node = propertySymbol?.valueDeclaration ?? propertySymbol?.declarations?.[0];
 
-		return {
-			fromRange: rangeFromHtmlNodeAttr(htmlAttr),
-			targets:   [
-				{
-					kind: 'node',
-					node: getNodeIdentifier(node, ts) || node,
-					name: target.name,
-				},
-			],
-		};
+		if (propertySymbol != null && node != null)
+			return definitionForNode(htmlAttr, node, propertySymbol.getName(), ts);
 	}
 
 	return;
+}
+
+function findBuiltInHtmlProperty(
+	htmlAttr: HtmlNodeAttr,
+	checker: TypeChecker,
+	currentFile: Node,
+	ts: LitAnalyzerContext['ts'],
+): TypeScriptSymbol | undefined {
+	const tagNameMap = checker.resolveName('HTMLElementTagNameMap', currentFile, ts.SymbolFlags.Interface, false);
+	if (tagNameMap == null)
+		return undefined;
+
+	const tagSymbol = checker.getPropertyOfType(checker.getDeclaredTypeOfSymbol(tagNameMap), htmlAttr.htmlNode.tagName);
+	const tagDeclaration = tagSymbol?.valueDeclaration ?? tagSymbol?.declarations?.[0];
+	if (tagSymbol == null || tagDeclaration == null)
+		return undefined;
+
+	const propertyName = HTML_ATTRIBUTE_PROPERTY_ALIASES[htmlAttr.name.toLowerCase()] ?? htmlAttr.name;
+	const normalizedPropertyName = normalizeHtmlMemberName(propertyName);
+	const tagType = checker.getTypeOfSymbolAtLocation(tagSymbol, tagDeclaration);
+
+	return checker.getPropertiesOfType(tagType)
+		.find(symbol => normalizeHtmlMemberName(symbol.getName()) === normalizedPropertyName);
+}
+
+function normalizeHtmlMemberName(name: string): string {
+	return name.replaceAll('-', '').toLowerCase();
+}
+
+function definitionForNode(
+	htmlAttr: HtmlNodeAttr,
+	node: Node,
+	name: string,
+	ts: LitAnalyzerContext['ts'],
+): LitDefinition {
+	return {
+		fromRange: rangeFromHtmlNodeAttr(htmlAttr),
+		targets:   [
+			{
+				kind: 'node',
+				node: getNodeIdentifier(node, ts) || node,
+				name,
+			},
+		],
+	};
 }

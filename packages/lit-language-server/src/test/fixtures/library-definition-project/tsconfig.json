@@ -1,0 +1,16 @@
+{
+	"compilerOptions": {
+		"target": "es2019",
+		"module": "node16",
+		"moduleResolution": "node16",
+		"paths": {
+			"mapped-element-library": [
+				"./library/dist/component.d.ts"
+			]
+		},
+		"strict": true
+	},
+	"files": [
+		"consumer.ts"
+	]
+}

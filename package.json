@@ -39,11 +39,10 @@
 		"build": "pnpm -r run build",
 		"eslint": "eslint .",
 		"lint": "pnpm run eslint",
-		"test:headless": "pnpm --filter ./packages/lit-analyzer run test && pnpm --filter ./packages/lit-language-server run test && pnpm --filter ./packages/ts-simple-type run test && pnpm --filter ./packages/web-component-analyzer run test",
+		"test:headless": "pnpm --filter ./packages/lit-analyzer run test && pnpm --filter ./packages/lit-language-server run test && pnpm --filter ./packages/web-component-analyzer run test",
 		"test:headful": "pnpm run build && pnpm --filter ./packages/vscode-lit-plugin run test",
 		"test": "pnpm run test:headless && pnpm run test:headful && pnpm run lint",
-		"package": "pnpm run build && pnpm --filter ./packages/vscode-lit-plugin run package",
-		"verify": "pnpm --filter ./internal/scripts run verify"
+		"package": "pnpm run build && pnpm --filter ./packages/vscode-lit-plugin run package"
 	},
 	"devDependencies": {
 		"@arcmantle/eslint-config": "^1.0.2",
@@ -51,12 +50,5 @@
 		"globals": "^17.8.0",
 		"typescript": "catalog:",
 		"vitest": "^4.1.10"
-	},
-	"contributors": [
-		{
-			"name": "You?",
-			"img": "https://joeschmoe.io/api/v1/random",
-			"url": "https://github.com/arcmantle/lit-analyzer/blob/master/CONTRIBUTING.md"
-		}
-	]
+	}
 }

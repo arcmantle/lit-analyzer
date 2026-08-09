@@ -6,9 +6,7 @@ import { Range, TextEdit, WorkspaceEdit } from 'vscode-languageserver/node';
 
 /**
  * Translates lit-analyzer's own `LitRenameLocation[]` into an LSP
- * `WorkspaceEdit`, mirroring what `ts-lit-plugin`'s
- * `translate-rename-locations.ts` does for the tsserver plugin's
- * `RenameLocation[]` -- except LSP's `textDocument/rename` wants every edit
+ * `WorkspaceEdit`. LSP's `textDocument/rename` wants every edit
  * up front as one `WorkspaceEdit`, rather than a list of spans the client
  * fills in with the new name itself, so `newName` is applied here.
  *

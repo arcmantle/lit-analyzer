@@ -1,10 +1,12 @@
 import type tsModule from 'typescript';
-import { JSDoc, JSDocParameterTag, JSDocTag, JSDocTypeTag, Node, Program, type Type, type TypeChecker, TypeFlags } from 'typescript';
+import { type Diagnostic, JSDoc, JSDocParameterTag, JSDocTag, JSDocTypeTag, Node, Program, type SourceFile, type Type, type TypeChecker, TypeFlags } from 'typescript';
 
 import { arrayDefined } from '../../util/array-util.js';
 import { JsDoc, JsDocTag, JsDocTagParsed } from '../types/js-doc.js';
 import { getLeadingCommentForNode } from './ast-util.js';
 import { lazy } from './lazy.js';
+
+const DIAGNOSTICS_BY_PROGRAM: WeakMap<Program, WeakMap<SourceFile, readonly Diagnostic[]>> = new WeakMap();
 
 /**
  * Returns typescript jsdoc node for a given node
@@ -303,10 +305,20 @@ function hasOverlappingDiagnostic(program: Program, node: Node): boolean {
 	const sourceFile = node.getSourceFile();
 	const nodeStart = node.getStart(sourceFile);
 	const nodeEnd = node.getEnd();
-	const diagnostics = [
-		...program.getSyntacticDiagnostics(sourceFile),
-		...program.getSemanticDiagnostics(sourceFile),
-	];
+	let diagnosticsByFile = DIAGNOSTICS_BY_PROGRAM.get(program);
+	if (diagnosticsByFile == null) {
+		diagnosticsByFile = new WeakMap();
+		DIAGNOSTICS_BY_PROGRAM.set(program, diagnosticsByFile);
+	}
+
+	let diagnostics = diagnosticsByFile.get(sourceFile);
+	if (diagnostics == null) {
+		diagnostics = [
+			...program.getSyntacticDiagnostics(sourceFile),
+			...program.getSemanticDiagnostics(sourceFile),
+		];
+		diagnosticsByFile.set(sourceFile, diagnostics);
+	}
 
 	return diagnostics.some(diagnostic => {
 		if (diagnostic.start == null || diagnostic.length == null)
@@ -331,7 +343,7 @@ export function getJsDocType(
 	jsDoc: JsDoc,
 	context: { program: Program; ts: typeof tsModule; checker: TypeChecker; },
 	ownerNode?: Node,
-): Type | undefined {
+): ((checker: TypeChecker) => Type | undefined) | undefined {
 	if (jsDoc.tags != null) {
 		const typeTagIndex = jsDoc.tags.findIndex(t => t.tag === 'type');
 		const typeJsDocTag = typeTagIndex < 0 ? undefined : jsDoc.tags[typeTagIndex];
@@ -339,8 +351,15 @@ export function getJsDocType(
 		if (typeJsDocTag != null) {
 			const parsedJsDoc = typeJsDocTag.parsed();
 
-			if (parsedJsDoc.type != null)
-				return parseSimpleJsDocTypeExpression(parsedJsDoc.type, context, typeJsDocTag.node, ownerNode, typeTagIndex);
+			if (parsedJsDoc.type != null) {
+				return checker => parseSimpleJsDocTypeExpression(
+					parsedJsDoc.type!,
+					{ ...context, checker },
+					typeJsDocTag.node,
+					ownerNode,
+					typeTagIndex,
+				);
+			}
 		}
 	}
 }

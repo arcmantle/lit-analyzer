@@ -77,6 +77,24 @@ test('A component member type comes from the checker the caller gives it', () =>
 	expect(member.type!(checker)).toBe(checker.getTypeAtLocation(member.node));
 });
 
+test('A Lit property converter type remains valid after the program changes', () => {
+	const compiler = createAnalysisCompiler(TSCONFIG);
+	const context = new DefaultLitAnalyzerContext({ getProgram: () => compiler.getProgram() });
+	context.updateConfig(makeConfig({ rules: { 'no-incompatible-property-type': 'error' } }));
+	const analyzer = new LitAnalyzer(context);
+
+	const converterMessages = () => analyzer
+		.getDiagnosticsInFile(compiler.getProgram().getSourceFile(ELEMENT)!)
+		.filter(diagnostic => diagnostic.source === 'no-incompatible-property-type')
+		.map(diagnostic => diagnostic.message);
+
+	expect(converterMessages()).not.toContain("@property type should be 'Array' instead of 'Object'");
+
+	compiler.openDocument(CONSUMER, `${ readFileSync(CONSUMER, 'utf8') }\n`);
+
+	expect(converterMessages()).not.toContain("@property type should be 'Array' instead of 'Object'");
+});
+
 /** Builds an analyzed project and counts how often a tag is rebuilt after the first analysis. */
 function startProject() {
 	const compiler = createAnalysisCompiler(TSCONFIG);

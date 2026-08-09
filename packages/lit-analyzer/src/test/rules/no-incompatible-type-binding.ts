@@ -297,6 +297,22 @@ tsTest('Property binding: Boolean type expression is not assignable to boolean p
 	hasNoDiagnostics(t, diagnostics);
 });
 
+tsTest('Property binding: Untyped custom directive is allowed', t => {
+	const { diagnostics } = getDiagnostics(
+		'type DirectiveResult = {}; declare function customDirective(): DirectiveResult; '
+		+ 'html`<input .value="${customDirective()}" />`',
+	);
+	hasNoDiagnostics(t, diagnostics);
+});
+
+tsTest('Boolean binding: Untyped custom directive is allowed', t => {
+	const { diagnostics } = getDiagnostics(
+		'type DirectiveResult = {}; declare function customDirective(): DirectiveResult; '
+		+ 'html`<input ?required="${customDirective()}" />`',
+	);
+	hasNoDiagnostics(t, diagnostics);
+});
+
 tsTest("Attribute binding: 'ifDefined' directive correctly removes 'undefined' from the type union 1", t => {
 	const { diagnostics } = getDiagnostics('type ifDefined = Function; html`<input maxlength="${ifDefined({} as number \
 | undefined)}" />`');
@@ -434,6 +450,22 @@ tsTest('Property binding: a property of a free parameter type accepts a constrai
 function bind<U extends Base<string>>(value: U) {
 	return html\`<my-element .narrow="\${value}"></my-element>\`;
 }
+	`);
+
+	hasNoDiagnostics(t, diagnostics);
+});
+
+tsTest('Property binding: an inherited generic property uses the registered subclass type argument', t => {
+	const { diagnostics } = getDiagnostics(`
+interface Item { name: string; }
+class BaseElement<T> extends HTMLElement {
+	values!: T[];
+}
+class ConcreteElement extends BaseElement<Item> {}
+customElements.define('concrete-element', ConcreteElement);
+
+const values: Item[] = [];
+html\`<concrete-element .values="\${values}"></concrete-element>\`;
 	`);
 
 	hasNoDiagnostics(t, diagnostics);

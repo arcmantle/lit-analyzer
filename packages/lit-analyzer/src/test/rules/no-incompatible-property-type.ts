@@ -122,6 +122,26 @@ tsTest("'no-incompatible-property-type' is not emitted for array types with Arra
 	hasNoDiagnostics(t, diagnostics);
 });
 
+tsTest("'no-incompatible-property-type' is not emitted for named array element types with Array configuration", t => {
+	const { diagnostics } = getDiagnostics(
+		`
+	interface FormField {
+		name: string;
+	}
+
+	/**
+	 * @element
+	 */
+	class MyElement extends LitElement {
+		@property({type: Array}) viewers: FormField[] = [];
+	}
+	`,
+		{ rules: { 'no-incompatible-property-type': 'on' } },
+	);
+
+	hasNoDiagnostics(t, diagnostics);
+});
+
 tsTest("'no-incompatible-property-type' is not emitted for object types with Object configuration", t => {
 	const { diagnostics } = getDiagnostics(
 		`

@@ -1,9 +1,15 @@
+import type { Program, Type, TypeChecker } from 'typescript';
+import type tsModule from 'typescript';
+import type { ComponentMember } from '@arcmantle/web-component-analyzer';
 import { AnalyzerResult, ComponentDeclaration, ComponentDefinition, ComponentFeatures } from '@arcmantle/web-component-analyzer';
 
+import { litAttributeNameFromDeclarationMap } from './lit-attribute-name-from-declaration-map.js';
 import { HtmlDataCollection, HtmlDataFeatures, type HtmlProp, HtmlTag } from './parse-html-data/html-tag.js';
 
 export interface AnalyzeResultConversionOptions {
 	addDeclarationPropertiesAsAttributes?: boolean;
+	program?:                              Program;
+	ts?:                                   typeof tsModule;
 }
 
 export function convertAnalyzeResultToHtmlCollection(
@@ -26,7 +32,7 @@ export function convertAnalyzeResultToHtmlCollection(
 export function convertComponentDeclarationToHtmlTag(
 	declaration: ComponentDeclaration | undefined,
 	definition: ComponentDefinition | undefined,
-	{ addDeclarationPropertiesAsAttributes }: AnalyzeResultConversionOptions,
+	{ addDeclarationPropertiesAsAttributes, program, ts }: AnalyzeResultConversionOptions,
 ): HtmlTag {
 	const tagName = definition?.tagName ?? '';
 
@@ -50,7 +56,7 @@ export function convertComponentDeclarationToHtmlTag(
 		tagName,
 		builtIn,
 		description: declaration.jsDoc?.description,
-		...convertComponentFeaturesToHtml(declaration, { builtIn, fromTagName: tagName }),
+		...convertComponentFeaturesToHtml(declaration, { builtIn, declaration, fromTagName: tagName }),
 	};
 
 	if (addDeclarationPropertiesAsAttributes && !builtIn) {
@@ -60,9 +66,16 @@ export function convertComponentDeclarationToHtmlTag(
 				&& htmlProp.declaration.attrName == null
 				&& htmlProp.declaration.node.getSourceFile().isDeclarationFile
 			) {
+				const configuredAttributeName = program == null || ts == null
+					? undefined
+					: litAttributeNameFromDeclarationMap(htmlProp.declaration, program, ts);
+				if (configuredAttributeName === false)
+					continue;
+
 				htmlTag.attributes.push({
 					...htmlProp,
 					kind: 'attribute',
+					name: configuredAttributeName ?? htmlProp.name,
 				});
 			}
 		}
@@ -73,7 +86,7 @@ export function convertComponentDeclarationToHtmlTag(
 
 export function convertComponentFeaturesToHtml(
 	features: ComponentFeatures,
-	{ builtIn, fromTagName }: { builtIn?: boolean; fromTagName?: string; },
+	{ builtIn, declaration, fromTagName }: { builtIn?: boolean; declaration?: ComponentDeclaration; fromTagName?: string; },
 ): HtmlDataFeatures {
 	const result: HtmlDataFeatures = {
 		attributes:    [],
@@ -162,14 +175,7 @@ export function convertComponentFeaturesToHtml(
 		const base = {
 			declaration: member,
 			description: member.jsDoc?.description,
-			getType:     checker => {
-				const type = member.type?.(checker);
-
-				if (type == null)
-					return checker.getAnyType();
-
-				return type;
-			},
+			getType:     checker => getMemberType(member, declaration, checker),
 			builtIn,
 			fromTagName,
 		} satisfies Partial<HtmlProp>;
@@ -194,4 +200,15 @@ export function convertComponentFeaturesToHtml(
 	}
 
 	return result;
+}
+
+function getMemberType(member: ComponentMember, declaration: ComponentDeclaration | undefined, checker: TypeChecker): Type {
+	if (member.kind === 'property' && declaration?.symbol != null) {
+		const declarationType = checker.getDeclaredTypeOfSymbol(declaration.symbol);
+		const memberSymbol = checker.getPropertyOfType(declarationType, member.propName);
+		if (memberSymbol != null)
+			return checker.getTypeOfSymbolAtLocation(memberSymbol, declaration.node);
+	}
+
+	return member.type?.(checker) ?? checker.getAnyType();
 }

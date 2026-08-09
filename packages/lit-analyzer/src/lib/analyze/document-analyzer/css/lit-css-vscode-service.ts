@@ -1,6 +1,7 @@
 import type * as vscodeTypes from 'vscode-css-languageservice';
-import * as vscodeNs from 'vscode-css-languageservice';
-import { IAtDirectiveData, ICSSDataProvider, IPropertyData, IPseudoClassData, IPseudoElementData } from 'vscode-css-languageservice';
+import { getCSSLanguageService, getSCSSLanguageService, IAtDirectiveData, ICSSDataProvider, IPropertyData, IPseudoClassData, IPseudoElementData } from 'vscode-css-languageservice';
+import { TextDocument } from 'vscode-languageserver-textdocument';
+import { CompletionItemKind, DiagnosticSeverity } from 'vscode-languageserver-types';
 
 import { isRuleDisabled } from '../../lit-analyzer-config.js';
 import { LitAnalyzerContext } from '../../lit-analyzer-context.js';
@@ -17,13 +18,8 @@ import { getPositionContextInDocument, grabWordInDirection } from '../../util/ge
 import { iterableFilter, iterableMap } from '../../util/iterable-util.js';
 import { documentRangeToSFRange } from '../../util/range-util.js';
 
-// Node resolves the CommonJS build and exposes only part of it as named ESM
-// exports, so runtime values come off the whole `module.exports`. Bundlers
-// resolve the real ESM build instead, where the namespace already has them all.
-const vscode = (vscodeNs as unknown as Record<string, typeof vscodeNs>)['default'] ?? vscodeNs;
-
 function makeVscTextDocument(cssDocument: CssDocument): vscodeTypes.TextDocument {
-	return vscode.TextDocument.create('untitled://embedded.css', 'css', 1, cssDocument.virtualDocument.text);
+	return TextDocument.create('untitled://embedded.css', 'css', 1, cssDocument.virtualDocument.text);
 }
 
 export class LitCssVscodeService {
@@ -31,11 +27,11 @@ export class LitCssVscodeService {
 	private dataProvider = new LitVscodeCSSDataProvider();
 
 	private get cssService() {
-		return vscode.getCSSLanguageService({ customDataProviders: [ this.dataProvider.provider ] });
+		return getCSSLanguageService({ customDataProviders: [ this.dataProvider.provider ] });
 	}
 
 	private get scssService() {
-		return vscode.getSCSSLanguageService({ customDataProviders: [ this.dataProvider.provider ] });
+		return getSCSSLanguageService({ customDataProviders: [ this.dataProvider.provider ] });
 	}
 
 	getDiagnostics(document: CssDocument, context: LitAnalyzerContext): LitDiagnostic[] {
@@ -61,7 +57,7 @@ export class LitCssVscodeService {
 			.map(
 				diagnostic =>
 					({
-						severity: diagnostic.severity === vscode.DiagnosticSeverity.Error ? 'error' : 'warning',
+						severity: diagnostic.severity === DiagnosticSeverity.Error ? 'error' : 'warning',
 						source:   'no-invalid-css',
 						location: documentRangeToSFRange(document, {
 							start: vscTextDocument.offsetAt(diagnostic.range.start),
@@ -144,7 +140,7 @@ export class LitCssVscodeService {
 					kind:          i.kind == null ? 'unknown' : translateCompletionItemKind(i.kind),
 					name:          i.label,
 					insert:        i.label, //replacePrefix(i.label, positionContext.leftWord),
-					kindModifiers: i.kind === vscode.CompletionItemKind.Color ? 'color' : undefined,
+					kindModifiers: i.kind === CompletionItemKind.Color ? 'color' : undefined,
 					documentation: lazy(() =>
 						(typeof i.documentation === 'string' || i.documentation == null ? i.documentation : i.documentation.value)),
 					sortText: i.sortText,
@@ -203,38 +199,38 @@ export class LitCssVscodeService {
 
 function translateCompletionItemKind(kind: vscodeTypes.CompletionItemKind): LitTargetKind {
 	switch (kind) {
-	case vscode.CompletionItemKind.Method:
+	case CompletionItemKind.Method:
 		return 'memberFunctionElement';
-	case vscode.CompletionItemKind.Function:
+	case CompletionItemKind.Function:
 		return 'functionElement';
-	case vscode.CompletionItemKind.Constructor:
+	case CompletionItemKind.Constructor:
 		return 'constructorImplementationElement';
-	case vscode.CompletionItemKind.Field:
-	case vscode.CompletionItemKind.Variable:
+	case CompletionItemKind.Field:
+	case CompletionItemKind.Variable:
 		return 'variableElement';
-	case vscode.CompletionItemKind.Class:
+	case CompletionItemKind.Class:
 		return 'classElement';
-	case vscode.CompletionItemKind.Interface:
+	case CompletionItemKind.Interface:
 		return 'interfaceElement';
-	case vscode.CompletionItemKind.Module:
+	case CompletionItemKind.Module:
 		return 'moduleElement';
-	case vscode.CompletionItemKind.Property:
+	case CompletionItemKind.Property:
 		return 'memberVariableElement';
-	case vscode.CompletionItemKind.Unit:
-	case vscode.CompletionItemKind.Value:
+	case CompletionItemKind.Unit:
+	case CompletionItemKind.Value:
 		return 'constElement';
-	case vscode.CompletionItemKind.Enum:
+	case CompletionItemKind.Enum:
 		return 'enumElement';
-	case vscode.CompletionItemKind.Keyword:
+	case CompletionItemKind.Keyword:
 		return 'keyword';
-	case vscode.CompletionItemKind.Color:
+	case CompletionItemKind.Color:
 		return 'constElement';
-	case vscode.CompletionItemKind.Reference:
+	case CompletionItemKind.Reference:
 		return 'alias';
-	case vscode.CompletionItemKind.File:
+	case CompletionItemKind.File:
 		return 'moduleElement';
-	case vscode.CompletionItemKind.Snippet:
-	case vscode.CompletionItemKind.Text:
+	case CompletionItemKind.Snippet:
+	case CompletionItemKind.Text:
 	default:
 		return 'unknown';
 	}

@@ -1,4 +1,4 @@
-import { Type, TypeFlags } from 'typescript';
+import { Type, TypeChecker, TypeFlags } from 'typescript';
 
 import { RuleModuleContext } from '../../../analyze/types/rule/rule-module-context.js';
 import { isUnionType } from './type-utils.js';
@@ -11,6 +11,23 @@ export function isAssignableToType(
 	const checker = context.program.getTypeChecker();
 	if (hasFreeTypeParameter(typeA))
 		return true;
+
+	if (context.file.fileName.endsWith('.js'))
+		return isAssignableInJavaScriptFile(typeA, typeB, checker);
+
+	return checker.isTypeAssignableTo(typeB, typeA);
+}
+
+function isAssignableInJavaScriptFile(
+	typeA: Type,
+	typeB: Type,
+	checker: TypeChecker,
+): boolean {
+	if (isUnionType(typeB))
+		return typeB.types.every(member => isAssignableInJavaScriptFile(typeA, member, checker));
+
+	if ((typeB.flags & (TypeFlags.Null | TypeFlags.Undefined)) !== 0)
+		return (typeA.flags & TypeFlags.Never) === 0;
 
 	return checker.isTypeAssignableTo(typeB, typeA);
 }

@@ -25,7 +25,24 @@ export interface Observations {
 		propertyLabels: string[];
 	};
 	languageServer: {
-		runsByDefault: boolean;
+		runsByDefault:    boolean;
+		runsAfterRestart: boolean;
+	};
+	selectedTypeScriptSdk: {
+		configuredDirectory:            string | null;
+		virtualLibraryContainsProperty: boolean;
+		definitionScheme:               string | null;
+		definitionLine:                 string | null;
+	};
+	virtualTypeScriptLibrary: {
+		scheme:            string;
+		languageId:        string;
+		selectorScore:     number;
+		containsDomType:   boolean;
+		diagnostics:       string[];
+		definitionSchemes: string[];
+		definition:        { scheme: string; lineText: string; } | null;
+		hoverText:         string;
 	};
 }
 
@@ -176,8 +193,98 @@ async function observeLanguageServer(): Promise<Observations['languageServer']> 
 	// The language server is the extension's only path now: it starts on
 	// activation, with no setting to gate it.
 	const runsByDefault = (await waitForLanguageServerState(getState, State.Running)) === State.Running;
+	await Promise.all([
+		vscode.commands.executeCommand('lit-plugin.restartLanguageServer'),
+		vscode.commands.executeCommand('lit-plugin.restartLanguageServer'),
+	]);
+	const runsAfterRestart = (await waitForLanguageServerState(getState, State.Running)) === State.Running;
 
-	return { runsByDefault };
+	return { runsByDefault, runsAfterRestart };
+}
+
+async function observeSelectedTypeScriptSdk(): Promise<Observations['selectedTypeScriptSdk']> {
+	const { doc } = await openFixture('selected-typescript-sdk.ts');
+	const marker = 'selected TypeScript SDK';
+	const libraryDocument = await vscode.workspace.openTextDocument(vscode.Uri.parse('lit-analyzer-lib:/lib.dom.d.ts'));
+	const position = doc.positionAt(doc.getText().indexOf('title=') + 1);
+	const definitions = await vscode.commands.executeCommand<(vscode.Location | vscode.LocationLink)[]>(
+		'vscode.executeDefinitionProvider',
+	doc.uri,
+	position,
+	);
+	const definition = definitions?.[0];
+	const targetUri = definition == null
+		? undefined
+		: 'targetUri' in definition ? definition.targetUri : definition.uri;
+	const targetRange = definition == null
+		? undefined
+		: 'targetRange' in definition ? definition.targetRange : definition.range;
+	const targetDocument = targetUri == null ? undefined : await vscode.workspace.openTextDocument(targetUri);
+
+	return {
+		configuredDirectory:            vscode.workspace.getConfiguration('lit-plugin').get<string>('typescript.tsdk') ?? null,
+		virtualLibraryContainsProperty: libraryDocument.getText().includes(marker),
+		definitionScheme:               targetUri?.scheme ?? null,
+		definitionLine:                 targetDocument == null || targetRange == null
+			? null
+			: targetDocument.lineAt(targetRange.start.line).text,
+	};
+}
+
+async function observeVirtualTypeScriptLibrary(): Promise<Observations['virtualTypeScriptLibrary']> {
+	const document = await vscode.workspace.openTextDocument(vscode.Uri.parse('lit-analyzer-lib:/lib.dom.d.ts'));
+	await vscode.window.showTextDocument(document);
+	for (let attempt = 0; attempt < 100 && document.languageId !== 'lit-analyzer-typescript-library'; attempt++)
+		await new Promise(resolve => setTimeout(resolve, 10));
+	const reference = 'interface HTMLAnchorElement extends HTMLElement';
+	const referenceOffset = document.getText().indexOf(reference) + reference.lastIndexOf('HTMLElement');
+	const definitions = await vscode.commands.executeCommand<(vscode.Location | vscode.LocationLink)[]>(
+		'vscode.executeDefinitionProvider',
+	document.uri,
+	document.positionAt(referenceOffset),
+	);
+	const hovers = await vscode.commands.executeCommand<vscode.Hover[]>(
+		'vscode.executeHoverProvider',
+		document.uri,
+		document.positionAt(referenceOffset),
+	);
+	const firstDefinition = definitions?.[0];
+	const targetUri = firstDefinition == null
+		? undefined
+		: 'targetUri' in firstDefinition
+			? firstDefinition.targetUri
+			: firstDefinition.uri;
+
+	const targetRange = firstDefinition == null
+		? undefined
+		: 'targetRange' in firstDefinition
+			? firstDefinition.targetRange
+			: firstDefinition.range;
+
+	const targetDocument = targetUri == null
+		? undefined
+		: await vscode.workspace.openTextDocument(targetUri);
+
+	return {
+		scheme:        document.uri.scheme,
+		languageId:    document.languageId,
+		selectorScore: vscode.languages.match(
+			{
+				scheme:   'lit-analyzer-lib',
+				language: 'lit-analyzer-typescript-library',
+			},
+			document,
+		),
+		containsDomType:   document.getText().includes('interface HTMLElement'),
+		diagnostics:       vscode.languages.getDiagnostics(document.uri).map(diagnostic => diagnostic.message),
+		definitionSchemes: (definitions ?? []).map(definition =>
+			('targetUri' in definition ? definition.targetUri : definition.uri).scheme),
+		definition: targetDocument == null || targetRange == null
+			? null
+			: { scheme: targetDocument.uri.scheme, lineText: targetDocument.lineAt(targetRange.start.line).text },
+		hoverText: (hovers ?? []).flatMap(hover => hover.contents).map(content =>
+			typeof content === 'string' ? content : content.value).join('\n'),
+	};
 }
 
 /**
@@ -188,13 +295,14 @@ export async function run(): Promise<void> {
 	if (outputPath == null)
 		throw new Error('LIT_PLUGIN_OBSERVATIONS must point at the file to write observations to');
 
-
 	const observations: Observations = {
 		installedExtensionIds:         vscode.extensions.all.map(extension => extension.id),
 		missingElementTypeDiagnostics: await observeMissingElementType(),
 		missingImport:                 await observeMissingImport(),
 		completions:                   await observeCompletions(),
 		languageServer:                await observeLanguageServer(),
+		selectedTypeScriptSdk:         await observeSelectedTypeScriptSdk(),
+		virtualTypeScriptLibrary:      await observeVirtualTypeScriptLibrary(),
 	};
 
 	fs.writeFileSync(outputPath, JSON.stringify(observations), 'utf8');

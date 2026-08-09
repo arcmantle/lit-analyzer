@@ -3,9 +3,7 @@ import { CompletionItem, MarkupKind } from 'vscode-languageserver/node';
 
 /**
  * Fills in an already-returned `CompletionItem`'s documentation from
- * lit-analyzer's own `LitCompletionDetails`, mirroring what `ts-lit-plugin`'s
- * `translate-completion-details.ts` does for the tsserver plugin's
- * `CompletionEntryDetails` -- except LSP renders markdown directly, so
+ * lit-analyzer's own `LitCompletionDetails`. LSP renders markdown directly, so
  * there's no `displayParts`/`documentation` split to reassemble: the
  * primary info renders as a code block, and the (already markdown)
  * secondary info follows it, the same split `translate-quick-info.ts` uses

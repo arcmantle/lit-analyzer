@@ -88,9 +88,6 @@ Two limits apply to an element that you get this way:
 The default severity of a rule depends on the `strict` option. Strict mode is off by default. Set
 the severity of any rule to `off`, `warning` or `error` with the `rules` option.
 
-The [full rule reference](https://github.com/arcmantle/lit-analyzer/blob/master/docs/readme/rules.md)
-gives an example for each rule.
-
 **Custom elements**
 
 | Rule | Description | Normal | Strict |
@@ -142,12 +139,9 @@ gives an example for each rule.
 
 Open `Settings` > `Extensions` > `lit-plugin2` to set an option.
 
-You can also set the same options in a `tsconfig.json` file. See
-[ts-lit-plugin](https://github.com/arcmantle/lit-analyzer/tree/master/packages/ts-lit-plugin) for the
-`tsconfig.json` form.
-
 | Option | Description | Type | Default |
 | :----- | :---------- | :--- | :------ |
+| `typescript.tsdk` | The TypeScript SDK `lib` directory. The path can be absolute or relative to the first workspace folder. Reload VS Code after you change it. | `string` | Bundled TypeScript |
 | `strict` | Changes which rules apply by default. | `boolean` | `false` |
 | `rules` | Sets the severity of one rule or more. Example: `{"no-unknown-tag-name": "off"}`. | `{ [rule]: "off" \| "warn" \| "error" }` | Depends on `strict` |
 | `disable` | Turns the extension off. | `boolean` | `false` |
@@ -189,16 +183,14 @@ customElements.define('my-element', MyElement);
 
 ## How this extension works
 
-Three libraries give the extension its features:
+The language server and two libraries give the extension its features:
 
-- [ts-lit-plugin](https://github.com/arcmantle/lit-analyzer/tree/master/packages/ts-lit-plugin) gives
-  the diagnostics, the completions and the type information, through the TypeScript language service.
+- `lit-language-server` provides diagnostics, completions, and type information.
 - [vscode-lit-html](https://github.com/mjbvz/vscode-lit-html) highlights the `html` template tag.
 - [vscode-styled-components](https://github.com/styled-components/vscode-styled-components) highlights
   the `css` template tag.
 
-This extension holds them together. It also copies the relevant VS Code settings into
-`ts-lit-plugin`.
+This extension starts the language server and sends it the relevant VS Code settings.
 
 Report a problem with syntax highlighting to the highlighting library. Report all other problems to
 [this repository](https://github.com/arcmantle/lit-analyzer/issues).

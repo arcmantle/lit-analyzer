@@ -4,8 +4,7 @@ import { Diagnostic, DiagnosticSeverity } from 'vscode-languageserver/node';
 
 /**
  * Translates lit-analyzer's own `LitDiagnostic[]` into LSP `Diagnostic[]`,
- * mirroring what `ts-lit-plugin`'s `translate-diagnostics.ts` does for the
- * tsserver plugin, so the two surfaces agree on severity, rule id and
+ * preserving severity, rule id and
  * message for the same file.
  */
 export function translateLitDiagnostics(

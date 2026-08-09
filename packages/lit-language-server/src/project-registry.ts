@@ -5,7 +5,6 @@ import type { HostCancellationToken } from 'typescript';
 
 import { type AnalysisCompiler, createAnalysisCompiler, createInferredAnalysisCompiler } from './analysis-compiler.js';
 import { createLitAnalyzer, type LitAnalyzerHandle } from './analyzer.js';
-import { hasLegacyPluginEntry } from './legacy-tsconfig-plugin.js';
 import { findNearestTsconfig } from './tsconfig-file.js';
 
 /** A single TypeScript project's analysis compiler and the `LitAnalyzer` wired to it. */
@@ -107,16 +106,9 @@ export function createProjectRegistry(host: ProjectRegistryHost): ProjectRegistr
 
 	function bootProject(tsconfigPath: string): TrackedProject | undefined {
 		try {
-			const compiler = createAnalysisCompiler(tsconfigPath);
-			const litAnalyzerHandle = createLitAnalyzer(compiler, host.getCancellationToken);
+			const compiler = createAnalysisCompiler(tsconfigPath, host.log);
+			const litAnalyzerHandle = createLitAnalyzer(compiler, host.getCancellationToken, host.log);
 			host.log(`lit-language-server sees ${ compiler.getRootFileNames().length } source file(s) via ${ tsconfigPath }`);
-
-			if (hasLegacyPluginEntry(compiler.getCompilerOptions())) {
-				host.logError(
-					`lit-language-server: ${ tsconfigPath } still configures lit through the old "ts-lit-plugin" tsconfig \
-plugin entry. This is no longer read -- move your rule configuration to lit-analyzer.config.json.`,
-				);
-			}
 
 			return { tsconfigPath, compiler, litAnalyzerHandle, watcher: undefined };
 		}
@@ -138,8 +130,8 @@ plugin entry. This is no longer read -- move your rule configuration to lit-anal
 	 */
 	function bootInferredProject(fileName: string): Project | undefined {
 		try {
-			const compiler = createInferredAnalysisCompiler(fileName);
-			const litAnalyzerHandle = createLitAnalyzer(compiler, host.getCancellationToken);
+			const compiler = createInferredAnalysisCompiler(fileName, host.log);
+			const litAnalyzerHandle = createLitAnalyzer(compiler, host.getCancellationToken, host.log);
 			host.log(`lit-language-server found no tsconfig.json above ${ fileName }; using an inferred project for just this file`);
 
 			return { tsconfigPath: fileName, compiler, litAnalyzerHandle };

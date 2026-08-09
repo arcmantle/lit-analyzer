@@ -59,7 +59,7 @@ describe('lit-language-server tracks unsaved document content', () => {
 		expect(afterEdit.diagnostics.map(d => d.code)).toContain('no-noncallable-event-binding');
 	});
 
-	test('closing a document without saving republishes diagnostics computed from disk content', async () => {
+	test('closing a document clears its diagnostics without analyzing it again', async () => {
 		const client = connectToServer();
 		const published: PublishDiagnosticsParams[] = [];
 		client.onNotification('textDocument/publishDiagnostics', (params: PublishDiagnosticsParams) => {
@@ -78,9 +78,10 @@ describe('lit-language-server tracks unsaved document content', () => {
 		await waitForPublishCount(published, 2);
 		expect(published[1].diagnostics).toHaveLength(0);
 
-		// Closed without saving -- the on-disk file still has the error.
+		// A closed document no longer needs diagnostics. Other open documents
+		// that depend on it are reanalyzed separately against disk content.
 		await client.sendNotification('textDocument/didClose', { textDocument: { uri } });
 		await waitForPublishCount(published, 3);
-		expect(published[2].diagnostics.map(d => d.code)).toContain('no-noncallable-event-binding');
+		expect(published[2].diagnostics).toEqual([]);
 	});
 });

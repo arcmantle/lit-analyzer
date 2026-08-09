@@ -53,6 +53,7 @@
 	},
 	"activationEvents": [
 		"onCommand:lit-plugin.analyze",
+		"onCommand:lit-plugin.restartLanguageServer",
 		"onLanguage:javascript",
 		"onLanguage:javascriptreact",
 		"onLanguage:typescript",
@@ -65,10 +66,22 @@
 		}
 	],
 	"contributes": {
+		"languages": [
+			{
+				"id": "lit-analyzer-typescript-library",
+				"aliases": [
+					"Lit Analyzer TypeScript Library"
+				]
+			}
+		],
 		"commands": [
 			{
 				"command": "lit-plugin.analyze",
 				"title": "Analyze lit-html templates"
+			},
+			{
+				"command": "lit-plugin.restartLanguageServer",
+				"title": "Lit Analyzer: Restart Language Server"
 			}
 		],
 		"configuration": [
@@ -76,6 +89,11 @@
 				"id": "lit-plugin",
 				"title": "lit-plugin",
 				"properties": {
+					"lit-plugin.typescript.tsdk": {
+						"type": "string",
+						"description": "Specifies the directory that contains the TypeScript SDK, such as node_modules/typescript/lib. Relative paths resolve from the first workspace folder. Reload the VS Code window after changing this setting.",
+						"scope": "machine-overridable"
+					},
 					"lit-plugin.disable": {
 						"type": "boolean",
 						"description": "Completely disable this plugin.",
@@ -601,17 +619,12 @@
 				}
 			}
 		],
-		"jsonValidation": [
-			{
-				"fileMatch": "jsconfig*.json",
-				"url": "./schemas/tsconfig.schema.json"
-			},
-			{
-				"fileMatch": "tsconfig*.json",
-				"url": "./schemas/tsconfig.schema.json"
-			}
-		],
 		"grammars": [
+			{
+				"language": "lit-analyzer-typescript-library",
+				"scopeName": "source.lit-analyzer-typescript-library",
+				"path": "./syntaxes/typescript-library.json"
+			},
 			{
 				"injectTo": [
 					"source.js",

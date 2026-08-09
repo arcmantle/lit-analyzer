@@ -29,6 +29,7 @@ export interface LitAnalyzerContext {
 	readonly currentRunningTime:      number;
 	readonly isCancellationRequested: boolean;
 
+	log?(message: string): void;
 	updateConfig(config: LitAnalyzerConfig): void;
 	updateDependencies(file: SourceFile): void;
 	updateComponents(file: SourceFile): void;
@@ -54,4 +55,6 @@ export interface LitPluginContextHandler {
 	 * `MAX_RUNNING_TIME_PER_OPERATION` wall-clock fallback.
 	 */
 	getCancellationToken?(): HostCancellationToken;
+	/** Sends host-specific diagnostic telemetry without writing to process stdout. */
+	log?(message: string): void;
 }

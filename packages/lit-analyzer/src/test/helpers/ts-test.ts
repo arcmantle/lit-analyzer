@@ -2,8 +2,6 @@ import { dirname } from 'path';
 import * as tsModule from 'typescript';
 import { expect, test } from 'vitest';
 
-import { setTypescriptModule } from '../../lib/analyze/ts-module.js';
-
 /**
  * The assertions the tests use.
  *
@@ -59,13 +57,7 @@ export function getCurrentTsModuleDirectory(): string {
  */
 function wrapTest(testFunction: TestFunction): TestFunction {
 	return (title, implementation) => {
-		testFunction(title, () => {
-			// Temporarily set the "typescript" module for helper functions to use
-			// Remove this line after refactoring away the global "tsModule.ts"
-			setTypescriptModule(getCurrentTsModule());
-
-			return implementation(testContext);
-		});
+		testFunction(title, () => implementation(testContext));
 	};
 }
 

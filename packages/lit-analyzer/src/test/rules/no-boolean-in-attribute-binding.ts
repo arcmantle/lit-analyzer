@@ -13,6 +13,14 @@ tsTest('Non-boolean-binding with a boolean type expression is not valid', t => {
 	hasDiagnostic(t, diagnostics, 'no-boolean-in-attribute-binding');
 });
 
+tsTest('Non-boolean-binding with a boolean-containing union is not valid', t => {
+	const { diagnostics } = getDiagnostics(
+		'declare const value: boolean | string; html`<input maxlength="${value}" />`',
+		{ rules: { 'no-boolean-in-attribute-binding': true } },
+	);
+	hasDiagnostic(t, diagnostics, 'no-boolean-in-attribute-binding');
+});
+
 tsTest('Non-boolean-binding on a boolean type attribute with a non-boolean type expression is not valid', t => {
 	const { diagnostics } = getDiagnostics('html`<input required="${{} as string}" \
 />`', { rules: { 'no-boolean-in-attribute-binding': true } });

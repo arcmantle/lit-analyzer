@@ -1,4 +1,4 @@
-<!-- ⚠️ This README has been generated from the file(s) "readme.blueprint.md" ⚠️--><h1 align="center">lit-analyzer</h1>
+<h1 align="center">lit-analyzer</h1>
 <p align="center">
   <b>CLI that type checks bindings in lit-html templates</b></br>
   <sub><sub>
@@ -29,7 +29,6 @@ npm install lit-analyzer -g
 **Note:**
 
 - If you use Visual Studio Code you can also install the [lit-plugin](https://marketplace.visualstudio.com/items?itemName=runem.lit-plugin) extension.
-- If you use Typescript you can also install [ts-lit-plugin](https://github.com/runem/lit-analyzer/blob/master/packages/ts-lit-plugin).
 
 
 [![-----------------------------------------------------](https://raw.githubusercontent.com/andreasbm/readme/master/assets/lines/rainbow.png)](#usage)
@@ -58,15 +57,13 @@ You can configure the CLI with arguments:
 lit-analyzer --strict --rules.no-unknown-tag-name off --format markdown
 ```
 
-**Note:** You can also configure the CLI using a `tsconfig.json` file (see [ts-lit-plugin](https://github.com/runem/lit-analyzer/blob/master/packages/ts-lit-plugin)).
-
 ### Available arguments
 
 <!-- prettier-ignore -->
 | Option | Description | Type | Default |
 | :----- | ----------- | ---- | ------- |
 | `--help` | Print help message | `boolean` | |
-| `--rules.rule-name` | Enable or disable rules (example: --rules.no-unknown-tag-name off). Severity can be "off" \| "warn" \| "error". See a list of rules [here](https://github.com/runem/lit-analyzer/blob/master/docs/readme/rules.md). | `{"rule-name": "off" \| "warn" \| "error"}` |  |
+| `--rules.rule-name` | Enable or disable rules (example: --rules.no-unknown-tag-name off). Severity can be "off" \| "warn" \| "error". | `{"rule-name": "off" \| "warn" \| "error"}` |  |
 | `--strict` | Enable strict mode. This changes the default ruleset | `boolean` | |
 | `--format` | Change the format of how diagnostics are reported | `code` \| `list` \| `markdown` | code |
 | `--maxWarnings` | Fail only when the number of warnings is larger than this number | `number` | -1 |

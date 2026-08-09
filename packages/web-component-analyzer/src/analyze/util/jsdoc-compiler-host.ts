@@ -146,6 +146,7 @@ export interface JSDocLanguageServiceHost {
 
 export function createJSDocLanguageServiceHost(host: LanguageServiceHost, ts: typeof tsModule): JSDocLanguageServiceHost {
 	let virtualFiles: VirtualCompilerFile[] = [];
+	const recoveredTypesBySourceFile: WeakMap<SourceFile, readonly RecoveredJSDocType[]> = new WeakMap();
 
 	const augmentedHost: LanguageServiceHost = {
 		...host,
@@ -178,18 +179,15 @@ export function createJSDocLanguageServiceHost(host: LanguageServiceHost, ts: ty
 			const checker = program.getTypeChecker();
 			const nextVirtualFiles = host.getScriptFileNames()
 				.map(fileName => {
-					const snapshot = host.getScriptSnapshot(fileName);
-					if (snapshot == null)
+					const sourceFile = program.getSourceFile(fileName);
+					if (sourceFile == null)
 						return undefined;
 
-					const sourceFile = createSourceFile(
-						fileName,
-						snapshot.getText(0, snapshot.getLength()),
-						program.getCompilerOptions().target ?? ScriptTarget.Latest,
-						true,
-						fileName.endsWith('.js') ? ScriptKind.JS : ScriptKind.TS,
-					);
-					const recoveredTypes = scanRecoveredJSDocTypes(sourceFile, ts);
+					let recoveredTypes = recoveredTypesBySourceFile.get(sourceFile);
+					if (recoveredTypes == null) {
+						recoveredTypes = sourceFile.text.includes('@') ? scanRecoveredJSDocTypes(sourceFile, ts) : [];
+						recoveredTypesBySourceFile.set(sourceFile, recoveredTypes);
+					}
 					if (recoveredTypes.length === 0 || host.fileExists?.(`${ fileName }.__lit_jsdoc__.d.ts`))
 						return undefined;
 

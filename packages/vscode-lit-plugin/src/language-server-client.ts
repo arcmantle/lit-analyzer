@@ -2,6 +2,8 @@ import * as path from 'path';
 import * as vscode from 'vscode';
 import { LanguageClient, LanguageClientOptions, ServerOptions, State, TransportKind } from 'vscode-languageclient/node';
 
+import { TYPESCRIPT_SDK_ENVIRONMENT_VARIABLE } from './typescript-sdk.js';
+import { VisibleDocumentSynchronization } from './visible-document-synchronization.js';
 import { filterExplicitLitPluginSettings } from './workspace-settings-filter.js';
 
 const configurationSection = 'lit-plugin';
@@ -9,6 +11,7 @@ const configurationSection = 'lit-plugin';
 /** Lets tests observe the client's lifecycle without reaching into the module's internals. */
 export interface LanguageServerHandle {
 	getState(): State;
+	restart(): Promise<void>;
 }
 
 /**
@@ -31,13 +34,30 @@ export interface LanguageServerHandle {
  * filter.ts` does that filtering, the same way the old `api.configurePlugin`
  * path did with `WorkspaceConfiguration.inspect`.
  */
-export function registerLanguageServer(context: vscode.ExtensionContext): LanguageServerHandle {
-	const serverModule = context.asAbsolutePath(path.join('server', 'main.js'));
+export function registerLanguageServer(context: vscode.ExtensionContext, typescriptSdkDirectory?: string): LanguageServerHandle {
+	const serverModule = context.asAbsolutePath(path.join('server', 'bootstrap.js'));
+	const options = typescriptSdkDirectory == null
+		? undefined
+		: { env: { ...process.env, [TYPESCRIPT_SDK_ENVIRONMENT_VARIABLE]: typescriptSdkDirectory } };
 
 	const serverOptions: ServerOptions = {
-		run:   { module: serverModule, transport: TransportKind.stdio },
-		debug: { module: serverModule, transport: TransportKind.stdio },
+		run:   { module: serverModule, transport: TransportKind.stdio, options },
+		debug: { module: serverModule, transport: TransportKind.stdio, options },
 	};
+	const outputChannel = vscode.window.createOutputChannel('lit-language-server', { log: true });
+	const visibleDocumentSynchronization: VisibleDocumentSynchronization<vscode.TextDocument>
+		= new VisibleDocumentSynchronization(
+			document => vscode.window.visibleTextEditors
+				.some(editor => editor.document.uri.toString() === document.uri.toString()),
+		);
+
+	context.subscriptions.push(vscode.window.onDidChangeVisibleTextEditors(editors => {
+		for (const editor of editors) {
+			void visibleDocumentSynchronization.didBecomeVisible(editor.document).catch(error => {
+				outputChannel.error(`Failed to synchronize visible document ${ editor.document.uri.toString() }: ${ String(error) }`);
+			});
+		}
+	}));
 
 	const clientOptions: LanguageClientOptions = {
 		documentSelector: [
@@ -46,10 +66,16 @@ export function registerLanguageServer(context: vscode.ExtensionContext): Langua
 			{ scheme: 'file', language: 'javascript' },
 			{ scheme: 'file', language: 'javascriptreact' },
 		],
+		textSynchronization: {
+			delayOpenNotifications: true,
+		},
 		synchronize: {
 			configurationSection,
 		},
 		middleware: {
+			didOpen:   (document, next) => visibleDocumentSynchronization.didOpen(document, next),
+			didChange: (event, next) => visibleDocumentSynchronization.didChange(event.document, () => next(event)),
+			didClose:  (document, next) => visibleDocumentSynchronization.didClose(document, next),
 			workspace: {
 				configuration: (params, token, next) => {
 					if (!params.items.every(item => item.section === configurationSection))
@@ -64,15 +90,23 @@ export function registerLanguageServer(context: vscode.ExtensionContext): Langua
 				},
 			},
 		},
-		outputChannel: vscode.window.createOutputChannel('lit-language-server', { log: true }),
+		outputChannel,
 	};
 
 	const client = new LanguageClient('lit-language-server', 'Lit Language Server', serverOptions, clientOptions);
+	const initialStart = client.start();
+	let restartPromise: Promise<void> | undefined;
 
-	void client.start();
 	context.subscriptions.push({ dispose: () => void client.stop() });
 
 	return {
 		getState: () => client.state,
+		restart:  () => {
+			restartPromise ??= initialStart
+				.then(() => client.restart())
+				.finally(() => restartPromise = undefined);
+
+			return restartPromise;
+		},
 	};
 }

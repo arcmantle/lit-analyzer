@@ -12,9 +12,9 @@ export interface LitAnalyzerHandle {
 /**
  * Builds a `LitAnalyzer` wired to the given analysis compiler's `Program`.
  *
- * `LitAnalyzerContext.project` is a tsserver-only `Project` used by the old
- * `ts-lit-plugin` path for cancellation and reading compiler options; it is
- * optional and left undefined here. Dependency resolution no longer looks
+ * `LitAnalyzerContext.project` is an optional tsserver-only `Project` for
+ * cancellation and reading compiler options. It is left undefined here.
+ * Dependency resolution no longer looks
  * at it at all -- `visit-dependencies.ts` resolves through the `Program`'s
  * own public `getResolvedModuleFromModuleSpecifier`/`getModuleResolutionCache`
  * APIs instead.
@@ -27,10 +27,12 @@ export interface LitAnalyzerHandle {
 export function createLitAnalyzer(
 	compiler: AnalysisCompiler,
 	getCancellationToken?: () => HostCancellationToken,
+	log?: (message: string) => void,
 ): LitAnalyzerHandle {
 	const context = new DefaultLitAnalyzerContext({
 		getProgram: () => compiler.getProgram(),
 		getCancellationToken,
+		log,
 	});
 	context.updateConfig(makeConfig({}));
 

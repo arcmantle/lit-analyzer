@@ -16,9 +16,8 @@ export interface LitCompletionItemData {
 }
 
 /**
- * Translates lit-analyzer's own `LitCompletion[]` into LSP `CompletionItem[]`,
- * mirroring what `ts-lit-plugin`'s `translate-completions.ts` does for the
- * tsserver plugin's `CompletionInfo`. Tag name, attribute, property, event,
+ * Translates lit-analyzer's own `LitCompletion[]` into LSP `CompletionItem[]`.
+ * Tag name, attribute, property, event,
  * slot, CSS part and CSS custom property completions all go through this
  * same translation -- `LitCompletion` doesn't distinguish between them.
  *
@@ -50,7 +49,7 @@ function translateCompletion(
 		// A CSS custom property completion with a color value (e.g.
 		// `--brand-color: #ff0000`) carries `kindModifiers: "color"`, which
 		// takes priority over the target-kind mapping below so the editor
-		// shows a color swatch, the same as `ts-lit-plugin`'s completions do.
+		// shows a color swatch.
 		kind:     kindModifiers === 'color' ? CompletionItemKind.Color : translateCompletionItemKind(kind),
 		sortText: sortText ?? (importance === 'high' ? '0' : importance === 'medium' ? '1' : '2'),
 		data,

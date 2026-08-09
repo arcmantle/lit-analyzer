@@ -2,6 +2,7 @@ import * as fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
+import * as ts from 'typescript';
 import { afterEach, describe, expect, test } from 'vitest';
 import type { Position } from 'vscode-languageserver/node';
 
@@ -14,6 +15,10 @@ const consumerPath = path.join(componentProjectDir, 'consumer.ts');
 const definitionProjectDir = path.join(fileURLToPath(new URL('.', import.meta.url)), 'fixtures', 'definition-project');
 const definitionComponentPath = path.join(definitionProjectDir, 'component.ts');
 const definitionConsumerPath = path.join(definitionProjectDir, 'consumer.ts');
+
+const libraryDefinitionProjectDir
+	= path.join(fileURLToPath(new URL('.', import.meta.url)), 'fixtures', 'library-definition-project');
+const libraryDefinitionConsumerPath = path.join(libraryDefinitionProjectDir, 'consumer.ts');
 
 let harness: ServerHarness | undefined;
 
@@ -54,6 +59,47 @@ describe('lit-language-server serves go-to-definition over LSP', () => {
 		expect(links).toHaveLength(1);
 		const [ link ] = links!;
 		expect(link.targetUri.endsWith('component.ts')).toBe(true);
+	});
+
+	test('definitions from native attributes land on their DOM properties', async () => {
+		harness = await startServer(componentProjectDir);
+
+		await harness.openFile(consumerPath);
+
+		const consumerText = fs.readFileSync(consumerPath, 'utf8');
+		for (const [ marker, propertyName ] of [
+			[ 'title="Native', 'title' ],
+			[ 'aria-label="Native', 'ariaLabel' ],
+			[ 'disabled class=', 'disabled' ],
+			[ 'class="Native', 'className' ],
+		] as const) {
+			const links = await harness.getDefinition(consumerPath, positionOf(consumerText, marker, 1));
+
+			expect(links, marker).not.toBeNull();
+			expect(links, marker).toHaveLength(1);
+			const [ link ] = links!;
+			expect(link.targetUri, marker).toBe('lit-analyzer-lib:/lib.dom.d.ts');
+
+			const targetText = fs.readFileSync(path.join(path.dirname(ts.getDefaultLibFilePath({})), 'lib.dom.d.ts'), 'utf8');
+			const targetLine = targetText.split('\n')[link.targetRange.start.line];
+			expect(targetLine, marker).toContain(`${ propertyName }:`);
+		}
+	});
+
+	test('definition from a library custom element follows its declaration map to source', async () => {
+		harness = await startServer(libraryDefinitionProjectDir);
+
+		await harness.openFile(libraryDefinitionConsumerPath);
+
+		const consumerText = fs.readFileSync(libraryDefinitionConsumerPath, 'utf8');
+		const position = positionOf(consumerText, '<library-element', 1);
+
+		const links = await harness.getDefinition(libraryDefinitionConsumerPath, position);
+
+		expect(links).not.toBeNull();
+		expect(links).toHaveLength(1);
+		const [ link ] = links!;
+		expect(fileURLToPath(link.targetUri)).toBe(path.join(libraryDefinitionProjectDir, 'library', 'src', 'component.ts'));
 	});
 
 	test('no definition at a position with nothing to define', async () => {

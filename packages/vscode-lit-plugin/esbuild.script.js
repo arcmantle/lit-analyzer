@@ -4,8 +4,6 @@ import * as esbuild from 'esbuild';
 // both are easy to lose:
 //
 // 1. `built/package.json` must say `"type": "module"`. copy-to-built.js sets it.
-//    The nested ts-lit-plugin package declares `"type": "commonjs"` for itself,
-//    so it is unaffected.
 // 2. The banner below. Bundled CommonJS dependencies still call `require` for
 //    Node builtins, and esbuild rewrites those to its own `__require` helper.
 //    That helper delegates to `require` when one is in scope and throws
@@ -47,4 +45,16 @@ await esbuild.build({
 	banner:      {
 		js: [ "import { createRequire as __createRequire } from 'node:module';", 'const require = __createRequire(import.meta.url);' ].join('\n'),
 	},
+});
+
+await esbuild.build({
+	entryPoints: [ '../lit-language-server/src/bootstrap.ts' ],
+	bundle:      true,
+	outfile:     'built/server/bootstrap.js',
+	platform:    'node',
+	minify:      true,
+	target:      'node24',
+	format:      'esm',
+	color:       true,
+	external:    [ './main.js' ],
 });

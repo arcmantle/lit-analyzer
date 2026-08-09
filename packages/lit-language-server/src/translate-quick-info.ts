@@ -3,9 +3,8 @@ import type * as ts from 'typescript';
 import { Hover, MarkupKind } from 'vscode-languageserver/node';
 
 /**
- * Translates lit-analyzer's own `LitQuickInfo` into an LSP `Hover`,
- * mirroring what `ts-lit-plugin`'s `translate-quick-info.ts` does for the
- * tsserver plugin's `QuickInfo` -- except LSP renders markdown directly,
+ * Translates lit-analyzer's own `LitQuickInfo` into an LSP `Hover`.
+ * LSP renders markdown directly,
  * so there's no `displayParts`/`documentation` split to reassemble: the
  * primary info renders as a code block, and the (already markdown)
  * secondary info follows it.

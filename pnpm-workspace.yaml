@@ -1,6 +1,5 @@
 packages:
   - packages/*
-  - internal/*
 
 catalog:
   # The one TypeScript in this repository. lit-analyzer builds a Program and
@@ -8,11 +7,6 @@ catalog:
   # host compiler for the playground project. Declared once so moving it is a
   # one-line change.
   typescript: ^6.0.3
-
-# `web-component-analyzer` is a workspace package now
-# (ADR_5DHSRF5RQ79S7ATW8V574YDD2X), so it declares `typescript: catalog:` and
-# `ts-simple-type: workspace:*` directly. The overrides that used to force those
-# on the registry copy are gone with it.
 
 allowBuilds:
   # Needed: esbuild's platform binary.

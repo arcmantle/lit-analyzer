@@ -1,7 +1,8 @@
 import { TypeFlags } from 'typescript';
 
 import { analyzeText } from '../../src/analyze/analyze-text.js';
-import { hasJSDocResolverDiagnostic } from '../../src/analyze/util/jsdoc-compiler-host.js';
+import { getJsDoc, parseSimpleJsDocTypeExpression } from '../../src/analyze/util/js-doc-util.js';
+import { createJSDocLanguageServiceHost, hasJSDocResolverDiagnostic } from '../../src/analyze/util/jsdoc-compiler-host.js';
 import { getCurrentTsModule, tsTest } from '../helpers/ts-test.js';
 
 tsTest('recovered JSDoc types resolve through an in-memory declaration file', t => {
@@ -116,6 +117,53 @@ tsTest('compiler-owned JSDoc type nodes do not create resolver files', t => {
 	}, { ts });
 
 	t.is(program.getSourceFile('component.ts.__lit_jsdoc__.d.ts'), undefined);
+});
+
+tsTest('language service JSDoc updates reuse parsed Program source files', t => {
+	const ts = getCurrentTsModule();
+	const { program } = analyzeText({
+		fileName: 'component.ts',
+		text:     '/** @type {string} */ const value = "";',
+	}, { ts });
+	const jsDocHost = createJSDocLanguageServiceHost({
+		getCompilationSettings: () => ({}),
+		getCurrentDirectory:    () => '',
+		getDefaultLibFileName:  () => '',
+		getScriptFileNames:     () => [ 'component.ts' ],
+		getScriptSnapshot:      () => {
+			throw new Error('The source snapshot was read');
+		},
+		getScriptVersion: () => '0',
+	}, ts);
+
+	t.is(jsDocHost.update(program), false);
+});
+
+tsTest('compiler-owned JSDoc type diagnostics are reused', t => {
+	const ts = getCurrentTsModule();
+	const { program } = analyzeText({
+		fileName: 'component.ts',
+		text:     `
+		/** @type {string} */
+		const value = '';
+		`,
+	}, { ts });
+	const sourceFile = program.getSourceFile('component.ts')!;
+	const declaration = sourceFile.statements[0];
+	const typeTag = getJsDoc(declaration, ts)!.tags![0];
+	const checker = program.getTypeChecker();
+	parseSimpleJsDocTypeExpression('string', { program, ts, checker }, typeTag.node, declaration, 0);
+
+	program.getSyntacticDiagnostics = () => {
+		throw new Error('Syntactic diagnostics were recalculated');
+	};
+	program.getSemanticDiagnostics = () => {
+		throw new Error('Semantic diagnostics were recalculated');
+	};
+
+	const type = parseSimpleJsDocTypeExpression('string', { program, ts, checker }, typeTag.node, declaration, 0);
+
+	t.true((type!.flags & TypeFlags.String) !== 0);
 });
 
 tsTest('ambiguous recovered union identifiers use the active Program classification', t => {

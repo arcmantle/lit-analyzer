@@ -80,13 +80,14 @@ function parsePropertyDecorator(
 				type:     checker => {
 					const propType = checker.getTypeAtLocation(node);
 					const configType = litConfig.node?.type != null
-						? getLitPropertyType(ts, litConfig.node.type, checker)
+						? getLitPropertyType(ts, litConfig.node.type)
 						: litConfig.type;
+					const resolvedConfigType = typeof configType === 'function' ? configType(checker) : configType;
 
-					return typeof configType === 'object'
-						&& configType != null
+					return typeof resolvedConfigType === 'object'
+						&& resolvedConfigType != null
 						&& (propType.flags & TypeFlags.Any) !== 0
-						? configType
+						? resolvedConfigType
 						: propType;
 				},
 				node,
@@ -180,7 +181,7 @@ function parseStaticProperties(returnStatement: ReturnStatement, context: Analyz
 			let litConfig: LitElementPropertyConfig = {};
 			if (ts.isPropertyAssignment(propNode)) {
 				if (inPolymerFlavorContext(context) && !ts.isObjectLiteralExpression(propNode.initializer)) {
-					litConfig = { type: getLitPropertyType(ts, propNode.initializer, context.checker) };
+					litConfig = { type: getLitPropertyType(ts, propNode.initializer) };
 				}
 				else {
 					const resolved = resolveNodeValue(propNode.initializer, context);
@@ -198,16 +199,15 @@ function parseStaticProperties(returnStatement: ReturnStatement, context: Analyz
 
 			const emitAttribute = litConfig.attribute !== false;
 
-			// Resolved here, not on read, because a jsdoc type comes from the tag text, not from a node.
-			const declaredType = (jsDoc && getJsDocType(jsDoc, context, propNode))
-				|| (typeof litConfig.type === 'object' && litConfig.type)
-				|| context.checker.getAnyType();
+			const jsDocType = jsDoc && getJsDocType(jsDoc, context, propNode);
 
 			// Emit either the attribute or the property
 			memberResults.push({
-				priority:   'high',
-				kind:       'property',
-				type:       () => declaredType,
+				priority: 'high',
+				kind:     'property',
+				type:     checker => jsDocType?.(checker)
+					|| (typeof litConfig.type === 'function' && litConfig.type(checker))
+					|| checker.getAnyType(),
 				propName:   propName,
 				attrName:   emitAttribute ? attrName : undefined,
 				jsDoc,

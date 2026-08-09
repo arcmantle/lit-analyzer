@@ -52,12 +52,12 @@ export function assertHasMembers(
 			if (
 				expectedMetaType != null
 				&& actualMember?.meta?.type != null
-				&& typeof actualMember.meta.type !== "string"
+				&& typeof actualMember.meta.type === "function"
 			) {
 				if (checker == null)
 					throw new Error("Type checker is not given to assert util!");
 
-				t.truthy(isAssignableToExpectedType(actualMember.meta.type, expectedMetaType(checker), checker));
+				t.truthy(isAssignableToExpectedType(actualMember.meta.type(checker), expectedMetaType(checker), checker));
 				delete metaWithoutNode.type;
 			}
 			delete metaWithoutNode.node;

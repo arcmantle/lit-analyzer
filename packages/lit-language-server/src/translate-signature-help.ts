@@ -3,8 +3,7 @@ import type { ParameterInformation, SignatureHelp, SignatureInformation } from '
 
 /**
  * Translates TypeScript's own `ts.SignatureHelpItems` into an LSP
- * `SignatureHelp`, mirroring what `ts-lit-plugin`'s `getSignatureHelpItems`
- * does for the tsserver plugin: a directive call (e.g. `classMap(...)`)
+ * `SignatureHelp`: a directive call (e.g. `classMap(...)`)
  * inside a template is an ordinary TypeScript call expression, so its
  * signature help needs no lit-specific handling and is passed through as-is.
  * The one thing filtered out is the single, unhelpful signature of the

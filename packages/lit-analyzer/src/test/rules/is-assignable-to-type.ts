@@ -92,3 +92,31 @@ tsTest('allows a target intersection containing a free type parameter', t => {
 
 	t.true(isAssignableToType({ typeA: target, typeB: checker.getStringType() }, context));
 });
+
+tsTest('allows non-strict comparison in JavaScript files', t => {
+	const { program, sourceFile } = compileFiles({
+		fileName: 'source.js',
+		text:     'const source = undefined; const target = "";',
+		entry:    true,
+	});
+	const checker = program.getTypeChecker();
+	const context = { program, file: sourceFile } as RuleModuleContext;
+	const source = typeOf('source', sourceFile, checker);
+	const target = typeOf('target', sourceFile, checker);
+
+	t.true(isAssignableToType({ typeA: target, typeB: source }, context));
+});
+
+tsTest('keeps strict comparison in TypeScript files', t => {
+	const { program, sourceFile } = compileFiles({
+		fileName: 'source.ts',
+		text:     'const source = undefined; const target = "";',
+		entry:    true,
+	});
+	const checker = program.getTypeChecker();
+	const context = { program, file: sourceFile } as RuleModuleContext;
+	const source = typeOf('source', sourceFile, checker);
+	const target = typeOf('target', sourceFile, checker);
+
+	t.is(isAssignableToType({ typeA: target, typeB: source }, context), false);
+});

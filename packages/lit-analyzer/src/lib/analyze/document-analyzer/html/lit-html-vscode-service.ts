@@ -1,6 +1,7 @@
 import * as ts from 'typescript';
 import type * as vscodeTypes from 'vscode-html-languageservice';
-import * as vscodeNs from 'vscode-html-languageservice';
+import { getLanguageService } from 'vscode-html-languageservice';
+import { TextDocument } from 'vscode-languageserver-textdocument';
 
 import { HtmlDocument } from '../../parse/document/text-document/html-document/html-document.js';
 import { textPartsToRanges } from '../../parse/document/virtual-document/virtual-document.js';
@@ -9,15 +10,10 @@ import { LitFormatEdit } from '../../types/lit-format-edit.js';
 import { DocumentOffset } from '../../types/range.js';
 import { documentRangeToSFRange, makeDocumentRange } from '../../util/range-util.js';
 
-// Node resolves the CommonJS build and exposes only part of it as named ESM
-// exports, so runtime values come off the whole `module.exports`. Bundlers
-// resolve the real ESM build instead, where the namespace already has them all.
-const vscode = (vscodeNs as unknown as Record<string, typeof vscodeNs>)['default'] ?? vscodeNs;
-
-const htmlService = vscode.getLanguageService();
+const htmlService = getLanguageService();
 
 function makeVscTextDocument(htmlDocument: HtmlDocument): vscodeTypes.TextDocument {
-	return vscode.TextDocument.create('untitled://embedded.html', 'html', 1, htmlDocument.virtualDocument.text);
+	return TextDocument.create('untitled://embedded.html', 'html', 1, htmlDocument.virtualDocument.text);
 }
 
 function makeVscHtmlDocument(vscTextDocument: vscodeTypes.TextDocument) {
@@ -51,7 +47,7 @@ export class LitHtmlVscodeService {
 
 		const ranges = textPartsToRanges(parts);
 		const originalHtml = parts.map(p => (typeof p === 'string' ? p : `[#${ '#'.repeat(p.getText().length) }]`)).join('');
-		const vscTextDocument = vscode.TextDocument.create('untitled://embedded.html', 'html', 1, originalHtml);
+		const vscTextDocument = TextDocument.create('untitled://embedded.html', 'html', 1, originalHtml);
 
 		const edits = htmlService.format(vscTextDocument, undefined, {
 			tabSize:             settings.tabSize,
@@ -72,7 +68,7 @@ export class LitHtmlVscodeService {
 		const hasTrailingNewline = originalHtml.endsWith('\n');
 
 		const newHtml = `${ hasLeadingNewline ? '\n' : '' }${
-			vscode.TextDocument.applyEdits(vscTextDocument, edits)
+			TextDocument.applyEdits(vscTextDocument, edits)
 		}${ hasTrailingNewline ? '\n' : '' }`;
 
 		const splitted = newHtml.split(/\[#+\]/);

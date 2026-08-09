@@ -1,8 +1,9 @@
-import { CallExpression, Node, type Type } from 'typescript';
+import { CallExpression, Node, type Type, type TypeChecker } from 'typescript';
 
 
 export interface LitElementPropertyConfig {
-	type?:      Type | string;
+	/** Resolves converter types with the caller's current TypeScript checker. */
+	type?:      ((checker: TypeChecker) => Type) | string;
 	attribute?: string | boolean;
 	node?: {
 		type?:      Node;

@@ -8,7 +8,6 @@ import { LitAnalyzerContext } from './lit-analyzer-context.js';
 import { CssDocument } from './parse/document/text-document/css-document/css-document.js';
 import { HtmlDocument } from './parse/document/text-document/html-document/html-document.js';
 import { TextDocument } from './parse/document/text-document/text-document.js';
-import { setTypescriptModule } from './ts-module.js';
 import { LitClosingTagInfo } from './types/lit-closing-tag-info.js';
 import { LitCodeFix } from './types/lit-code-fix.js';
 import { LitCompletion } from './types/lit-completion.js';
@@ -32,11 +31,7 @@ export class LitAnalyzer {
 	private litCssDocumentAnalyzer = new LitCssDocumentAnalyzer();
 	private componentAnalyzer = new ComponentAnalyzer();
 
-	constructor(private context: LitAnalyzerContext) {
-		// Set the Typescript module
-		// I plan on removing this function, so only "context.ts" is used.
-		setTypescriptModule(context.ts);
-	}
+	constructor(private context: LitAnalyzerContext) {}
 
 	getOutliningSpansInFile(file: SourceFile): LitOutliningSpan[] {
 		this.context.setContextBase({ file });
@@ -219,16 +214,23 @@ export class LitAnalyzer {
 	}
 
 	getDiagnosticsInFile(file: SourceFile): LitDiagnostic[] {
-		this.context.setContextBase({ file, timeout: 7000, throwOnCancellation: true });
+		this.context.setContextBase({ file, timeout: 30000, throwOnCancellation: true });
 
-		this.context.updateComponents(file);
-		this.context.updateDependencies(file);
-
+		const parseStartTime = Date.now();
 		const documents = this.getDocumentsInFile(file);
+		const parseElapsedMs = Date.now() - parseStartTime;
+
+		const componentIndexStartTime = Date.now();
+		this.context.updateComponents(file);
+		const componentIndexElapsedMs = Date.now() - componentIndexStartTime;
+		const dependencyStartTime = Date.now();
+		this.context.updateDependencies(file);
+		const dependencyElapsedMs = Date.now() - dependencyStartTime;
 
 		const diagnostics: LitDiagnostic[] = [];
 
 		// Get diagnostics for components definitions in this file
+		const componentRulesStartTime = Date.now();
 		const definitions = this.context.definitionStore.getDefinitionsWithDeclarationInFile(file);
 		for (const definition of definitions) {
 			if (this.context.isCancellationRequested)
@@ -245,8 +247,10 @@ export class LitAnalyzer {
 
 			diagnostics.push(...this.componentAnalyzer.getDiagnostics(declaration, this.context));
 		}
+		const componentRulesElapsedMs = Date.now() - componentRulesStartTime;
 
 		// Get diagnostics for documents in this file
+		const documentRulesStartTime = Date.now();
 		for (const document of documents) {
 			if (this.context.isCancellationRequested)
 				break;
@@ -256,6 +260,10 @@ export class LitAnalyzer {
 			else if (document instanceof HtmlDocument)
 				diagnostics.push(...this.litHtmlDocumentAnalyzer.getDiagnostics(document, this.context));
 		}
+
+		this.context.log?.(
+			`lit-language-server diagnostic stages for ${ file.fileName }: parse=${ parseElapsedMs }ms, components=${ componentIndexElapsedMs }ms, dependencies=${ dependencyElapsedMs }ms, componentRules=${ componentRulesElapsedMs }ms, templateRules=${ Date.now() - documentRulesStartTime }ms`,
+		);
 
 		return diagnostics;
 	}

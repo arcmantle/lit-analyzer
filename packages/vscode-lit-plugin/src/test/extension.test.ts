@@ -49,4 +49,34 @@ registered on HTMLElementTagNameMap",
 	test('the language server is running by default', () => {
 		expect(observations.languageServer.runsByDefault).toBe(true);
 	});
+
+	test('restarts the language server from a command', () => {
+		expect(observations.languageServer.runsAfterRestart).toBe(true);
+	});
+
+	test('uses the selected TypeScript SDK for analysis and virtual libraries', () => {
+		expect(observations.selectedTypeScriptSdk).toEqual({
+			configuredDirectory:            expect.stringContaining('selected-typescript-sdk'),
+			virtualLibraryContainsProperty: true,
+			definitionScheme:               'lit-analyzer-lib',
+			definitionLine:                 '    title: string; // selected TypeScript SDK',
+		});
+	});
+
+	test('opens bundled TypeScript libraries outside the file scheme', () => {
+		expect(observations.virtualTypeScriptLibrary).toEqual({
+			scheme:            'lit-analyzer-lib',
+			languageId:        'lit-analyzer-typescript-library',
+			selectorScore:     10,
+			containsDomType:   true,
+			diagnostics:       [],
+			definitionSchemes: expect.arrayContaining([ 'lit-analyzer-lib' ]),
+			definition:        {
+				scheme:   'lit-analyzer-lib',
+				// eslint-disable-next-line @stylistic/max-len
+				lineText: 'interface HTMLElement extends Element, ElementCSSInlineStyle, ElementContentEditable, GlobalEventHandlers, HTMLOrSVGElement {',
+			},
+			hoverText: expect.stringContaining('interface HTMLElement'),
+		});
+	});
 });

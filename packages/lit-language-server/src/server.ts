@@ -1,12 +1,14 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { inspect } from 'node:util';
 
-import type { LitAnalyzerConfig } from '@arcmantle/lit-analyzer';
-import type * as ts from 'typescript';
+import type { LitAnalyzerConfig, LitDefinition, LitDefinitionTarget, SourceFileRange } from '@arcmantle/lit-analyzer';
+import ts from 'typescript';
 import type { CodeAction, CodeActionParams, CompletionItem, CompletionParams, Connection, DefinitionParams, DocumentOnTypeFormattingParams, Hover, HoverParams, InitializeParams, InitializeResult, LocationLink, PrepareRenameParams, PrepareRenameResult, RenameParams, SignatureHelp, SignatureHelpParams, TextEdit, WorkspaceEdit } from 'vscode-languageserver/node';
 import { CodeActionKind, DidChangeWatchedFilesNotification, FileChangeType, TextDocumentSyncKind } from 'vscode-languageserver/node';
 
+import type { AnalysisCompiler } from './analysis-compiler.js';
 import { resolveConfigForFile } from './config-file.js';
 import { type CancellationToken, createDebouncedRunner } from './debounced-runner.js';
 import { translateLitDiagnostics } from './lit-diagnostics.js';
@@ -35,9 +37,51 @@ const DEBOUNCE_DELAY_MS = 300;
 /** Used for analysis runs that aren't part of a debounced, cancellable batch. */
 const NEVER_CANCELLED: CancellationToken = { isCancellationRequested: () => false };
 
+function resolveDeclarationMapTargets(definition: LitDefinition, compiler: AnalysisCompiler): LitDefinition {
+	const program = compiler.getProgram();
+	const targets = definition.targets.flatMap<LitDefinitionTarget>(target => {
+		if (target.kind !== 'node' || !target.node.getSourceFile().isDeclarationFile)
+			return [ target ];
+
+		const declarationFile = target.node.getSourceFile();
+		const mappedStart = compiler.getSourcePosition(declarationFile.fileName, target.node.getStart());
+		const mappedEnd = compiler.getSourcePosition(declarationFile.fileName, target.node.getEnd());
+		if (mappedStart == null)
+			return [ target ];
+
+		const sourceFile = program.getSourceFile(mappedStart.fileName)
+			?? (fs.existsSync(mappedStart.fileName)
+				? ts.createSourceFile(mappedStart.fileName, fs.readFileSync(mappedStart.fileName, 'utf8'), compiler.getCompilerOptions().target ?? ts.ScriptTarget.Latest, true)
+				: undefined);
+		if (sourceFile == null)
+			return [ target ];
+
+		return [
+			{
+				kind:  'range' as const,
+				sourceFile,
+				range: {
+					start: mappedStart.position,
+					end:   mappedEnd?.fileName === mappedStart.fileName ? mappedEnd.position : mappedStart.position + target.node.getWidth(),
+				} as SourceFileRange,
+			},
+		];
+	});
+
+	return targets.length === 0 ? definition : { ...definition, targets };
+}
+
 /** Lets the event loop process any pending message (e.g. a newer `didChange`) before continuing a loop. */
 function yieldToEventLoop(): Promise<void> {
 	return new Promise(resolve => setImmediate(resolve));
+}
+
+function formatError(error: unknown): string {
+	if (error instanceof Error)
+		return error.stack ?? error.message;
+
+
+	return inspect(error, { depth: 5 });
 }
 
 /**
@@ -57,8 +101,7 @@ function isLitCompletionItemData(data: unknown): data is LitCompletionItemData {
 
 /**
  * Maps the client's `SignatureHelpContext` onto the `ts.SignatureHelpTriggerReason`
- * the language service expects -- forwarded as-is, the same way `ts-lit-plugin`
- * forwards tsserver's own reason, so a retrigger (e.g. typing `,` to move to
+ * the language service expects -- forwarded as-is, so a retrigger (e.g. typing `,` to
  * the next parameter, or moving the cursor) keeps the active signature
  * stable instead of resetting it. `undefined` (no context sent) is treated
  * the same as a manual invocation.
@@ -150,11 +193,6 @@ function getRootPath(params: InitializeParams): string | undefined {
  * file. Those settings override the config file, but the rule map is merged
  * rather than replaced wholesale: a rule the settings don't mention keeps
  * whatever the config file said about it.
- *
- * If the tsconfig still has the old `ts-lit-plugin` plugin entry in
- * `compilerOptions.plugins`, that entry is never read -- only reported, once
- * per session at boot, so no one loses configuration silently.
- *
  * A client with no `tsconfig.json` anywhere at or above its root is expected
  * to happen (e.g. an empty workspace), so a missing tsconfig or a boot
  * failure is logged and otherwise ignored rather than failing the handshake:
@@ -268,8 +306,11 @@ export function createServer(connection: Connection): Connection {
 
 	function analyzeAndPublish(uri: string, fileName: string, token: CancellationToken = NEVER_CANCELLED): void {
 		const project = registry.getOrCreateProject(fileName);
-		if (project == null)
+		if (project == null) {
+			connection.console.error(`lit-language-server could not create an analysis project for ${ fileName }`);
+
 			return;
+		}
 
 
 		// Wraps the whole analysis, not just the diagnostics call, so a
@@ -277,9 +318,16 @@ export function createServer(connection: Connection): Connection {
 		// `Program`) cannot stop `reanalyzeOpenDocuments` from reaching the
 		// other open documents in its loop.
 		try {
-			const sourceFile = project.compiler.getProgram().getSourceFile(fileName);
-			if (sourceFile == null)
+			const diagnosticStartTime = Date.now();
+			const program = project.compiler.getProgram();
+			const sourceFile = program.getSourceFile(fileName);
+			if (sourceFile == null) {
+				connection.console.error(
+					`lit-language-server cannot analyze ${ fileName }: it is not included by ${ project.tsconfigPath }`,
+				);
+
 				return;
+			}
 
 
 			const resolvedConfig = resolveConfigForFile(fileName);
@@ -301,15 +349,19 @@ export function createServer(connection: Connection): Connection {
 				sourceFile,
 				mergedConfig.dontShowSuggestions,
 			);
+			connection.console.log(`lit-language-server diagnostics took ${ Date.now() - diagnosticStartTime }ms: ${ fileName }`);
 			connection.sendDiagnostics({ uri, diagnostics }).catch(error => {
 				connection.console.error(
-					`lit-language-server could not publish diagnostics for ${ fileName }: ${ (error as Error).message }`,
+					`lit-language-server could not publish diagnostics for ${ fileName }: ${ formatError(error) }`,
 				);
 			});
 		}
 		catch (error) {
+			if (error instanceof ts.OperationCanceledException)
+				return;
+
 			connection.console.error(
-				`lit-language-server could not compute diagnostics for ${ fileName }: ${ (error as Error).message }`,
+				`lit-language-server could not compute diagnostics for ${ fileName }: ${ formatError(error) }`,
 			);
 		}
 		finally {
@@ -405,6 +457,7 @@ export function createServer(connection: Connection): Connection {
 
 	connection.onDidOpenTextDocument(params => {
 		const fileName = fileURLToPath(params.textDocument.uri);
+		connection.console.log(`lit-language-server opened ${ fileName }`);
 		openDocuments.set(params.textDocument.uri, fileName);
 		registry.getOrCreateProject(fileName)?.compiler.openDocument(fileName, params.textDocument.text);
 		analyzeAndPublish(params.textDocument.uri, fileName);
@@ -412,7 +465,7 @@ export function createServer(connection: Connection): Connection {
 
 	// Go-to-definition from a tag name, attribute, property or event in a
 	// template to its declaration -- backed by the same `LitAnalyzer` used for
-	// diagnostics, ported from `ts-lit-plugin`'s `getDefinitionAndBoundSpan`.
+	// diagnostics.
 	// Wrapped in try/catch the same way `analyzeAndPublish` is: a bad position
 	// (e.g. a stale one from a client racing a fast edit) or a failure inside
 	// the analyzer must not crash the connection, just this one request.
@@ -424,7 +477,8 @@ export function createServer(connection: Connection): Connection {
 				return null;
 
 
-			const sourceFile = project.compiler.getProgram().getSourceFile(fileName);
+			const program = project.compiler.getProgram();
+			const sourceFile = program.getSourceFile(fileName);
 			if (sourceFile == null)
 				return null;
 
@@ -435,7 +489,7 @@ export function createServer(connection: Connection): Connection {
 				return null;
 
 
-			return translateDefinition(definition, sourceFile);
+			return translateDefinition(resolveDeclarationMapTargets(definition, project.compiler), sourceFile, program);
 		}
 		catch (error) {
 			connection.console.error(
@@ -447,8 +501,7 @@ export function createServer(connection: Connection): Connection {
 	});
 
 	// Hover on a tag name, attribute, property or event in a template --
-	// backed by the same `LitAnalyzer` used for diagnostics, ported from
-	// `ts-lit-plugin`'s `getQuickInfoAtPosition`. Unlike the plugin, there's
+	// backed by the same `LitAnalyzer` used for diagnostics. There is
 	// no underlying tsserver quick info to fall back to when the analyzer has
 	// nothing for this position -- this server only ever serves lit
 	// template hovers, never general TypeScript ones. Wrapped in try/catch
@@ -486,7 +539,7 @@ export function createServer(connection: Connection): Connection {
 
 	// Quick fixes for the rules that provide them (e.g. adding a missing
 	// import, renaming a misspelled tag) -- backed by the same `LitAnalyzer`
-	// used for diagnostics, ported from `ts-lit-plugin`'s `getCodeFixesAtPosition`.
+	// used for diagnostics.
 	// Wrapped in try/catch the same way `onDefinition` is: a bad range or a
 	// failure inside the analyzer must not crash the connection, just this
 	// one request.
@@ -530,7 +583,7 @@ export function createServer(connection: Connection): Connection {
 
 	// Confirms a position can be renamed and marks its span, before the client
 	// ever sends `textDocument/rename` -- backed by the same `LitAnalyzer` used
-	// for diagnostics, ported from `ts-lit-plugin`'s `getRenameInfo`. Wrapped in
+	// for diagnostics. Wrapped in
 	// try/catch the same way `onDefinition` is: a bad position or a failure
 	// inside the analyzer must not crash the connection, just this one request.
 	connection.onPrepareRename((params: PrepareRenameParams): PrepareRenameResult | null => {
@@ -564,8 +617,7 @@ export function createServer(connection: Connection): Connection {
 	});
 
 	// Renames a custom element tag across its definition and every template
-	// usage -- backed by the same `LitAnalyzer` used for diagnostics, ported
-	// from `ts-lit-plugin`'s `findRenameLocations`. Locations can span several
+	// usage -- backed by the same `LitAnalyzer` used for diagnostics. Locations can span several
 	// files, so all edits are returned together in one `WorkspaceEdit`, which a
 	// conforming client applies atomically. Wrapped in try/catch the same way
 	// `onDefinition` is: a bad position or a failure inside the analyzer must
@@ -603,8 +655,7 @@ export function createServer(connection: Connection): Connection {
 
 	// Tag name, attribute, property, event, slot, CSS part and CSS custom
 	// property completions inside `html` and `css` templates -- backed by the
-	// same `LitAnalyzer` used for diagnostics, ported from `ts-lit-plugin`'s
-	// `getCompletionsAtPosition`. Per ADR, TypeScript's own completions are no
+	// same `LitAnalyzer` used for diagnostics. Per ADR, TypeScript's own completions are no
 	// longer suppressed: this server only ever adds lit completions alongside
 	// whatever the editor's own TypeScript completions already offer, never
 	// replacing them. Each returned item carries `data` (see
@@ -644,12 +695,9 @@ export function createServer(connection: Connection): Connection {
 	});
 
 	// Fills in a completion item's documentation, once the client asks for it
-	// -- backed by the same `LitAnalyzer` used for diagnostics, ported from
-	// `ts-lit-plugin`'s `getCompletionEntryDetails`. Relies on the analyzer's
+	// -- backed by the same `LitAnalyzer` used for diagnostics. Relies on the analyzer's
 	// own completion cache, populated by the `onCompletion` call that produced
-	// this item, the same way the tsserver plugin does -- that cache is one
-	// per *project* (shared by every open file in it, the same as the
-	// tsserver plugin's own cache is one per plugin instance), not one per
+	// this item. That cache is one per *project*, shared by every open file in it, not one per
 	// file, so this must be called for an item from the most recent
 	// completion list for its project, not an arbitrary older one, or an item
 	// from a different project entirely. Wrapped in try/catch the same way
@@ -691,8 +739,7 @@ export function createServer(connection: Connection): Connection {
 	// Signature help for a call, construct, or tagged template expression --
 	// backed directly by the project's own `ts.LanguageService`, not the
 	// analyzer core: a directive call (e.g. `classMap(...)`) inside a
-	// template is an ordinary TypeScript call, ported from `ts-lit-plugin`'s
-	// `getSignatureHelpItems`. Unlike every other handler above, this one
+	// template is an ordinary TypeScript call. Unlike every other handler above, this one
 	// doesn't need `LitAnalyzer` at all -- the only lit-specific behaviour is
 	// `translateSignatureHelp` filtering out the `html`/`css` tag function's
 	// own signature. Wrapped in try/catch the same way `onDefinition` is: a
@@ -727,8 +774,7 @@ ${ (error as Error).message }`,
 	});
 
 	// Auto-closes a tag once `>` is typed inside a lit template -- backed by
-	// the same `LitAnalyzer` used for diagnostics, ported from
-	// `ts-lit-plugin`'s `getJsxClosingTagAtPosition`. Only ever fires inside
+	// the same `LitAnalyzer` used for diagnostics. Only ever fires inside
 	// an `html` template: `getClosingTagAtPosition` returns `undefined`
 	// anywhere else (e.g. plain TypeScript, or a `css` template), the same
 	// as every other lit-specific handler above. Wrapped in try/catch the
@@ -792,9 +838,11 @@ ${ (error as Error).message }`,
 		openDocuments.delete(params.textDocument.uri);
 		if (fileName != null) {
 			registry.getOrCreateProject(fileName)?.compiler.closeDocument(fileName);
-			// Republishes so a closed, unsaved edit doesn't leave a stale
-			// diagnostic behind -- the compiler now reports disk content again.
-			analyzeAndPublish(params.textDocument.uri, fileName);
+			connection.sendDiagnostics({ uri: params.textDocument.uri, diagnostics: [] }).catch(error => {
+				connection.console.error(
+					`lit-language-server could not clear diagnostics for ${ fileName }: ${ formatError(error) }`,
+				);
+			});
 			// Reverting to disk content is itself a content change, so any
 			// other open document that depends on this one (e.g. a template
 			// using a component this file defines) must not keep stale

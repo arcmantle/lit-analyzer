@@ -3,7 +3,7 @@
 	"private": true,
 	"version": "0.0.0",
 	"description": "Standalone language server that serves lit-html analysis over the Language Server Protocol.",
-	"author": "runem",
+	"author": "arcmantle",
 	"license": "MIT",
 	"engines": {
 		"node": ">=24"
@@ -14,6 +14,7 @@
 	},
 	"main": "lib/main.js",
 	"scripts": {
+		"bench": "pnpm run build && vitest bench --run src/test/repeat-analysis.bench.ts",
 		"watch": "tsc --watch",
 		"build": "rm -rf lib .tsbuildinfo && tsc --build --pretty",
 		"rebuild": "rm -rf lib .tsbuildinfo && tsc --build --pretty",

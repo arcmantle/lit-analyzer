@@ -4,7 +4,6 @@ import { JsDocFlavor } from './flavors/js-doc/js-doc-flavor.js';
 import { JSXFlavor } from './flavors/jsx/jsx-flavor.js';
 import { LitElementFlavor } from './flavors/lit-element/lit-element-flavor.js';
 import { LwcFlavor } from './flavors/lwc/lwc-flavor.js';
-import { ComponentDeclaration } from './types/component-declaration.js';
 
 // Upstream substituted this at bundle time with rollup's `replace` plugin, using
 // `<@VERSION@>` as the placeholder. The `tsc` build has no such step, so the

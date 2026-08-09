@@ -60,6 +60,23 @@ describe('translateDefinition', () => {
 		});
 	});
 
+	test('translates default library targets to a virtual library URI', () => {
+		const originSourceFile = sourceFileWithLines('origin.ts', '<div title="x"></div>');
+		const targetSourceFile = sourceFileWithLines('/extension/node_modules/typescript/lib/lib.dom.d.ts', 'title: string;');
+		const definition: LitDefinition = {
+			fromRange: sourceFileRange(5, 10),
+			targets:   [ { kind: 'node', node: targetSourceFile.statements[0], name: 'title' } ],
+		};
+		const program = {
+			isSourceFileDefaultLibrary: (sourceFile: ts.SourceFile) => sourceFile === targetSourceFile,
+			getCompilerOptions:         () => ({}),
+		} as ts.Program;
+
+		const [ link ] = translateDefinition(definition, originSourceFile, program);
+
+		expect(link.targetUri).toBe('lit-analyzer-lib:/lib.dom.d.ts');
+	});
+
 	test('translates every target when there is more than one', () => {
 		const originSourceFile = sourceFileWithLines('origin.ts', 'x');
 		const targetSourceFile = sourceFileWithLines('target.ts', 'a', 'b');

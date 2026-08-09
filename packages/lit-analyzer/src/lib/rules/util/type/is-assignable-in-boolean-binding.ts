@@ -13,11 +13,15 @@ export function isAssignableInBooleanBinding(
 	context: RuleModuleContext,
 ): boolean | undefined {
 	const checker = context.program.getTypeChecker();
-	const typeBIsAssignableToBooleanBinding = [
+	const booleanBindingTypes = [
 		checker.getBooleanType(),
 		checker.getUndefinedType(),
 		checker.getNullType(),
-	].some(target => checker.isTypeAssignableTo(typeB, target));
+	];
+	const typeBConstituents = typeB.isUnion() ? typeB.types : [ typeB ];
+	const typeBIsAssignableToBooleanBinding = typeBConstituents.every(constituent => {
+		return booleanBindingTypes.some(target => checker.isTypeAssignableTo(constituent, target));
+	});
 
 	// Test if the user is trying to use ? modifier on a non-boolean type.
 	if (!typeBIsAssignableToBooleanBinding) {

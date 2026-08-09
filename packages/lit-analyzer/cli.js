@@ -2,5 +2,8 @@
 
 import { cli } from './dist/lib/index.js';
 
-// eslint-disable-next-line no-console
-cli().catch(console.log);
+cli().catch(error => {
+	// eslint-disable-next-line no-console
+	console.error(error);
+	process.exitCode = 1;
+});

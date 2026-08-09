@@ -1,7 +1,3 @@
-// yargs is CommonJS. Under node16 resolution its export is the factory, not the
-// pre-built singleton the namespace import upstream resolved to. The factory
-// defaults to an empty argument list, so the process arguments are passed in
-// explicitly to keep the upstream behaviour.
 import yargs from 'yargs';
 import { hideBin } from 'yargs/helpers';
 

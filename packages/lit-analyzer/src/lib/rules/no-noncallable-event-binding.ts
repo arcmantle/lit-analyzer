@@ -44,8 +44,12 @@ function isTypeBindableToEventListener(type: Type, checker: TypeChecker): boolea
 	if ((type.flags & (TypeFlags.Any | TypeFlags.Unknown | TypeFlags.TypeParameter)) !== 0)
 		return true;
 
-	if (type.isUnion())
-		return type.types.every(member => isTypeBindableToEventListener(member, checker));
+	if (type.isUnion()) {
+		return type.types.every(member => {
+			return (member.flags & (TypeFlags.Null | TypeFlags.Undefined)) !== 0
+				|| isTypeBindableToEventListener(member, checker);
+		});
+	}
 
 	if (type.isIntersection())
 		return type.types.every(member => isTypeBindableToEventListener(member, checker));

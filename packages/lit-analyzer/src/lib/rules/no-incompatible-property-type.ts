@@ -1,4 +1,4 @@
-import { Node, ObjectFlags, Type, TypeChecker, TypeFlags } from 'typescript';
+import { Node, Type, TypeChecker, TypeFlags } from 'typescript';
 import { LitElementPropertyConfig } from '@arcmantle/web-component-analyzer';
 
 import { RuleModule } from '../analyze/types/rule/rule-module.js';
@@ -70,6 +70,15 @@ function getLitPropertyTypeKind(type: Type, checker: TypeChecker): LitPropertyTy
 	return LIT_PROPERTY_TYPE_KINDS
 		.filter((kind): kind is Exclude<LitPropertyTypeKind, 'ANY'> => kind !== 'ANY')
 		.find(kind => matchesTypeKind(type, kind, checker));
+}
+
+function getConfiguredLitPropertyTypeKind(
+	litConfig: LitElementPropertyConfig,
+	checker: TypeChecker,
+): LitPropertyTypeKind | undefined {
+	return litConfig.type == null || typeof litConfig.type !== 'function'
+		? undefined
+		: getLitPropertyTypeKind(litConfig.type(checker), checker);
 }
 
 /**
@@ -213,7 +222,7 @@ function validateLitPropertyConfig(
 
 	// Test the @property type against the actual type if a type has been provided
 	if (litConfig.type != null) {
-		const configuredTypeKind = getLitPropertyTypeKind(litConfig.type, checker);
+		const configuredTypeKind = getConfiguredLitPropertyTypeKind(litConfig, checker);
 		if (configuredTypeKind == null)
 			return;
 

@@ -22,6 +22,20 @@ tsTest('Event binding: Function is bindable', t => {
 	hasNoDiagnostics(t, diagnostics);
 });
 
+tsTest('Event binding: Optional function is bindable', t => {
+	const { diagnostics } = getDiagnostics(
+		'declare const handler: ((event: Event) => void) | undefined; html`<input @change="${handler}" />`',
+	);
+	hasNoDiagnostics(t, diagnostics);
+});
+
+tsTest('Event binding: Nullable function is bindable', t => {
+	const { diagnostics } = getDiagnostics(
+		'declare const handler: ((event: Event) => void) | null; html`<input @change="${handler}" />`',
+	);
+	hasNoDiagnostics(t, diagnostics);
+});
+
 tsTest('Event binding: Called function is not bindable', t => {
 	const { diagnostics } = getDiagnostics('function foo() {}; html`<input @change="${foo()}" />`');
 	hasDiagnostic(t, diagnostics, 'no-noncallable-event-binding');

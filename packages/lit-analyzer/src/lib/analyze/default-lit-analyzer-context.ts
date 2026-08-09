@@ -28,6 +28,7 @@ import { getContributingFiles } from './util/component-util.js';
 // analyzed a file cannot keep that program alive.
 const PROGRAM_IDS: WeakMap<Program, number> = new WeakMap();
 let nextProgramId = 0;
+const SLOW_COMPONENT_ANALYSIS_MS = 250;
 
 function programIdOf(program: Program): number {
 	const id = PROGRAM_IDS.get(program) ?? nextProgramId++;
@@ -58,6 +59,10 @@ export class DefaultLitAnalyzerContext implements LitAnalyzerContext {
 
 	get config(): LitAnalyzerConfig {
 		return this._config;
+	}
+
+	log(message: string): void {
+		this.handler.log?.(message);
 	}
 
 	private _currentStartTime = Date.now();
@@ -186,7 +191,6 @@ export class DefaultLitAnalyzerContext implements LitAnalyzerContext {
 		if (this.componentProgramId === programId)
 			return;
 
-
 		const previousProgramId = this.componentProgramId;
 		this.componentProgramId = programId;
 		if (previousProgramId != null)
@@ -202,18 +206,15 @@ export class DefaultLitAnalyzerContext implements LitAnalyzerContext {
 		if (this.refreshingTags.has(tagName))
 			return;
 
-
 		const definition = this.definitionStore.getDefinitionForTagName(tagName);
 		if (definition == null)
 			return;
-
 
 		const staleFile = Array.from(getContributingFiles(definition))
 			.find(file => this.program.getSourceFile(file.fileName) !== file);
 
 		if (staleFile == null)
 			return;
-
 
 		const fileName = definition.sourceFile.fileName;
 		const sourceFile = this.program.getSourceFile(fileName);
@@ -273,7 +274,9 @@ export class DefaultLitAnalyzerContext implements LitAnalyzerContext {
 			});
 
 			this.logger.debug(`Analyzing components in ${ sourceFile.fileName } (changed) (${ getRunningTime() }ms total)`);
+			const fileStartTime = Date.now();
 			this.findComponentsInFile(sourceFile);
+			this.logSlowComponentAnalysis(sourceFile, Date.now() - fileStartTime);
 		}
 
 		for (const sourceFile of invalidatedFiles) {
@@ -285,13 +288,20 @@ export class DefaultLitAnalyzerContext implements LitAnalyzerContext {
 				seenFiles.add(sourceFile);
 
 				this.logger.debug(`Analyzing components in ${ sourceFile.fileName } (invalidated) (${ getRunningTime() }ms total)`);
+				const fileStartTime = Date.now();
 				this.findComponentsInFile(sourceFile);
+				this.logSlowComponentAnalysis(sourceFile, Date.now() - fileStartTime);
 			}
 		}
 
 		this.logger.verbose(
 			`Analyzed ${ seenFiles.size } files (${ invalidatedFiles.size } invalidated) in ${ getRunningTime() }ms`,
 		);
+	}
+
+	private logSlowComponentAnalysis(sourceFile: SourceFile, elapsedMs: number): void {
+		if (elapsedMs >= SLOW_COMPONENT_ANALYSIS_MS)
+			this.handler.log?.(`lit-language-server component analysis took ${ elapsedMs }ms: ${ sourceFile.fileName }`);
 	}
 
 	private findComponentsInFile(sourceFile: SourceFile) {
@@ -304,7 +314,6 @@ export class DefaultLitAnalyzerContext implements LitAnalyzerContext {
 			(isExternalLibrary && sourceFile.fileName.match(/(@types\/node)/) != null)
 		)
 			return;
-
 
 		const analyzeResult = analyzeSourceFile(sourceFile, {
 			program: this.program,
@@ -327,6 +336,8 @@ export class DefaultLitAnalyzerContext implements LitAnalyzerContext {
 		this.definitionStore.absorbAnalysisResult(sourceFile, analyzeResult);
 		const htmlCollection = convertAnalyzeResultToHtmlCollection(analyzeResult, {
 			addDeclarationPropertiesAsAttributes: this.program.isSourceFileFromExternalLibrary(sourceFile),
+			program:                              this.program,
+			ts:                                   this.ts,
 		});
 		this.htmlStore.absorbCollection(htmlCollection, reg);
 	}

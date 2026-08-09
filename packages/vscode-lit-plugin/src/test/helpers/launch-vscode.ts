@@ -55,6 +55,23 @@ export async function collectObservations(target: ExtensionUnderTest = extension
 	// any test executes. Keep the user data directory short and out of the way.
 	const userDataDir = fs.mkdtempSync(path.join(os.tmpdir(), 'lit-plugin-test-'));
 	const observationsPath = path.join(userDataDir, 'observations.json');
+	const sourceSdkDirectory = path.join(packageRoot, 'node_modules', 'typescript', 'lib');
+	const selectedSdkDirectory = path.join(userDataDir, 'selected-typescript-sdk');
+	fs.cpSync(sourceSdkDirectory, selectedSdkDirectory, { recursive: true });
+	const domLibraryPath = path.join(selectedSdkDirectory, 'lib.dom.d.ts');
+	const domLibraryText = fs.readFileSync(domLibraryPath, 'utf8');
+	const htmlElementTitleDocumentation = 'The **`HTMLElement.title`** property';
+	const htmlElementTitleDocumentationIndex = domLibraryText.indexOf(htmlElementTitleDocumentation);
+	const titleDeclarationIndex = domLibraryText.indexOf('    title: string;', htmlElementTitleDocumentationIndex);
+	const selectedSdkMarker = ' // selected TypeScript SDK';
+	fs.writeFileSync(
+		domLibraryPath,
+		`${ domLibraryText.slice(0, titleDeclarationIndex + '    title: string;'.length) }${ selectedSdkMarker }${ domLibraryText.slice(titleDeclarationIndex + '    title: string;'.length) }`,
+	);
+	fs.mkdirSync(path.join(userDataDir, 'User'), { recursive: true });
+	fs.writeFileSync(path.join(userDataDir, 'User', 'settings.json'), JSON.stringify({
+		'lit-plugin.typescript.tsdk': selectedSdkDirectory,
+	}));
 
 	try {
 		await runTests({

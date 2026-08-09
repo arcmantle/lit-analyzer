@@ -10,12 +10,6 @@
 			"path": "./packages/lit-language-server"
 		},
 		{
-			"path": "./packages/ts-lit-plugin"
-		},
-		{
-			"path": "./packages/ts-simple-type"
-		},
-		{
 			"path": "./packages/vscode-lit-plugin"
 		},
 		{

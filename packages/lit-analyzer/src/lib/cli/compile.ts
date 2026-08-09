@@ -15,8 +15,6 @@ import {
 import * as tsModule from 'typescript';
 import { createJSDocProgram } from '@arcmantle/web-component-analyzer';
 
-import { LitAnalyzerConfig } from '../analyze/lit-analyzer-config.js';
-
 const requiredCompilerOptions: CompilerOptions = {
 	noEmitOnError:    false,
 	noEmit:           true,
@@ -44,9 +42,8 @@ const defaultCompilerOptions: CompilerOptions = {
 };
 
 export interface CompileResult {
-	program:        Program;
-	files:          SourceFile[];
-	pluginOptions?: LitAnalyzerConfig;
+	program: Program;
+	files:   SourceFile[];
 }
 
 /**
@@ -109,23 +106,6 @@ export function resolveTsConfigCompilerOptions(): CompilerOptions | undefined {
 
 			return parsedJson?.options;
 		}
-	}
-
-	return undefined;
-}
-
-/**
- * Resolves the nearest tsconfig.json and returns the configuration seed within the plugins section for "ts-lit-plugin"
- */
-export function readLitAnalyzerConfigFromTsConfig(): Partial<LitAnalyzerConfig> | undefined {
-	const compilerOptions = resolveTsConfigCompilerOptions();
-
-	// Finds the plugin section
-	if (compilerOptions != null && 'plugins' in compilerOptions) {
-		const plugins = compilerOptions.plugins as ({ name: string; } & Partial<LitAnalyzerConfig>)[];
-		const tsLitPluginOptions = plugins.find(plugin => plugin.name === 'ts-lit-plugin');
-		if (tsLitPluginOptions != null)
-			return tsLitPluginOptions;
 	}
 
 	return undefined;

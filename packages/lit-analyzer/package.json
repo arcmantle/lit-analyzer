@@ -2,7 +2,7 @@
 	"name": "@arcmantle/lit-analyzer",
 	"version": "3.0.0",
 	"description": "CLI that type checks bindings in lit-html templates",
-	"author": "runem",
+	"author": "arcmantle",
 	"license": "MIT",
 	"engines": {
 		"node": ">=24"
@@ -26,6 +26,9 @@
 	"bin": {
 		"lit-analyzer": "cli.js"
 	},
+	"type": "module",
+	"main": "dist/lib/index.js",
+	"types": "dist/lib/index.d.ts",
 	"scripts": {
 		"build": "rm -rf dist .tsbuildinfo && tsc --build --pretty",
 		"rebuild": "rm -rf dist .tsbuildinfo && tsc --build --pretty",
@@ -36,7 +39,6 @@
 		"test:watch": "vitest",
 		"check-version": "node src/scripts/check-version.ts"
 	},
-	"main": "dist/lib/index.js",
 	"files": [
 		"/dist/lib/",
 		"cli.js"
@@ -49,6 +51,7 @@
 		"parse5": "8.0.1",
 		"vscode-css-languageservice": "6.3.7",
 		"vscode-html-languageservice": "5.5.1",
+		"vscode-languageserver-textdocument": "^1.0.12",
 		"vscode-languageserver-types": "^3.17.5",
 		"@arcmantle/web-component-analyzer": "workspace:*"
 	},
@@ -57,24 +60,5 @@
 		"tslib": "^2.0.0",
 		"typescript": "catalog:",
 		"vitest": "^4.1.10"
-	},
-	"contributors": [
-		{
-			"name": "Rune Mehlsen",
-			"url": "https://twitter.com/runemehlsen",
-			"img": "https://avatars2.githubusercontent.com/u/5372940?s=460&v=4"
-		},
-		{
-			"name": "Andreas Mehlsen",
-			"url": "https://twitter.com/andreasmehlsen",
-			"img": "https://avatars1.githubusercontent.com/u/6267397?s=460&v=4"
-		},
-		{
-			"name": "You?",
-			"img": "https://joeschmoe.io/api/v1/random",
-			"url": "https://github.com/runem/lit-analyzer/blob/master/CONTRIBUTING.md"
-		}
-	],
-	"types": "dist/lib/index.d.ts",
-	"type": "module"
+	}
 }

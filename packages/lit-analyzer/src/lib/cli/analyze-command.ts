@@ -6,7 +6,6 @@ import { DefaultLitAnalyzerContext } from '../analyze/default-lit-analyzer-conte
 import { LitAnalyzer } from '../analyze/lit-analyzer.js';
 import { LitAnalyzerConfig, makeConfig } from '../analyze/lit-analyzer-config.js';
 import { analyzeGlobs } from './analyze-globs.js';
-import { readLitAnalyzerConfigFromTsConfig } from './compile.js';
 import { CodeDiagnosticFormatter } from './format/code-diagnostic-formatter.js';
 import { AnalysisStats, DiagnosticFormatter } from './format/diagnostic-formatter.js';
 import { ListDiagnosticFormatter } from './format/list-diagnostic-formatter.js';
@@ -36,34 +35,13 @@ export async function analyzeCommand(globs: string[], cliConfig: LitAnalyzerCliC
 		},
 	});
 
-	// Read config from tsconfig.json
-	const configFromTS = readLitAnalyzerConfigFromTsConfig() || {};
-
 	// Read config from the CLI options
 	const configFromCLI = readLitAnalyzerConfigFromCliConfig(cliConfig);
 
-	// Make seed where options from CLI takes precedence over options from "tsconfig.json"
-	const configSeed = {
-		...configFromTS,
-		...configFromCLI,
-
-		// Also merge rules deep
-		rules: {
-			...(configFromTS.rules || {}),
-			...(configFromCLI.rules || {}),
-		},
-	};
-
-	// Generate final config based on CLI and "tsconfig.json"
-	const tsPluginConfig = makeConfig(configSeed);
-
-	// Set the config on the context
-	context.updateConfig(tsPluginConfig);
-
-	// Debug config
-	context.logger.verbose('Lit Analyzer Configuration', tsPluginConfig);
+	const tsPluginConfig = makeConfig(configFromCLI);
 
 	const analyzer = new LitAnalyzer(context);
+	let configuredProgram: Program | undefined;
 
 	const stats: AnalysisStats = { errors: 0, warnings: 0, filesWithProblems: 0, totalFiles: 0, diagnostics: 0 };
 
@@ -89,6 +67,11 @@ export async function analyzeCommand(globs: string[], cliConfig: LitAnalyzerCliC
 		},
 		analyzeSourceFile(file: SourceFile, options: { program: Program; }): void | boolean {
 			program = options.program;
+			if (configuredProgram !== program) {
+				context.updateConfig(tsPluginConfig);
+				context.logger.verbose('Lit Analyzer Configuration', tsPluginConfig);
+				configuredProgram = program;
+			}
 
 			if (cliConfig.debug) {
 				// eslint-disable-next-line no-console
