@@ -33,9 +33,7 @@ registered on HTMLElementTagNameMap",
 	// The mocha suite this replaced looked like it covered this, but its assertion
 	// was `assert.rejects(...)` with no `await`, so the promise floated and the
 	// check never ran. Unskip once cache invalidation lands.
-	test.skip('stops reporting the missing import once it is added', () => {
-		expect(observations.missingImport.clearedAfterFix).toBe(true);
-	});
+	test.todo('stops reporting the missing import once it is added');
 
 	test('completes custom element tag names', () => {
 		expect(observations.completions.tagLabels).toContain('complete-me');

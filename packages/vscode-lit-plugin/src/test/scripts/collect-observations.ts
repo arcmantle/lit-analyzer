@@ -17,8 +17,7 @@ export interface Observations {
 	installedExtensionIds:         string[];
 	missingElementTypeDiagnostics: string[];
 	missingImport: {
-		beforeFix:       string[];
-		clearedAfterFix: boolean;
+		beforeFix: string[];
 	};
 	completions: {
 		tagLabels:      string[];
@@ -62,25 +61,6 @@ async function waitForDiagnostics(uri: vscode.Uri, retries = 1000): Promise<vsco
 	throw new Error(`No diagnostics found for ${ uri.fsPath }`);
 }
 
-/**
- * Waits for a document's diagnostics to disappear.
- *
- * Kept short on purpose. Today this always exhausts, because adding the import
- * does not clear the diagnostic -- see the skipped assertion in
- * ../extension.test.ts and ISS_4H4W1Q8QX39NJSX2E3KQ5XMYSS. Waiting longer only
- * makes every run slower for an outcome we already know.
- */
-async function waitForDiagnosticsToClear(uri: vscode.Uri, retries = 50): Promise<boolean> {
-	for (let i = 0; i < retries; i++) {
-		if (vscode.languages.getDiagnostics(uri).length === 0)
-			return true;
-
-		await new Promise(resolve => setTimeout(resolve, 100));
-	}
-
-	return false;
-}
-
 async function openFixture(name: string) {
 	const doc = await vscode.workspace.openTextDocument(vscode.Uri.file(path.join(FIXTURES, name)));
 	const editor = await vscode.window.showTextDocument(doc);
@@ -104,13 +84,10 @@ async function observeMissingImport(): Promise<Observations['missingImport']> {
 	await config.update('lit-plugin.logging', 'verbose', true);
 	await config.update('lit-plugin.rules.no-missing-import', 'error', true);
 
-	const { doc, editor } = await openFixture('missing-import.ts');
+	const { doc } = await openFixture('missing-import.ts');
 	const beforeFix = (await waitForDiagnostics(doc.uri)).map(d => d.message);
 
-	// Add the missing import, which should clear the diagnostic.
-	await editor.insertSnippet(new vscode.SnippetString("import './my-other-element';\n"), doc.lineAt(0).range.start);
-
-	return { beforeFix, clearedAfterFix: await waitForDiagnosticsToClear(doc.uri) };
+	return { beforeFix };
 }
 
 async function observeCompletions(): Promise<Observations['completions']> {
