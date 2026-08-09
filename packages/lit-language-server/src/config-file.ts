@@ -6,7 +6,7 @@ import {
 	type LitAnalyzerConfig,
 	makeConfig,
 	readLitConfigFileOptions,
-} from 'lit-analyzer';
+} from '@arcmantle/lit-analyzer';
 
 export const CONFIG_FILE_NAME = LIT_CONFIG_FILE_NAME;
 

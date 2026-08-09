@@ -1,4 +1,4 @@
-import { getUnionType } from 'web-component-analyzer';
+import { getUnionType } from '@arcmantle/web-component-analyzer';
 
 import {
 	HtmlAttr,

@@ -1,6 +1,6 @@
 import { pathToFileURL } from 'node:url';
 
-import type { LitRenameLocation } from 'lit-analyzer';
+import type { LitRenameLocation } from '@arcmantle/lit-analyzer';
 import type * as ts from 'typescript';
 import { Range, TextEdit, WorkspaceEdit } from 'vscode-languageserver/node';
 

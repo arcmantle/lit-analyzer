@@ -5,7 +5,7 @@ import {
 	type LitAnalyzerRules,
 	type LitAnalyzerRuleSeverity,
 	type LitSecuritySystem,
-} from 'lit-analyzer';
+} from '@arcmantle/lit-analyzer';
 
 /**
  * The raw shape of the `lit-plugin` VS Code configuration section, as

@@ -1,5 +1,5 @@
 {
-	"name": "lit-analyzer",
+	"name": "@arcmantle/lit-analyzer",
 	"version": "3.0.0",
 	"description": "CLI that type checks bindings in lit-html templates",
 	"author": "runem",
@@ -53,7 +53,7 @@
 		"vscode-css-languageservice": "6.3.7",
 		"vscode-html-languageservice": "5.5.1",
 		"vscode-languageserver-types": "^3.17.5",
-		"web-component-analyzer": "workspace:*"
+		"@arcmantle/web-component-analyzer": "workspace:*"
 	},
 	"devDependencies": {
 		"@types/node": "^24.0.0",

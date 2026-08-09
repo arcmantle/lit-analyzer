@@ -1,4 +1,4 @@
-import type { LitQuickInfo, SourceFileRange } from 'lit-analyzer';
+import type { LitQuickInfo, SourceFileRange } from '@arcmantle/lit-analyzer';
 import * as ts from 'typescript';
 import { describe, expect, test } from 'vitest';
 import { MarkupKind } from 'vscode-languageserver/node';

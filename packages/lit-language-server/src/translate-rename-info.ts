@@ -1,4 +1,4 @@
-import type { LitRenameInfo } from 'lit-analyzer';
+import type { LitRenameInfo } from '@arcmantle/lit-analyzer';
 import type * as ts from 'typescript';
 import type { PrepareRenameResult } from 'vscode-languageserver/node';
 

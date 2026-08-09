@@ -1,5 +1,5 @@
 import { Type, TypeChecker } from 'typescript';
-import { getUnionType } from 'web-component-analyzer';
+import { getUnionType } from '@arcmantle/web-component-analyzer';
 
 const HTML_5_ATTR_TYPES: { [key: string]: string | string[] | [string[]]; } = {
 	onafterprint:            'string',

@@ -2,7 +2,7 @@ import * as fs from 'node:fs';
 import * as path from 'node:path';
 
 import ts from 'typescript';
-import { createJSDocLanguageServiceHost } from 'web-component-analyzer';
+import { createJSDocLanguageServiceHost } from '@arcmantle/web-component-analyzer';
 
 import { parseTsconfig } from './tsconfig-file.js';
 

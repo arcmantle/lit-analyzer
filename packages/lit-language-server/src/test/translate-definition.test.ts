@@ -1,4 +1,4 @@
-import type { LitDefinition, SourceFileRange } from 'lit-analyzer';
+import type { LitDefinition, SourceFileRange } from '@arcmantle/lit-analyzer';
 import * as ts from 'typescript';
 import { describe, expect, test } from 'vitest';
 

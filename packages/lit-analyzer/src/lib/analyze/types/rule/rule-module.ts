@@ -1,4 +1,4 @@
-import { ComponentDeclaration, ComponentDefinition, ComponentMember } from 'web-component-analyzer';
+import { ComponentDeclaration, ComponentDefinition, ComponentMember } from '@arcmantle/web-component-analyzer';
 
 import { LitAnalyzerRuleId } from '../../lit-analyzer-config.js';
 import { HtmlNodeAttrAssignment } from '../html-node/html-node-attr-assignment-types.js';

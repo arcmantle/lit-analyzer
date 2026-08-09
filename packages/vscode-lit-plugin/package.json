@@ -1,5 +1,5 @@
 {
-	"name": "lit-plugin",
+	"name": "@arcmantle/lit-plugin",
 	"private": true,
 	"displayName": "Lit Analyzer",
 	"description": "Syntax highlighting, type checking and code completion for lit-html",
@@ -47,7 +47,7 @@
 		"@vscode/vsce": "^3.7.0",
 		"esbuild": "^0.28.1",
 		"fs-extra": "^9.0.1",
-		"lit-analyzer": "workspace:*",
+		"@arcmantle/lit-analyzer": "workspace:*",
 		"vitest": "^4.1.10",
 		"vscode-languageclient": "^10.1.0"
 	},

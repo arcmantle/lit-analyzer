@@ -1,5 +1,5 @@
 import { Type, TypeChecker, TypeFlags } from 'typescript';
-import { ComponentCssPart, ComponentCssProperty, ComponentDeclaration, ComponentEvent, ComponentMember, ComponentSlot } from 'web-component-analyzer';
+import { ComponentCssPart, ComponentCssProperty, ComponentDeclaration, ComponentEvent, ComponentMember, ComponentSlot } from '@arcmantle/web-component-analyzer';
 
 import { hasFlag, isBooleanType, typeToDisplayString } from '../../../rules/util/type/type-utils.js';
 import {

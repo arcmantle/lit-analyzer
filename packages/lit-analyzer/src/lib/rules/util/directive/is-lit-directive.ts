@@ -1,5 +1,5 @@
 import { SignatureKind, Type, TypeChecker, TypeFlags } from 'typescript';
-import { isTypeReference } from 'web-component-analyzer';
+import { isTypeReference } from '@arcmantle/web-component-analyzer';
 
 const partTypeNames: ReadonlySet<string> = new Set([
 	'Part',

@@ -1,5 +1,5 @@
 {
-	"name": "lit-language-server",
+	"name": "@arcmantle/lit-language-server",
 	"private": true,
 	"version": "0.0.0",
 	"description": "Standalone language server that serves lit-html analysis over the Language Server Protocol.",
@@ -20,8 +20,8 @@
 		"test": "pnpm run build && vitest run"
 	},
 	"dependencies": {
-		"lit-analyzer": "workspace:*",
-		"web-component-analyzer": "workspace:*",
+		"@arcmantle/lit-analyzer": "workspace:*",
+		"@arcmantle/web-component-analyzer": "workspace:*",
 		"vscode-languageserver": "^10.0.0",
 		"vscode-languageserver-textdocument": "^1.0.12"
 	},

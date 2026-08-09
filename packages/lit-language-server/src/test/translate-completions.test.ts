@@ -1,4 +1,4 @@
-import type { LitCompletion, SourceFileRange } from 'lit-analyzer';
+import type { LitCompletion, SourceFileRange } from '@arcmantle/lit-analyzer';
 import * as ts from 'typescript';
 import { describe, expect, test } from 'vitest';
 import { CompletionItemKind } from 'vscode-languageserver/node';

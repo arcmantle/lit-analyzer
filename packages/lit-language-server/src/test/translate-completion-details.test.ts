@@ -1,4 +1,4 @@
-import type { LitCompletionDetails } from 'lit-analyzer';
+import type { LitCompletionDetails } from '@arcmantle/lit-analyzer';
 import { describe, expect, test } from 'vitest';
 import { CompletionItem, MarkupKind } from 'vscode-languageserver/node';
 

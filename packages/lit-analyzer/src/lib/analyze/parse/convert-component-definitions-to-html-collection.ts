@@ -1,4 +1,4 @@
-import { AnalyzerResult, ComponentDeclaration, ComponentDefinition, ComponentFeatures } from 'web-component-analyzer';
+import { AnalyzerResult, ComponentDeclaration, ComponentDefinition, ComponentFeatures } from '@arcmantle/web-component-analyzer';
 
 import { HtmlDataCollection, HtmlDataFeatures, type HtmlProp, HtmlTag } from './parse-html-data/html-tag.js';
 

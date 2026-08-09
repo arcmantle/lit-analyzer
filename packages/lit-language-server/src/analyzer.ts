@@ -1,4 +1,4 @@
-import { DefaultLitAnalyzerContext, LitAnalyzer, type LitAnalyzerConfig, makeConfig } from 'lit-analyzer';
+import { DefaultLitAnalyzerContext, LitAnalyzer, type LitAnalyzerConfig, makeConfig } from '@arcmantle/lit-analyzer';
 import type { HostCancellationToken } from 'typescript';
 
 import type { AnalysisCompiler } from './analysis-compiler.js';

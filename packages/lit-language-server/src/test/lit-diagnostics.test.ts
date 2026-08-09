@@ -1,4 +1,4 @@
-import type { LitDiagnostic, Range } from 'lit-analyzer';
+import type { LitDiagnostic, Range } from '@arcmantle/lit-analyzer';
 import * as ts from 'typescript';
 import { describe, expect, test } from 'vitest';
 import { DiagnosticSeverity } from 'vscode-languageserver/node';

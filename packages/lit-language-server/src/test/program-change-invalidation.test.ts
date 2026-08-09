@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs';
 import * as path from 'node:path';
 
-import { DefaultLitAnalyzerContext, LitAnalyzer, makeConfig } from 'lit-analyzer';
+import { DefaultLitAnalyzerContext, LitAnalyzer, makeConfig } from '@arcmantle/lit-analyzer';
 import { expect, test } from 'vitest';
 
 import { createAnalysisCompiler } from '../analysis-compiler.js';

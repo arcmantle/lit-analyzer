@@ -1,6 +1,6 @@
 import { pathToFileURL } from 'node:url';
 
-import type { LitDefinition, LitDefinitionTarget } from 'lit-analyzer';
+import type { LitDefinition, LitDefinitionTarget } from '@arcmantle/lit-analyzer';
 import type * as ts from 'typescript';
 import { LocationLink, Range } from 'vscode-languageserver/node';
 

@@ -57,7 +57,7 @@ importers:
       vscode-languageserver-types:
         specifier: ^3.17.5
         version: 3.18.0
-      web-component-analyzer:
+      '@arcmantle/web-component-analyzer':
         specifier: workspace:*
         version: link:../web-component-analyzer
     devDependencies:
@@ -76,7 +76,7 @@ importers:
 
   packages/lit-language-server:
     dependencies:
-      lit-analyzer:
+      '@arcmantle/lit-analyzer':
         specifier: workspace:*
         version: link:../lit-analyzer
       vscode-languageserver:
@@ -85,7 +85,7 @@ importers:
       vscode-languageserver-textdocument:
         specifier: ^1.0.12
         version: 1.0.12
-      web-component-analyzer:
+      '@arcmantle/web-component-analyzer':
         specifier: workspace:*
         version: link:../web-component-analyzer
     devDependencies:
@@ -173,7 +173,7 @@ importers:
       fs-extra:
         specifier: ^9.0.1
         version: 9.1.0
-      lit-analyzer:
+      '@arcmantle/lit-analyzer':
         specifier: workspace:*
         version: link:../lit-analyzer
       vitest:

@@ -1,4 +1,4 @@
-import { ALL_RULE_IDS } from 'lit-analyzer';
+import { ALL_RULE_IDS } from '@arcmantle/lit-analyzer';
 
 const NON_RULE_SETTING_KEYS = [
 	'disable',

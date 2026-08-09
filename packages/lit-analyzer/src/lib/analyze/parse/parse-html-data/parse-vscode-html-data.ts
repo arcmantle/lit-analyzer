@@ -1,7 +1,7 @@
 import { Type, TypeChecker } from 'typescript';
 import { HTMLDataV1, IAttributeData, ITagData, IValueData, IValueSet } from 'vscode-html-languageservice';
 import { MarkupContent } from 'vscode-languageserver-types';
-import { getUnionType } from 'web-component-analyzer';
+import { getUnionType } from '@arcmantle/web-component-analyzer';
 
 import { HtmlAttr, HtmlDataCollection, HtmlEvent, HtmlTag } from './html-tag.js';
 

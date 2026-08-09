@@ -13,7 +13,7 @@ import {
 	sys,
 } from 'typescript';
 import * as tsModule from 'typescript';
-import { createJSDocProgram } from 'web-component-analyzer';
+import { createJSDocProgram } from '@arcmantle/web-component-analyzer';
 
 import { LitAnalyzerConfig } from '../analyze/lit-analyzer-config.js';
 

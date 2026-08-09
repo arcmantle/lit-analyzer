@@ -2,7 +2,7 @@ import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import type { LitAnalyzerConfig } from 'lit-analyzer';
+import type { LitAnalyzerConfig } from '@arcmantle/lit-analyzer';
 import type * as ts from 'typescript';
 import type { CodeAction, CodeActionParams, CompletionItem, CompletionParams, Connection, DefinitionParams, DocumentOnTypeFormattingParams, Hover, HoverParams, InitializeParams, InitializeResult, LocationLink, PrepareRenameParams, PrepareRenameResult, RenameParams, SignatureHelp, SignatureHelpParams, TextEdit, WorkspaceEdit } from 'vscode-languageserver/node';
 import { CodeActionKind, DidChangeWatchedFilesNotification, FileChangeType, TextDocumentSyncKind } from 'vscode-languageserver/node';

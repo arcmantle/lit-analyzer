@@ -1,7 +1,7 @@
 import { Type, TypeChecker, TypeFlags, UnionType } from 'typescript';
-import { hasFlag as hasTypeFlag } from 'web-component-analyzer';
+import { hasFlag as hasTypeFlag } from '@arcmantle/web-component-analyzer';
 
-export { hasFlag } from 'web-component-analyzer';
+export { hasFlag } from '@arcmantle/web-component-analyzer';
 
 
 export function isAnyOrUnknown(type: Type): boolean {

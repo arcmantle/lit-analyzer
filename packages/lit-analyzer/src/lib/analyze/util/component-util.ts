@@ -1,5 +1,5 @@
 import { SourceFile } from 'typescript';
-import { ComponentDeclaration, ComponentDefinition, visitAllHeritageClauses } from 'web-component-analyzer';
+import { ComponentDeclaration, ComponentDefinition, visitAllHeritageClauses } from '@arcmantle/web-component-analyzer';
 
 const CONTRIBUTING_FILES: WeakMap<ComponentDefinition, Set<SourceFile>> = new WeakMap();
 

@@ -1,5 +1,5 @@
 {
-	"name": "web-component-analyzer",
+	"name": "@arcmantle/web-component-analyzer",
 	"version": "2.0.0",
 	"private": true,
 	"description": "CLI that analyzes web components. Internal to this repository and not published.",

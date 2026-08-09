@@ -1,4 +1,4 @@
-import { makeConfig } from 'lit-analyzer';
+import { makeConfig } from '@arcmantle/lit-analyzer';
 import { describe, expect, test } from 'vitest';
 
 import { mergeConfig, parseWorkspaceSettings } from '../workspace-settings.js';

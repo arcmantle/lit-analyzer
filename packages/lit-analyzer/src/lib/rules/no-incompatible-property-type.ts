@@ -1,5 +1,5 @@
 import { Node, ObjectFlags, Type, TypeChecker, TypeFlags } from 'typescript';
-import { LitElementPropertyConfig } from 'web-component-analyzer';
+import { LitElementPropertyConfig } from '@arcmantle/web-component-analyzer';
 
 import { RuleModule } from '../analyze/types/rule/rule-module.js';
 import { RuleModuleContext } from '../analyze/types/rule/rule-module-context.js';

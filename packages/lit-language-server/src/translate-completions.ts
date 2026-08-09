@@ -1,4 +1,4 @@
-import type { LitCompletion, LitTargetKind } from 'lit-analyzer';
+import type { LitCompletion, LitTargetKind } from '@arcmantle/lit-analyzer';
 import type * as ts from 'typescript';
 import { CompletionItem, CompletionItemKind, Range, TextEdit } from 'vscode-languageserver/node';
 

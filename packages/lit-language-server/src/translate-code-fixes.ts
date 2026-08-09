@@ -1,6 +1,6 @@
 import { pathToFileURL } from 'node:url';
 
-import type { LitCodeFix, LitCodeFixAction } from 'lit-analyzer';
+import type { LitCodeFix, LitCodeFixAction } from '@arcmantle/lit-analyzer';
 import type * as ts from 'typescript';
 import { CodeAction, CodeActionKind, Range, TextEdit, WorkspaceEdit } from 'vscode-languageserver/node';
 

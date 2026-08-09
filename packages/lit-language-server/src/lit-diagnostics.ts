@@ -1,4 +1,4 @@
-import type { LitDiagnostic } from 'lit-analyzer';
+import type { LitDiagnostic } from '@arcmantle/lit-analyzer';
 import type * as ts from 'typescript';
 import { Diagnostic, DiagnosticSeverity } from 'vscode-languageserver/node';
 

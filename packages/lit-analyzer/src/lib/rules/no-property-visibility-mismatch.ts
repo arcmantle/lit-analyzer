@@ -1,5 +1,5 @@
 import { Identifier, ObjectLiteralExpression } from 'typescript';
-import { ComponentMember } from 'web-component-analyzer';
+import { ComponentMember } from '@arcmantle/web-component-analyzer';
 
 import { RuleFixAction, RuleFixActionChangeRange } from '../analyze/types/rule/rule-fix-action.js';
 import { RuleModule } from '../analyze/types/rule/rule-module.js';

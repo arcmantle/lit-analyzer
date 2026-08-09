@@ -1,5 +1,5 @@
 import { SourceFile } from 'typescript';
-import { AnalyzerResult, ComponentDeclaration, ComponentDefinition } from 'web-component-analyzer';
+import { AnalyzerResult, ComponentDeclaration, ComponentDefinition } from '@arcmantle/web-component-analyzer';
 
 import { getContributingFiles, getDeclarationsInFile } from '../../util/component-util.js';
 import { AnalyzerDefinitionStore } from '../analyzer-definition-store.js';

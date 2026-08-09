@@ -1,4 +1,4 @@
-import type { LitQuickInfo } from 'lit-analyzer';
+import type { LitQuickInfo } from '@arcmantle/lit-analyzer';
 import type * as ts from 'typescript';
 import { Hover, MarkupKind } from 'vscode-languageserver/node';
 

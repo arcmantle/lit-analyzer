@@ -1,6 +1,6 @@
 import htmlDataJson from '@vscode/web-custom-data/data/browsers.html-data.json' with { type: 'json' };
 import { HTMLDataV1 } from 'vscode-html-languageservice';
-import { getUnionType } from 'web-component-analyzer';
+import { getUnionType } from '@arcmantle/web-component-analyzer';
 
 import { HtmlAttr, HtmlDataCollection } from '../parse/parse-html-data/html-tag.js';
 import { parseVscodeHtmlData } from '../parse/parse-html-data/parse-vscode-html-data.js';
