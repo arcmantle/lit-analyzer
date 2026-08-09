@@ -15,8 +15,8 @@
 	"main": "lib/main.js",
 	"scripts": {
 		"watch": "tsc --watch",
-		"build": "tsc --build --pretty",
-		"rebuild": "tsc --build --force --pretty",
+		"build": "rm -rf lib .tsbuildinfo && tsc --build --pretty",
+		"rebuild": "rm -rf lib .tsbuildinfo && tsc --build --pretty",
 		"test": "pnpm run build && vitest run"
 	},
 	"dependencies": {

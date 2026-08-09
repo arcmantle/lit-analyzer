@@ -26,8 +26,8 @@
 		"web-component-analyzer": "cli.js"
 	},
 	"scripts": {
-		"build": "tsc --build --pretty",
-		"rebuild": "tsc --build --force --pretty",
+		"build": "rm -rf lib .tsbuildinfo && tsc --build --pretty",
+		"rebuild": "rm -rf lib .tsbuildinfo && tsc --build --pretty",
 		"watch": "tsc --build --watch",
 		"test": "vitest run"
 	},

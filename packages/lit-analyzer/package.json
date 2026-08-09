@@ -27,8 +27,8 @@
 		"lit-analyzer": "cli.js"
 	},
 	"scripts": {
-		"build": "tsc --build --pretty",
-		"rebuild": "tsc --build --force --pretty",
+		"build": "rm -rf dist .tsbuildinfo && tsc --build --pretty",
+		"rebuild": "rm -rf dist .tsbuildinfo && tsc --build --pretty",
 		"prepack": "pnpm run rebuild",
 		"prepublishOnly": "pnpm test",
 		"test": "vitest run && pnpm run check-version",
@@ -36,12 +36,9 @@
 		"test:watch": "vitest",
 		"check-version": "node src/scripts/check-version.ts"
 	},
-	"main": "dist/index.js",
+	"main": "dist/lib/index.js",
 	"files": [
 		"/dist/lib/",
-		"/dist/index.js",
-		"/dist/index.d.ts",
-		"/dist/index.d.ts.map",
 		"cli.js"
 	],
 	"dependencies": {
@@ -78,6 +75,6 @@
 			"url": "https://github.com/runem/lit-analyzer/blob/master/CONTRIBUTING.md"
 		}
 	],
-	"types": "dist/index.d.ts",
+	"types": "dist/lib/index.d.ts",
 	"type": "module"
 }

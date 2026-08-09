@@ -5,7 +5,7 @@
 	],
 	"exclude": [
 		"node_modules",
-		"./src/test/fixtures"
+		"./src/test"
 	],
 	"compilerOptions": {
 		"rootDir": "./src",
