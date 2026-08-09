@@ -1,11 +1,12 @@
+import { createJSDocProgram } from '@arcmantle/web-component-analyzer';
 import { existsSync, readFileSync } from 'fs';
+import { resolve } from 'path';
 import {
 	CompilerOptions,
 	createCompilerHost,
 	findConfigFile,
 	ModuleKind,
 	ModuleResolutionKind,
-	normalizePath,
 	parseJsonConfigFileContent,
 	Program,
 	readConfigFile,
@@ -13,8 +14,7 @@ import {
 	SourceFile,
 	sys,
 } from 'typescript';
-import * as tsModule from 'typescript';
-import { createJSDocProgram } from '@arcmantle/web-component-analyzer';
+import tsModule from 'typescript';
 
 const requiredCompilerOptions: CompilerOptions = {
 	noEmitOnError:    false,
@@ -65,7 +65,7 @@ export function compileTypescript(filePaths: string | string[]): CompileResult {
 }
 
 function canonicalFileName(fileName: string): string {
-	const normalized = normalizePath(fileName);
+	const normalized = resolve(fileName).replace(/\\/g, '/');
 
 	return sys.useCaseSensitiveFileNames ? normalized : normalized.toLowerCase();
 }
