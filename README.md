@@ -10,7 +10,6 @@
 <p align="center">
 		<a href="https://marketplace.visualstudio.com/items?itemName=runem.lit-plugin"><img alt="Downloads per Month" src="https://img.shields.io/visual-studio-marketplace/d/runem.lit-plugin.svg?label=vscode-lit-plugin" height="20"/></a>
 <a href="https://www.npmjs.com/package/lit-analyzer"><img alt="Downloads per Month" src="https://img.shields.io/npm/dm/lit-analyzer.svg?label=lit-analyzer" height="20"/></a>
-<a href="https://www.npmjs.com/package/ts-lit-plugin"><img alt="Downloads per Month" src="https://img.shields.io/npm/dm/ts-lit-plugin.svg?label=ts-lit-plugin" height="20"/></a>
 <a href="https://github.com/runem/lit-analyzer/graphs/contributors"><img alt="Contributors" src="https://img.shields.io/github/contributors/runem/lit-analyzer" height="20"/></a>
 	</p>
 
@@ -19,16 +18,9 @@ This mono-repository consists of the following tools:
 
 - [**`vscode-lit-plugin`**](/packages/vscode-lit-plugin) VS Code plugin that adds syntax highlighting, type checking and code completion for lit-html.
 
-- [**`ts-lit-plugin`**](/packages/ts-lit-plugin) Typescript plugin that adds type checking and code completion to lit-html templates.
+- [**`lit-language-server`**](/packages/lit-language-server) Language server that provides Lit analysis to supported editors.
 
 - [**`lit-analyzer`**](/packages/lit-analyzer) CLI that analyzes lit-html templates in your code to validate html and type check bindings.
-
-
-[![-----------------------------------------------------](https://raw.githubusercontent.com/andreasbm/readme/master/assets/lines/rainbow.png)](#rules)
-
-## ➤ Rules
-
-You can find a list of all rules [here](https://github.com/runem/lit-analyzer/blob/master/docs/readme/rules.md).
 
 
 [![-----------------------------------------------------](https://raw.githubusercontent.com/andreasbm/readme/master/assets/lines/rainbow.png)](#contributing)
