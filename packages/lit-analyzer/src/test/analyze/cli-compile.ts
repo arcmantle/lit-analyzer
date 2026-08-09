@@ -8,7 +8,7 @@ tsTest('compileTypescript includes the JSDoc resolver in the active Program', t 
 	const { program, files } = compileTypescript(fileName);
 
 	t.true(program.getSourceFile(`${ fileName }.__lit_jsdoc__.d.ts`) != null);
-	t.deepEqual(files.map(file => file.fileName), [ fileName ]);
+	t.deepEqual(files.map(file => resolve(file.fileName)), [ fileName ]);
 });
 
 tsTest('compileTypescript retains requested files after TypeScript normalizes their paths', t => {
@@ -16,5 +16,5 @@ tsTest('compileTypescript retains requested files after TypeScript normalizes th
 	const unnormalizedFileName = `${ dirname(fileName) }${ sep }..${ sep }lit-element${ sep }lit-element.ts`;
 	const { files } = compileTypescript(unnormalizedFileName);
 
-	t.deepEqual(files.map(file => file.fileName), [ fileName ]);
+	t.deepEqual(files.map(file => resolve(file.fileName)), [ fileName ]);
 });
