@@ -5,6 +5,7 @@ import {
 	findConfigFile,
 	ModuleKind,
 	ModuleResolutionKind,
+	normalizePath,
 	parseJsonConfigFileContent,
 	Program,
 	readConfigFile,
@@ -54,12 +55,19 @@ export function compileTypescript(filePaths: string | string[]): CompileResult {
 	const options = getCompilerOptions();
 	filePaths = Array.isArray(filePaths) ? filePaths : [ filePaths ];
 	const program = createJSDocProgram(filePaths, options, createCompilerHost(options), tsModule);
+	const canonicalFileNames = new Set(filePaths.map(canonicalFileName));
 	const files = program
 		.getSourceFiles()
-		.filter(sf => filePaths.includes(sf.fileName))
+		.filter(sf => canonicalFileNames.has(canonicalFileName(sf.fileName)))
 		.sort((sfA, sfB) => (sfA.fileName > sfB.fileName ? 1 : -1));
 
 	return { program, files };
+}
+
+function canonicalFileName(fileName: string): string {
+	const normalized = normalizePath(fileName);
+
+	return sys.useCaseSensitiveFileNames ? normalized : normalized.toLowerCase();
 }
 
 /**
