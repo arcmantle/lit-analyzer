@@ -79,7 +79,10 @@ export async function collectObservations(target: ExtensionUnderTest = extension
 			extensionDevelopmentPath,
 			extensionTestsPath,
 			launchArgs:        [ path.join(packageRoot, 'src', 'test', 'fixtures'), `--user-data-dir=${ userDataDir }` ],
-			extensionTestsEnv: { LIT_PLUGIN_OBSERVATIONS: observationsPath },
+			extensionTestsEnv: {
+				ELECTRON_RUN_AS_NODE:    undefined,
+				LIT_PLUGIN_OBSERVATIONS: observationsPath,
+			},
 		});
 
 		if (!fs.existsSync(observationsPath))
