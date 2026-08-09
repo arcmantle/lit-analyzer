@@ -2,7 +2,7 @@ import * as fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { afterEach, describe, expect, test } from 'vitest';
+import { afterAll, beforeAll, describe, expect, test } from 'vitest';
 import type { Position } from 'vscode-languageserver/node';
 
 import { type ServerHarness, startServer } from './helpers/server-harness.js';
@@ -13,7 +13,13 @@ const consumerPath = path.join(definitionProjectDir, 'consumer.ts');
 
 let harness: ServerHarness | undefined;
 
-afterEach(() => {
+beforeAll(async () => {
+	harness = await startServer(definitionProjectDir);
+	await harness.openFile(componentPath);
+	await harness.openFile(consumerPath);
+});
+
+afterAll(() => {
 	harness?.dispose();
 	harness = undefined;
 });
@@ -36,11 +42,6 @@ function positionOf(fileText: string, marker: string, withinMarker = 0): Positio
 
 describe('lit-language-server serves prepare-rename over LSP', () => {
 	test('prepare-rename on a custom element tag usage returns its span', async () => {
-		harness = await startServer(definitionProjectDir);
-
-		await harness.openFile(componentPath);
-		await harness.openFile(consumerPath);
-
 		const consumerText = fs.readFileSync(consumerPath, 'utf8');
 		const position = positionOf(consumerText, '<my-element', 1);
 
@@ -53,11 +54,6 @@ describe('lit-language-server serves prepare-rename over LSP', () => {
 	});
 
 	test('prepare-rename rejects a position that cannot be renamed', async () => {
-		harness = await startServer(definitionProjectDir);
-
-		await harness.openFile(componentPath);
-		await harness.openFile(consumerPath);
-
 		// The very start of the file, inside the "Pretending this is..." comment.
 		const result = await harness.getPrepareRename(consumerPath, { line: 0, character: 0 });
 

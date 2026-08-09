@@ -1,7 +1,7 @@
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { afterEach, describe, expect, test } from 'vitest';
+import { afterAll, beforeAll, describe, expect, test } from 'vitest';
 
 import { type ServerHarness, startServer } from './helpers/server-harness.js';
 
@@ -9,7 +9,11 @@ const litProjectDir = path.join(fileURLToPath(new URL('.', import.meta.url)), 'f
 
 let harness: ServerHarness | undefined;
 
-afterEach(() => {
+beforeAll(async () => {
+	harness = await startServer(litProjectDir);
+});
+
+afterAll(() => {
 	harness?.dispose();
 	harness = undefined;
 });
@@ -19,8 +23,6 @@ afterEach(() => {
 // runs the same in CI as it does locally.
 describe('LSP integration test harness', () => {
 	test('asserts a known diagnostic for a fixture file', async () => {
-		harness = await startServer(litProjectDir);
-
 		const diagnostics = await harness.openFile(path.join(litProjectDir, 'component.ts'));
 
 		expect(diagnostics).toHaveLength(1);
@@ -28,8 +30,6 @@ describe('LSP integration test harness', () => {
 	});
 
 	test('asserts no diagnostics for a clean file', async () => {
-		harness = await startServer(litProjectDir);
-
 		const diagnostics = await harness.openFile(path.join(litProjectDir, 'clean.ts'));
 
 		expect(diagnostics).toEqual([]);

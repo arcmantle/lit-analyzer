@@ -3,7 +3,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import * as ts from 'typescript';
-import { afterAll, afterEach, beforeAll, describe, expect, test } from 'vitest';
+import { afterAll, beforeAll, describe, expect, test } from 'vitest';
 import type { Position } from 'vscode-languageserver/node';
 
 import { type ServerHarness, startServer } from './helpers/server-harness.js';
@@ -22,9 +22,11 @@ const libraryDefinitionConsumerPath = path.join(libraryDefinitionProjectDir, 'co
 const libraryDefinitionSourcePath = path.join(libraryDefinitionProjectDir, 'library', 'src', 'component.ts');
 const libraryDefinitionOutputPath = path.join(libraryDefinitionProjectDir, 'library', 'dist');
 
-let harness: ServerHarness | undefined;
+let componentHarness: ServerHarness;
+let libraryHarness: ServerHarness;
+let definitionHarness: ServerHarness;
 
-beforeAll(() => {
+beforeAll(async () => {
 	fs.rmSync(libraryDefinitionOutputPath, { recursive: true, force: true });
 	const program = ts.createProgram([ libraryDefinitionSourcePath ], {
 		declaration:         true,
@@ -38,15 +40,24 @@ beforeAll(() => {
 	const result = program.emit();
 	if (result.emitSkipped)
 		throw new Error('Could not emit the declaration-map test fixture');
+
+	componentHarness = await startServer(componentProjectDir);
+	await componentHarness.openFile(componentPath);
+	await componentHarness.openFile(consumerPath);
+
+	libraryHarness = await startServer(libraryDefinitionProjectDir);
+	await libraryHarness.openFile(libraryDefinitionConsumerPath);
+
+	definitionHarness = await startServer(definitionProjectDir);
+	await definitionHarness.openFile(definitionComponentPath);
+	await definitionHarness.openFile(definitionConsumerPath);
 });
 
 afterAll(() => {
+	componentHarness?.dispose();
+	libraryHarness?.dispose();
+	definitionHarness?.dispose();
 	fs.rmSync(libraryDefinitionOutputPath, { recursive: true, force: true });
-});
-
-afterEach(() => {
-	harness?.dispose();
-	harness = undefined;
 });
 
 /**
@@ -67,15 +78,10 @@ function positionOf(fileText: string, marker: string, withinMarker = 0): Positio
 
 describe('lit-language-server serves go-to-definition over LSP', () => {
 	test('definition from a custom element tag usage lands on its class declaration', async () => {
-		harness = await startServer(componentProjectDir);
-
-		await harness.openFile(componentPath);
-		await harness.openFile(consumerPath);
-
 		const consumerText = fs.readFileSync(consumerPath, 'utf8');
 		const position = positionOf(consumerText, '<my-element', 1);
 
-		const links = await harness.getDefinition(consumerPath, position);
+		const links = await componentHarness.getDefinition(consumerPath, position);
 
 		expect(links).not.toBeNull();
 		expect(links).toHaveLength(1);
@@ -84,10 +90,6 @@ describe('lit-language-server serves go-to-definition over LSP', () => {
 	});
 
 	test('definitions from native attributes land on their DOM properties', async () => {
-		harness = await startServer(componentProjectDir);
-
-		await harness.openFile(consumerPath);
-
 		const consumerText = fs.readFileSync(consumerPath, 'utf8');
 		for (const [ marker, propertyName ] of [
 			[ 'title="Native', 'title' ],
@@ -95,7 +97,7 @@ describe('lit-language-server serves go-to-definition over LSP', () => {
 			[ 'disabled class=', 'disabled' ],
 			[ 'class="Native', 'className' ],
 		] as const) {
-			const links = await harness.getDefinition(consumerPath, positionOf(consumerText, marker, 1));
+			const links = await componentHarness.getDefinition(consumerPath, positionOf(consumerText, marker, 1));
 
 			expect(links, marker).not.toBeNull();
 			expect(links, marker).toHaveLength(1);
@@ -109,14 +111,10 @@ describe('lit-language-server serves go-to-definition over LSP', () => {
 	});
 
 	test('definition from a library custom element follows its declaration map to source', async () => {
-		harness = await startServer(libraryDefinitionProjectDir);
-
-		await harness.openFile(libraryDefinitionConsumerPath);
-
 		const consumerText = fs.readFileSync(libraryDefinitionConsumerPath, 'utf8');
 		const position = positionOf(consumerText, '<library-element', 1);
 
-		const links = await harness.getDefinition(libraryDefinitionConsumerPath, position);
+		const links = await libraryHarness.getDefinition(libraryDefinitionConsumerPath, position);
 
 		expect(links).not.toBeNull();
 		expect(links).toHaveLength(1);
@@ -125,27 +123,17 @@ describe('lit-language-server serves go-to-definition over LSP', () => {
 	});
 
 	test('no definition at a position with nothing to define', async () => {
-		harness = await startServer(componentProjectDir);
-
-		await harness.openFile(componentPath);
-		await harness.openFile(consumerPath);
-
 		// The very start of the file, inside the "Pretending this is..." comment.
-		const links = await harness.getDefinition(consumerPath, { line: 0, character: 0 });
+		const links = await componentHarness.getDefinition(consumerPath, { line: 0, character: 0 });
 
 		expect(links == null || links.length === 0).toBe(true);
 	});
 
 	test('definition from a property binding lands on the class field it binds to', async () => {
-		harness = await startServer(definitionProjectDir);
-
-		await harness.openFile(definitionComponentPath);
-		await harness.openFile(definitionConsumerPath);
-
 		const consumerText = fs.readFileSync(definitionConsumerPath, 'utf8');
 		const position = positionOf(consumerText, '.foo=', 1);
 
-		const links = await harness.getDefinition(definitionConsumerPath, position);
+		const links = await definitionHarness.getDefinition(definitionConsumerPath, position);
 
 		expect(links).not.toBeNull();
 		expect(links).toHaveLength(1);
@@ -158,15 +146,10 @@ describe('lit-language-server serves go-to-definition over LSP', () => {
 	});
 
 	test('definition from an event binding lands on the method that dispatches it', async () => {
-		harness = await startServer(definitionProjectDir);
-
-		await harness.openFile(definitionComponentPath);
-		await harness.openFile(definitionConsumerPath);
-
 		const consumerText = fs.readFileSync(definitionConsumerPath, 'utf8');
 		const position = positionOf(consumerText, '@my-event', 1);
 
-		const links = await harness.getDefinition(definitionConsumerPath, position);
+		const links = await definitionHarness.getDefinition(definitionConsumerPath, position);
 
 		expect(links).not.toBeNull();
 		expect(links).toHaveLength(1);

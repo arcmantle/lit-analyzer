@@ -2,7 +2,7 @@ import * as fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { afterEach, describe, expect, test } from 'vitest';
+import { afterAll, beforeAll, describe, expect, test } from 'vitest';
 import type { Position } from 'vscode-languageserver/node';
 
 import { type ServerHarness, startServer } from './helpers/server-harness.js';
@@ -13,7 +13,13 @@ const consumerPath = path.join(hoverProjectDir, 'consumer.ts');
 
 let harness: ServerHarness | undefined;
 
-afterEach(() => {
+beforeAll(async () => {
+	harness = await startServer(hoverProjectDir);
+	await harness.openFile(componentPath);
+	await harness.openFile(consumerPath);
+});
+
+afterAll(() => {
 	harness?.dispose();
 	harness = undefined;
 });
@@ -36,11 +42,6 @@ function positionOf(fileText: string, marker: string, withinMarker = 0): Positio
 
 describe('lit-language-server serves hover over LSP', () => {
 	test("hover on a tag name shows the element's quick info as markdown", async () => {
-		harness = await startServer(hoverProjectDir);
-
-		await harness.openFile(componentPath);
-		await harness.openFile(consumerPath);
-
 		const consumerText = fs.readFileSync(consumerPath, 'utf8');
 		const position = positionOf(consumerText, '<my-element', 1);
 
@@ -51,11 +52,6 @@ describe('lit-language-server serves hover over LSP', () => {
 	});
 
 	test('hover on a plain attribute shows its quick info', async () => {
-		harness = await startServer(hoverProjectDir);
-
-		await harness.openFile(componentPath);
-		await harness.openFile(consumerPath);
-
 		const consumerText = fs.readFileSync(consumerPath, 'utf8');
 		const position = positionOf(consumerText, 'id=', 0);
 
@@ -66,11 +62,6 @@ describe('lit-language-server serves hover over LSP', () => {
 	});
 
 	test("hover on a property binding shows the class field's quick info", async () => {
-		harness = await startServer(hoverProjectDir);
-
-		await harness.openFile(componentPath);
-		await harness.openFile(consumerPath);
-
 		const consumerText = fs.readFileSync(consumerPath, 'utf8');
 		const position = positionOf(consumerText, '.foo=', 1);
 
@@ -81,11 +72,6 @@ describe('lit-language-server serves hover over LSP', () => {
 	});
 
 	test("hover on an event binding shows the event's quick info", async () => {
-		harness = await startServer(hoverProjectDir);
-
-		await harness.openFile(componentPath);
-		await harness.openFile(consumerPath);
-
 		const consumerText = fs.readFileSync(consumerPath, 'utf8');
 		const position = positionOf(consumerText, '@my-event', 1);
 
@@ -96,11 +82,6 @@ describe('lit-language-server serves hover over LSP', () => {
 	});
 
 	test('no hover at a position with nothing to show', async () => {
-		harness = await startServer(hoverProjectDir);
-
-		await harness.openFile(componentPath);
-		await harness.openFile(consumerPath);
-
 		// The very start of the file, inside the "Pretending this is..." comment.
 		const hover = await harness.getHover(consumerPath, { line: 0, character: 0 });
 

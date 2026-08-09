@@ -2,7 +2,7 @@ import * as fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { afterEach, describe, expect, test } from 'vitest';
+import { afterAll, beforeAll, describe, expect, test } from 'vitest';
 import type { Position } from 'vscode-languageserver/node';
 
 import { type ServerHarness, startServer } from './helpers/server-harness.js';
@@ -14,7 +14,14 @@ const typoPath = path.join(codeFixProjectDir, 'consumer-typo.ts');
 
 let harness: ServerHarness | undefined;
 
-afterEach(() => {
+beforeAll(async () => {
+	harness = await startServer(codeFixProjectDir);
+	await harness.openFile(componentPath);
+	await harness.openFile(missingImportPath);
+	await harness.openFile(typoPath);
+});
+
+afterAll(() => {
 	harness?.dispose();
 	harness = undefined;
 });
@@ -37,11 +44,6 @@ function positionOf(fileText: string, marker: string, withinMarker = 0): Positio
 
 describe('lit-language-server serves code actions over LSP', () => {
 	test('a missing import produces a code action that inserts the import statement', async () => {
-		harness = await startServer(codeFixProjectDir);
-
-		await harness.openFile(componentPath);
-		await harness.openFile(missingImportPath);
-
 		const consumerText = fs.readFileSync(missingImportPath, 'utf8');
 		const position = positionOf(consumerText, '<my-element', 1);
 
@@ -60,11 +62,6 @@ describe('lit-language-server serves code actions over LSP', () => {
 	});
 
 	test('a misspelled tag name produces a code action that renames both the opening and closing tag', async () => {
-		harness = await startServer(codeFixProjectDir);
-
-		await harness.openFile(componentPath);
-		await harness.openFile(typoPath);
-
 		const consumerText = fs.readFileSync(typoPath, 'utf8');
 		const position = positionOf(consumerText, '<my-elment', 1);
 
@@ -83,11 +80,6 @@ describe('lit-language-server serves code actions over LSP', () => {
 	});
 
 	test('no code action at a position with nothing to fix', async () => {
-		harness = await startServer(codeFixProjectDir);
-
-		await harness.openFile(componentPath);
-		await harness.openFile(missingImportPath);
-
 		// The very start of the file, inside the "Pretending this is..." comment.
 		const actions = await harness.getCodeActions(missingImportPath, {
 			start: { line: 0, character: 0 },
@@ -98,11 +90,6 @@ describe('lit-language-server serves code actions over LSP', () => {
 	});
 
 	test('no code action when the client asks for a kind this server never returns', async () => {
-		harness = await startServer(codeFixProjectDir);
-
-		await harness.openFile(componentPath);
-		await harness.openFile(missingImportPath);
-
 		const consumerText = fs.readFileSync(missingImportPath, 'utf8');
 		const position = positionOf(consumerText, '<my-element', 1);
 
