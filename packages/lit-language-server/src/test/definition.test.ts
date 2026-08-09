@@ -3,7 +3,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import * as ts from 'typescript';
-import { afterEach, describe, expect, test } from 'vitest';
+import { afterAll, afterEach, beforeAll, describe, expect, test } from 'vitest';
 import type { Position } from 'vscode-languageserver/node';
 
 import { type ServerHarness, startServer } from './helpers/server-harness.js';
@@ -19,8 +19,30 @@ const definitionConsumerPath = path.join(definitionProjectDir, 'consumer.ts');
 const libraryDefinitionProjectDir
 	= path.join(fileURLToPath(new URL('.', import.meta.url)), 'fixtures', 'library-definition-project');
 const libraryDefinitionConsumerPath = path.join(libraryDefinitionProjectDir, 'consumer.ts');
+const libraryDefinitionSourcePath = path.join(libraryDefinitionProjectDir, 'library', 'src', 'component.ts');
+const libraryDefinitionOutputPath = path.join(libraryDefinitionProjectDir, 'library', 'dist');
 
 let harness: ServerHarness | undefined;
+
+beforeAll(() => {
+	fs.rmSync(libraryDefinitionOutputPath, { recursive: true, force: true });
+	const program = ts.createProgram([ libraryDefinitionSourcePath ], {
+		declaration:         true,
+		declarationMap:      true,
+		emitDeclarationOnly: true,
+		module:              ts.ModuleKind.Node16,
+		moduleResolution:    ts.ModuleResolutionKind.Node16,
+		outDir:              libraryDefinitionOutputPath,
+		target:              ts.ScriptTarget.ES2019,
+	});
+	const result = program.emit();
+	if (result.emitSkipped)
+		throw new Error('Could not emit the declaration-map test fixture');
+});
+
+afterAll(() => {
+	fs.rmSync(libraryDefinitionOutputPath, { recursive: true, force: true });
+});
 
 afterEach(() => {
 	harness?.dispose();
