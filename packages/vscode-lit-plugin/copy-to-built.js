@@ -53,7 +53,6 @@ async function main() {
 	await copy('./README.md', './built/README.md');
 	await copy('./docs', './built/docs');
 	await copy('./syntaxes', './built/syntaxes');
-	await copy('./schemas', './built/schemas');
 }
 
 main().catch(e => {
