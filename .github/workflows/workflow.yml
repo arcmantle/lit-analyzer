@@ -36,6 +36,9 @@ jobs:
         if: matrix.os == 'ubuntu-latest'
         run: pnpm lint
 
+      - name: Build
+        run: pnpm build
+
       - name: test
         run: pnpm test:headless
 
