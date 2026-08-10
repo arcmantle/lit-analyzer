@@ -8,7 +8,7 @@
 
 
 <p align="center">
-		<a href="https://marketplace.visualstudio.com/items?itemName=runem.lit-plugin"><img alt="Downloads per Month" src="https://img.shields.io/visual-studio-marketplace/d/runem.lit-plugin.svg?label=vscode-lit-plugin" height="20"/></a>
+		<a href="https://marketplace.visualstudio.com/items?itemName=arcmantle.lit-analyzer"><img alt="Downloads per Month" src="https://img.shields.io/visual-studio-marketplace/d/arcmantle.lit-analyzer.svg?label=vscode-lit-plugin" height="20"/></a>
 <a href="https://www.npmjs.com/package/lit-analyzer"><img alt="Downloads per Month" src="https://img.shields.io/npm/dm/lit-analyzer.svg?label=lit-analyzer" height="20"/></a>
 <a href="https://github.com/runem/lit-analyzer/graphs/contributors"><img alt="Contributors" src="https://img.shields.io/github/contributors/runem/lit-analyzer" height="20"/></a>
 	</p>

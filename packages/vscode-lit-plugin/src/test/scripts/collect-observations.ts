@@ -164,7 +164,7 @@ async function waitForLanguageServerState(getState: () => State, expected: State
 }
 
 async function observeLanguageServer(): Promise<Observations['languageServer']> {
-	const extension = vscode.extensions.getExtension<ExtensionApi>('arcmantle.lit-plugin')!;
+	const extension = vscode.extensions.getExtension<ExtensionApi>('arcmantle.lit-analyzer')!;
 	const { getState } = extension.exports.languageServer;
 
 	// The language server is the extension's only path now: it starts on
