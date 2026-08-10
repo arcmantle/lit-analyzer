@@ -21,6 +21,8 @@ jobs:
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
       - run: pnpm install --frozen-lockfile
+      - name: Build
+        run: pnpm build
       # Test normally on Mac
       - run: pnpm test:packaged
         working-directory: packages/vscode-lit-plugin
