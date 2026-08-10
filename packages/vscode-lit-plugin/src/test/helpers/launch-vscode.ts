@@ -94,6 +94,6 @@ export async function collectObservations(target: ExtensionUnderTest = extension
 		return JSON.parse(fs.readFileSync(observationsPath, 'utf8')) as Observations;
 	}
 	finally {
-		fs.rmSync(userDataDir, { recursive: true, force: true });
+		fs.rmSync(userDataDir, { recursive: true, force: true, maxRetries: 10, retryDelay: 100 });
 	}
 }
