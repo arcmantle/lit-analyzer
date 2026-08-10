@@ -66,7 +66,9 @@ export async function collectObservations(target: ExtensionUnderTest = extension
 	const selectedSdkMarker = ' // selected TypeScript SDK';
 	fs.writeFileSync(
 		domLibraryPath,
-		`${ domLibraryText.slice(0, titleDeclarationIndex + '    title: string;'.length) }${ selectedSdkMarker }${ domLibraryText.slice(titleDeclarationIndex + '    title: string;'.length) }`,
+		`${ domLibraryText.slice(
+			0, titleDeclarationIndex + '    title: string;'.length,
+) }${ selectedSdkMarker }${ domLibraryText.slice(titleDeclarationIndex + '    title: string;'.length) }`,
 	);
 	fs.mkdirSync(path.join(userDataDir, 'User'), { recursive: true });
 	fs.writeFileSync(path.join(userDataDir, 'User', 'settings.json'), JSON.stringify({
