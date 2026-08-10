@@ -99,8 +99,14 @@ export async function collectObservations(target: ExtensionUnderTest = extension
 		}
 		catch (error) {
 			// VS Code can retain a Windows handle after its process exits; the OS owns cleanup of this temporary path.
-			if (process.platform !== 'win32' || (error as NodeJS.ErrnoException).code !== 'EPERM')
-				throw error;
+			const isLockedWindowsDirectory
+				 = process.platform === 'win32'
+				&& error instanceof Error
+				&& 'code' in error
+				&& error.code === 'EPERM';
+
+			if (!isLockedWindowsDirectory)
+				process.emitWarning(error instanceof Error ? error : String(error));
 		}
 	}
 }
