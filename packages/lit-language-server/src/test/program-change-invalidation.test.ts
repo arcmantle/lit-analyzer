@@ -106,9 +106,10 @@ function startProject() {
 	analyze();
 
 	let rebuilds = 0;
+	const normalizedElementPath = ELEMENT.replaceAll(path.sep, '/');
 	const debug = context.logger.debug.bind(context.logger);
 	context.logger.debug = (...args: unknown[]) => {
-		if (String(args[0]).includes(ELEMENT))
+		if (String(args[0]).includes(normalizedElementPath))
 			rebuilds += 1;
 
 
