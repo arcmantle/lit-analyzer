@@ -8,5 +8,5 @@ tsTest("compileTypescript includes the JSDoc resolver in the active Program", t 
 	const { program, files } = compileTypescript(fileName);
 
 	t.truthy(program.getSourceFile(`${ fileName }.__lit_jsdoc__.d.ts`));
-	t.deepEqual(files.map(file => file.fileName), [ fileName ]);
+	t.deepEqual(files.map(file => resolve(file.fileName)), [ fileName ]);
 });

@@ -1,3 +1,5 @@
+import { resolve, sep } from 'node:path';
+
 import * as tsModule from 'typescript';
 import { CompilerOptions, createCompilerHost, ModuleKind, ModuleResolutionKind, Program, ScriptTarget, SourceFile } from 'typescript';
 
@@ -39,10 +41,17 @@ export interface CompileResult {
 export function compileTypescript(filePaths: string | string[], options: CompilerOptions = defaultOptions): CompileResult {
 	filePaths = Array.isArray(filePaths) ? filePaths : [ filePaths ];
 	const program = createJSDocProgram(filePaths, options, createCompilerHost(options), tsModule);
+	const canonicalFileNames = new Set(filePaths.map(canonicalFileName));
 	const files = program
 		.getSourceFiles()
-		.filter(sf => filePaths.includes(sf.fileName))
+		.filter(sf => canonicalFileNames.has(canonicalFileName(sf.fileName)))
 		.sort((sfA, sfB) => (sfA.fileName > sfB.fileName ? 1 : -1));
 
 	return { program, files };
+}
+
+function canonicalFileName(fileName: string): string {
+	const normalized = resolve(fileName).replaceAll(sep, '/');
+
+	return tsModule.sys.useCaseSensitiveFileNames ? normalized : normalized.toLowerCase();
 }
