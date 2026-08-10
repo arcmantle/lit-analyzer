@@ -115,7 +115,7 @@ async function observeCompletions(): Promise<Observations['completions']> {
 	// added two blank lines to the fixture silently shifted them onto the wrong
 	// constructs, which made this observer poll for completions that could never
 	// appear there.
-	const lines = doc.getText().split('\n');
+	const lines = Array.from({ length: doc.lineCount }, (_, line) => doc.lineAt(line).text);
 
 	const endOfLine = (line: number) => new vscode.Position(line, lines[line]!.length);
 
