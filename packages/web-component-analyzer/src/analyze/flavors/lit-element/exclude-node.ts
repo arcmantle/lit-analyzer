@@ -16,6 +16,6 @@ export function excludeNode(node: Node, context: AnalyzerVisitContext): boolean 
 	else {
 		const fileName = node.getSourceFile().fileName;
 
-		return fileName.includes('/lit-element.') || fileName.endsWith('/updating-element.');
+		return /(?:^|[/\\])lit-element\./.test(fileName) || /(?:^|[/\\])updating-element\./.test(fileName);
 	}
 }

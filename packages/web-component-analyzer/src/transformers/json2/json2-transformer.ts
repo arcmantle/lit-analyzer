@@ -1,4 +1,4 @@
-import { basename, relative } from 'path';
+import { basename, relative, sep } from 'path';
 import * as tsModule from 'typescript';
 import { Node, ObjectFlags, Program, SourceFile, Type, TypeChecker, TypeFlags, TypeReference } from 'typescript';
 
@@ -483,7 +483,7 @@ function getReferenceForNode(node: Node, context: TransformerContext): Reference
 
 	// Test if the source file is from a typescript lib
 	// TODO: Find a better way of checking this
-	const isLib = sourceFile.isDeclarationFile && sourceFile.fileName.match(/typescript\/lib.*\.d\.ts$/) != null;
+	const isLib = sourceFile.isDeclarationFile && /typescript[/\\]lib.*\.d\.ts$/.test(sourceFile.fileName);
 	if (isLib) {
 		// Only return the name of the declaration if it's from lib
 		return {
@@ -517,7 +517,7 @@ function getPackageName(sourceFile: SourceFile): string | undefined {
 	// TODO: Make it possible to access the ModuleResolutionHost
 	//  in order to resolve the package using "resolveModuleNames"
 	//  The following approach is very, very naive and is only temporary.
-	const match = sourceFile.fileName.match(/node_modules\/(.*?)\//);
+	const match = sourceFile.fileName.match(/node_modules[/\\](.*?)[/\\]/);
 
 	if (match != null)
 		return match[1];
@@ -532,7 +532,9 @@ function getPackageName(sourceFile: SourceFile): string | undefined {
  * @param context
  */
 function getRelativePath(fullPath: string, context: TransformerContext) {
-	return context.config.cwd != null ? `./${ relative(context.config.cwd, fullPath) }` : basename(fullPath);
+	return context.config.cwd != null
+		? `./${ relative(context.config.cwd, fullPath).replaceAll(sep, '/') }`
+		: basename(fullPath);
 }
 
 /**

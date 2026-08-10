@@ -13,6 +13,10 @@ function isTypescriptType(value: any): value is Type {
 	return value instanceof Object && 'flags' in value && 'checker' in value;
 }
 
+function leafFileName(fileName: string): string {
+	return fileName.match(/[^/\\]+$/)?.[0] ?? fileName;
+}
+
 /**
  * Returns a representation of the input that can be JSON stringified
  */
@@ -31,12 +35,13 @@ export function stripTypescriptValues(input: unknown, checker: TypeChecker, seen
 		return stripTypescriptValues(input(), checker, seenValues);
 	}
 	else if (isTypescriptSourceFile(input)) {
-		return `{SOURCEFILE:${ input.fileName.match('.*/(.+)')?.[1] }}`;
+		return `{SOURCEFILE:${ leafFileName(input.fileName) }}`;
 	}
 	else if (isTypescriptNode(input)) {
 		const title = 'escapedText' in input ? (input as any).escapedText : undefined;
+		const sourceFile = input.getSourceFile?.();
 
-		return  `{NODE:${ input.getSourceFile?.()?.fileName.match('.*/(.+)')?.[1] }`
+		return  `{NODE:${ sourceFile == null ? undefined : leafFileName(sourceFile.fileName) }`
 				+ `${ title != null ? `:${ title }` : '' }:${ input.pos }}`;
 	}
 	else if (isTypescriptType(input)) {
