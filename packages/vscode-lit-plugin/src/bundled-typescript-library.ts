@@ -41,7 +41,7 @@ export class BundledTypeScriptLibrary {
 		return (languageService.getDefinitionAtPosition(sourcePath, position) ?? [])
 			.flatMap(definition => {
 				const libraryName = path.basename(definition.fileName);
-				if (path.dirname(definition.fileName) !== this.libraryDirectory || !TYPESCRIPT_LIBRARY_NAME.test(libraryName))
+				if (!this.isLibraryDirectory(path.dirname(definition.fileName)) || !TYPESCRIPT_LIBRARY_NAME.test(libraryName))
 					return [];
 
 				return [
@@ -95,6 +95,16 @@ export class BundledTypeScriptLibrary {
 		};
 
 		return this.typescript.createLanguageService(host);
+	}
+
+	private isLibraryDirectory(directory: string): boolean {
+		const canonicalPath = (value: string): string => {
+			const normalized = path.resolve(value).replace(/\\/g, '/');
+
+			return this.typescript.sys.useCaseSensitiveFileNames ? normalized : normalized.toLowerCase();
+		};
+
+		return canonicalPath(directory) === canonicalPath(this.libraryDirectory);
 	}
 
 	private libraryPath(uriPath: string): string {
