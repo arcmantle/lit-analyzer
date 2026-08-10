@@ -1,6 +1,6 @@
 import { createJSDocProgram } from '@arcmantle/web-component-analyzer';
 import { existsSync, readFileSync } from 'fs';
-import { resolve } from 'path';
+import { resolve, sep } from 'path';
 import {
 	CompilerOptions,
 	createCompilerHost,
@@ -65,7 +65,7 @@ export function compileTypescript(filePaths: string | string[]): CompileResult {
 }
 
 function canonicalFileName(fileName: string): string {
-	const normalized = resolve(fileName).replace(/\\/g, '/');
+	const normalized = resolve(fileName).replaceAll(sep, '/');
 
 	return sys.useCaseSensitiveFileNames ? normalized : normalized.toLowerCase();
 }

@@ -99,7 +99,7 @@ export class BundledTypeScriptLibrary {
 
 	private isLibraryDirectory(directory: string): boolean {
 		const canonicalPath = (value: string): string => {
-			const normalized = path.resolve(value).replace(/\\/g, '/');
+			const normalized = path.resolve(value).replaceAll(path.sep, '/');
 
 			return this.typescript.sys.useCaseSensitiveFileNames ? normalized : normalized.toLowerCase();
 		};

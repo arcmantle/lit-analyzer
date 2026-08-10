@@ -1,5 +1,6 @@
 import fastGlob from 'fast-glob';
 import { existsSync, lstatSync } from 'fs';
+import { sep } from 'path';
 import { Program, SourceFile } from 'typescript';
 
 import { analyzeSourceFile } from '../../analyze/analyze-source-file.js';
@@ -123,5 +124,5 @@ async function expandGlobs(globs: string | string[], config: AnalyzerCliConfig):
  * @param glob
  */
 function fastGlobNormalize(glob: string): string {
-	return glob.replace(/\\/g, '/');
+	return glob.replaceAll(sep, '/');
 }

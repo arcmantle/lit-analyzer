@@ -1,6 +1,6 @@
 import fastGlob from 'fast-glob';
 import { existsSync, lstatSync } from 'fs';
-import { join } from 'path';
+import { join, sep } from 'path';
 import { Diagnostic, Program, SourceFile } from 'typescript';
 
 import { arrayFlat } from '../analyze/util/array-util.js';
@@ -95,5 +95,5 @@ async function expandGlobs(globs: string | string[]): Promise<string[]> {
 }
 
 function fastGlobNormalize(glob: string): string {
-	return glob.replace(/\\/g, '/');
+	return glob.replaceAll(sep, '/');
 }
