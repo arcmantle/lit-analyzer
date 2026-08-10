@@ -31,7 +31,10 @@ export interface AnalyzeTextResult {
  * @param {IVirtualSourceFile[]|VirtualSourceFile} inputFiles
  * @param config
  */
-export function analyzeText(inputFiles: VirtualSourceFile[] | VirtualSourceFile, config: Partial<AnalyzerOptions> = {}): AnalyzeTextResult {
+export function analyzeText(
+	inputFiles: VirtualSourceFile[] | VirtualSourceFile,
+	config: Partial<AnalyzerOptions> = {},
+): AnalyzeTextResult {
 	const ts = config.ts || tsModule;
 
 	// "sys" can be undefined when running in the browser
@@ -97,7 +100,15 @@ export function analyzeText(inputFiles: VirtualSourceFile[] | VirtualSourceFile,
 			if (sourceText == null)
 				return undefined;
 
-			return ts.createSourceFile(fileName, sourceText, languageVersion, true, fileName.endsWith('.js') ? ScriptKind.JS : ScriptKind.TS);
+			return ts.createSourceFile(
+				fileName,
+				sourceText,
+				languageVersion,
+				true,
+				fileName.endsWith('.js')
+					? ScriptKind.JS
+					: ScriptKind.TS,
+			);
 		},
 
 		getCurrentDirectory() {
