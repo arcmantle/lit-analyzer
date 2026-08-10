@@ -32,7 +32,11 @@ import {
  * @param program
  * @param config
  */
-export const jsonTransformer: TransformerFunction = (results: AnalyzerResult[], program: Program, config: TransformerConfig): string => {
+export const jsonTransformer: TransformerFunction = (
+	results: AnalyzerResult[],
+	program: Program,
+	config: TransformerConfig,
+): string => {
 	const checker = program.getTypeChecker();
 
 	// Get all definitions
@@ -74,7 +78,9 @@ function definitionToHtmlDataTag(definition: ComponentDefinition, checker: TypeC
 		filterVisibility(config.visibility, declaration.members).map(d => componentMemberToHtmlDataProperty(d, checker, config)),
 	);
 
-	const events = arrayDefined(filterVisibility(config.visibility, declaration.events).map(e => componentEventToHtmlDataEvent(e, checker)));
+	const events = arrayDefined(filterVisibility(
+		config.visibility, declaration.events,
+	).map(e => componentEventToHtmlDataEvent(e, checker)));
 
 	const slots = arrayDefined(declaration.slots.map(e => componentSlotToHtmlDataSlot(e, checker)));
 
@@ -129,7 +135,11 @@ function componentEventToHtmlDataEvent(event: ComponentEvent, checker: TypeCheck
 	};
 }
 
-function componentMemberToHtmlDataAttribute(member: ComponentMember, checker: TypeChecker, config: TransformerConfig): HtmlDataAttribute | undefined {
+function componentMemberToHtmlDataAttribute(
+	member: ComponentMember,
+	checker: TypeChecker,
+	config: TransformerConfig,
+): HtmlDataAttribute | undefined {
 	if (member.attrName == null)
 		return undefined;
 
@@ -144,7 +154,11 @@ function componentMemberToHtmlDataAttribute(member: ComponentMember, checker: Ty
 	};
 }
 
-function componentMemberToHtmlDataProperty(member: ComponentMember, checker: TypeChecker, config: TransformerConfig): HtmlDataProperty | undefined {
+function componentMemberToHtmlDataProperty(
+	member: ComponentMember,
+	checker: TypeChecker,
+	config: TransformerConfig,
+): HtmlDataProperty | undefined {
 	if (member.propName == null)
 		return undefined;
 
