@@ -81,8 +81,7 @@ interface LanguageServiceSource {
 function createLanguageServiceCompiler(source: LanguageServiceSource, log?: (message: string) => void): AnalysisCompiler {
 	const openDocuments: Map<string, TrackedDocument> = new Map();
 	const canonicalFileName = (fileName: string): string => {
-		const resolved = path.resolve(fileName);
-		const normalized = path.sep === '\\' ? resolved.replaceAll('\\', '/') : resolved;
+		const normalized = path.resolve(fileName).replaceAll(path.sep, '/');
 
 		return ts.sys.useCaseSensitiveFileNames ? normalized : normalized.toLowerCase();
 	};
