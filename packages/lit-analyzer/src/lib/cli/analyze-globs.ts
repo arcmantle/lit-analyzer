@@ -74,7 +74,7 @@ async function expandGlobs(globs: string | string[]): Promise<string[]> {
 					// If so, return the result of a new glob that searches for files in the directory excluding node_modules..
 					const dirExists = existsSync(g) && lstatSync(g).isDirectory();
 					if (dirExists) {
-						return fastGlob([ ...IGNORE_GLOBS, join(g, DEFAULT_DIR_GLOB) ], {
+						return fastGlob([ ...IGNORE_GLOBS, fastGlobNormalize(join(g, DEFAULT_DIR_GLOB)) ], {
 							absolute:            true,
 							followSymbolicLinks: true,
 						});
@@ -85,11 +85,15 @@ async function expandGlobs(globs: string | string[]): Promise<string[]> {
 				}
 
 				// Return the result of globbing
-				return fastGlob([ ...IGNORE_GLOBS, g ], {
+				return fastGlob([ ...IGNORE_GLOBS, fastGlobNormalize(g) ], {
 					absolute:            true,
 					followSymbolicLinks: false,
 				});
 			}),
 		),
 	);
+}
+
+function fastGlobNormalize(glob: string): string {
+	return glob.replace(/\\/g, '/');
 }
