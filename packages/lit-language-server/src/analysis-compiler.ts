@@ -1,8 +1,8 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 
-import ts from 'typescript';
 import { createJSDocLanguageServiceHost } from '@arcmantle/web-component-analyzer';
+import ts from 'typescript';
 
 import { parseTsconfig } from './tsconfig-file.js';
 
@@ -120,7 +120,8 @@ function createLanguageServiceCompiler(source: LanguageServiceSource, log?: (mes
 	const languageServiceStartTime = Date.now();
 	const jsDocHost = createJSDocLanguageServiceHost(host, ts);
 	const languageService = ts.createLanguageService(jsDocHost.host);
-	log?.(`lit-language-server compiler created language service in ${ Date.now() - languageServiceStartTime }ms: ${ source.describeProject() }`);
+	log?.(`lit-language-server compiler created language service in `
+		+ `${ Date.now() - languageServiceStartTime }ms: ${ source.describeProject() }`);
 	let hasBuiltProgram = false;
 	let jsDocProgram: ts.Program | undefined;
 
@@ -141,7 +142,8 @@ function createLanguageServiceCompiler(source: LanguageServiceSource, log?: (mes
 
 			if (!hasBuiltProgram) {
 				hasBuiltProgram = true;
-				log?.(`lit-language-server compiler built first program in ${ Date.now() - programStartTime }ms: ${ source.describeProject() }`);
+				log?.(`lit-language-server compiler built first program in `
+					+ `${ Date.now() - programStartTime }ms: ${ source.describeProject() }`);
 			}
 
 			return program;
@@ -187,7 +189,8 @@ export function createAnalysisCompiler(tsconfigPath: string, log?: (message: str
 	const parseStartTime = Date.now();
 	const parsedConfig = parseTsconfig(tsconfigPath);
 	log?.(
-		`lit-language-server compiler parsed tsconfig in ${ Date.now() - parseStartTime }ms (${ parsedConfig.fileNames.length } root files): ${ tsconfigPath }`,
+		`lit-language-server compiler parsed tsconfig in `
+		+ `${ Date.now() - parseStartTime }ms (${ parsedConfig.fileNames.length } root files): ${ tsconfigPath }`,
 	);
 
 	return createLanguageServiceCompiler({

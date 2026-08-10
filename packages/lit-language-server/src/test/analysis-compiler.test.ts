@@ -84,10 +84,14 @@ describe('analysis compiler tracks unsaved document content', () => {
 		const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'jsdoc-project-'));
 		try {
 			const fileName = path.join(dir, 'component.ts');
-			fs.writeFileSync(fileName, `/**\n * @element\n * @fires {CustomEvent<Array>} items-changed\n */\nclass Component extends HTMLElement {}`);
+			fs.writeFileSync(
+				fileName,
+				`/**\n * @element\n * @fires {CustomEvent<Array>} items-changed\n */\nclass Component extends HTMLElement {}`,
+			);
 
 			const compiler = createInferredAnalysisCompiler(fileName);
-			const resolver = compiler.getProgram().getSourceFiles().find(sourceFile => sourceFile.fileName.endsWith('.__lit_jsdoc__.d.ts'));
+			const resolver = compiler.getProgram()
+				.getSourceFiles().find(sourceFile => sourceFile.fileName.endsWith('.__lit_jsdoc__.d.ts'));
 
 			expect(resolver?.isDeclarationFile).toBe(true);
 			expect(resolver?.text).toContain('export {};');
@@ -102,14 +106,18 @@ describe('analysis compiler tracks unsaved document content', () => {
 		try {
 			const fileName = path.join(dir, 'component.ts');
 			const tsconfigName = path.join(dir, 'tsconfig.json');
-			fs.writeFileSync(fileName, '/** @element @fires {CustomEvent<Array>} items-changed */\nclass Component extends HTMLElement {}');
+			fs.writeFileSync(
+				fileName,
+				'/** @element @fires {CustomEvent<Array>} items-changed */\nclass Component extends HTMLElement {}',
+			);
 			fs.writeFileSync(tsconfigName, JSON.stringify({
 				compilerOptions: { target: 'ESNext', module: 'ESNext', moduleResolution: 'Bundler' },
 				files:           [ 'component.ts' ],
 			}));
 
 			const compiler = createAnalysisCompiler(tsconfigName);
-			const resolver = compiler.getProgram().getSourceFiles().find(sourceFile => sourceFile.fileName.endsWith('.__lit_jsdoc__.d.ts'));
+			const resolver = compiler.getProgram()
+				.getSourceFiles().find(sourceFile => sourceFile.fileName.endsWith('.__lit_jsdoc__.d.ts'));
 
 			expect(resolver?.isDeclarationFile).toBe(true);
 		}
@@ -123,17 +131,20 @@ describe('analysis compiler tracks unsaved document content', () => {
 		try {
 			const fileName = path.join(dir, 'component.ts');
 			const firstText = '/** @element @fires {CustomEvent<Array>} items-changed */\nclass Component extends HTMLElement {}';
-			const secondText = '/** @element @fires {CustomEvent<MouseEvent>} items-changed */\nclass Component extends HTMLElement {}';
+			const secondText = '/** @element @fires {CustomEvent<MouseEvent>} '
+				+ 'items-changed */\nclass Component extends HTMLElement {}';
 			fs.writeFileSync(fileName, firstText);
 
 			const compiler = createInferredAnalysisCompiler(fileName);
 			compiler.openDocument(fileName, firstText);
 			const firstProgram = compiler.getProgram();
-			const firstResolver = firstProgram.getSourceFiles().find(sourceFile => sourceFile.fileName.endsWith('.__lit_jsdoc__.d.ts'))!;
+			const firstResolver = firstProgram
+				.getSourceFiles().find(sourceFile => sourceFile.fileName.endsWith('.__lit_jsdoc__.d.ts'))!;
 
 			compiler.updateDocument(fileName, secondText);
 			const secondProgram = compiler.getProgram();
-			const secondResolver = secondProgram.getSourceFiles().find(sourceFile => sourceFile.fileName.endsWith('.__lit_jsdoc__.d.ts'))!;
+			const secondResolver = secondProgram
+				.getSourceFiles().find(sourceFile => sourceFile.fileName.endsWith('.__lit_jsdoc__.d.ts'))!;
 
 			expect(secondProgram).not.toBe(firstProgram);
 			expect(secondResolver).not.toBe(firstResolver);
