@@ -94,6 +94,13 @@ export async function collectObservations(target: ExtensionUnderTest = extension
 		return JSON.parse(fs.readFileSync(observationsPath, 'utf8')) as Observations;
 	}
 	finally {
-		fs.rmSync(userDataDir, { recursive: true, force: true, maxRetries: 10, retryDelay: 100 });
+		try {
+			fs.rmSync(userDataDir, { recursive: true, force: true, maxRetries: 10, retryDelay: 100 });
+		}
+		catch (error) {
+			// VS Code can retain a Windows handle after its process exits; the OS owns cleanup of this temporary path.
+			if (process.platform !== 'win32' || (error as NodeJS.ErrnoException).code !== 'EPERM')
+				throw error;
+		}
 	}
 }
