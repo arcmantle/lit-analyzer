@@ -1,5 +1,5 @@
 import { existsSync, readFileSync } from 'fs';
-import { dirname, join } from 'path';
+import { dirname, join, resolve, sep } from 'path';
 import * as tsModule from 'typescript';
 import { CompilerOptions, Program, ScriptKind, ScriptTarget, SourceFile, System, TypeChecker } from 'typescript';
 
@@ -48,11 +48,18 @@ export function analyzeText(inputFiles: VirtualSourceFile[] | VirtualSourceFile,
 				}
 				: file)
 		.map(file => ({ ...file, fileName: file.fileName }));
+	const useCaseSensitiveFileNames = system?.useCaseSensitiveFileNames ?? false;
+	const canonicalFileName = (fileName: string): string => {
+		const normalized = resolve(fileName).replaceAll(sep, '/');
+
+		return useCaseSensitiveFileNames ? normalized : normalized.toLowerCase();
+	};
+	const filesByName = new Map(files.map(file => [ canonicalFileName(file.fileName), file ]));
 
 	const includeLib = files.some(file => file.includeLib);
 
 	const readFile = (fileName: string): string | undefined => {
-		const matchedFile = files.find(currentFile => currentFile.fileName === fileName);
+		const matchedFile = filesByName.get(canonicalFileName(fileName));
 		if (matchedFile != null)
 			return matchedFile.text;
 
@@ -70,7 +77,7 @@ export function analyzeText(inputFiles: VirtualSourceFile[] | VirtualSourceFile,
 	};
 
 	const fileExists = (fileName: string): boolean => {
-		return files.some(currentFile => currentFile.fileName === fileName);
+		return filesByName.has(canonicalFileName(fileName));
 	};
 
 	const compilerOptions: CompilerOptions = {
@@ -106,7 +113,7 @@ export function analyzeText(inputFiles: VirtualSourceFile[] | VirtualSourceFile,
 		},
 
 		getCanonicalFileName(fileName: string): string {
-			return this.useCaseSensitiveFileNames() ? fileName : fileName.toLowerCase();
+			return canonicalFileName(fileName);
 		},
 
 		getNewLine(): string {
@@ -114,7 +121,7 @@ export function analyzeText(inputFiles: VirtualSourceFile[] | VirtualSourceFile,
 		},
 
 		useCaseSensitiveFileNames() {
-			return system?.useCaseSensitiveFileNames ?? false;
+			return useCaseSensitiveFileNames;
 		},
 	};
 	const program = createJSDocProgram(files.map(file => file.fileName), compilerOptions, host, ts);
@@ -122,7 +129,12 @@ export function analyzeText(inputFiles: VirtualSourceFile[] | VirtualSourceFile,
 	const checker = program.getTypeChecker();
 
 	// Analyze source files
-	const sourceFilesToAnalyze = arrayDefined(files.filter(file => file.analyze !== false).map(file => program.getSourceFile(file.fileName)));
+	const sourceFilesByName = new Map(program.getSourceFiles().map(file => [ canonicalFileName(file.fileName), file ]));
+	const sourceFilesToAnalyze = arrayDefined(
+		files
+			.filter(file => file.analyze !== false)
+			.map(file => sourceFilesByName.get(canonicalFileName(file.fileName))),
+	);
 	const results = sourceFilesToAnalyze.map(sf => analyzeSourceFile(sf, { program, ...config }));
 
 	return { checker, program, results, analyzedSourceFiles: sourceFilesToAnalyze };
