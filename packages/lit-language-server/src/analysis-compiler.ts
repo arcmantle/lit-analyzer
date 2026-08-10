@@ -80,6 +80,11 @@ interface LanguageServiceSource {
  */
 function createLanguageServiceCompiler(source: LanguageServiceSource, log?: (message: string) => void): AnalysisCompiler {
 	const openDocuments: Map<string, TrackedDocument> = new Map();
+	const canonicalFileName = (fileName: string): string => {
+		const normalized = path.resolve(fileName).replace(/\\/g, '/');
+
+		return ts.sys.useCaseSensitiveFileNames ? normalized : normalized.toLowerCase();
+	};
 
 	const host: ts.LanguageServiceHost = {
 		getScriptFileNames: () => [ ...source.getRootFileNames() ],
@@ -88,12 +93,12 @@ function createLanguageServiceCompiler(source: LanguageServiceSource, log?: (mes
 		// changes; a disk-backed file that is never opened keeps a fixed
 		// version and so is never redundantly re-parsed either.
 		getScriptVersion:   fileName => {
-			const tracked = openDocuments.get(fileName);
+			const tracked = openDocuments.get(canonicalFileName(fileName));
 
 			return tracked ? String(tracked.version) : '0';
 		},
 		getScriptSnapshot: fileName => {
-			const tracked = openDocuments.get(fileName);
+			const tracked = openDocuments.get(canonicalFileName(fileName));
 			if (tracked)
 				return ts.ScriptSnapshot.fromString(tracked.text);
 
@@ -146,7 +151,7 @@ function createLanguageServiceCompiler(source: LanguageServiceSource, log?: (mes
 			position: number,
 			triggerReason?: ts.SignatureHelpTriggerReason,
 		): ts.SignatureHelpItems | undefined {
-			return languageService.getSignatureHelpItems(fileName, position, triggerReason && { triggerReason });
+			return languageService.getSignatureHelpItems(canonicalFileName(fileName), position, triggerReason && { triggerReason });
 		},
 		getSourcePosition(fileName: string, position: number): { fileName: string; position: number; } | undefined {
 			const sourceMapper = (languageService as unknown as {
@@ -161,17 +166,18 @@ function createLanguageServiceCompiler(source: LanguageServiceSource, log?: (mes
 		getRootFileNames:   () => source.getRootFileNames(),
 		getCompilerOptions: () => source.getCompilerOptions(),
 		openDocument(fileName: string, text: string): void {
-			openDocuments.set(fileName, { text, version: 1 });
+			openDocuments.set(canonicalFileName(fileName), { text, version: 1 });
 		},
 		updateDocument(fileName: string, text: string): void {
-			const tracked = openDocuments.get(fileName);
+			const canonicalName = canonicalFileName(fileName);
+			const tracked = openDocuments.get(canonicalName);
 			if (tracked && tracked.text === text)
 				return;
 
-			openDocuments.set(fileName, { text, version: (tracked?.version ?? 0) + 1 });
+			openDocuments.set(canonicalName, { text, version: (tracked?.version ?? 0) + 1 });
 		},
 		closeDocument(fileName: string): void {
-			openDocuments.delete(fileName);
+			openDocuments.delete(canonicalFileName(fileName));
 		},
 	};
 }

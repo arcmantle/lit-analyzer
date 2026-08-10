@@ -154,6 +154,17 @@ describe('analysis compiler tracks unsaved document content', () => {
 		expect(sourceFile?.text).toContain('edited, not saved');
 	});
 
+	test('openDocument matches equivalent file path spellings', () => {
+		const compiler = createAnalysisCompiler(path.join(fixturesDir, 'sample-project', 'tsconfig.json'));
+		const aFileName = fileNameOf('a.ts');
+		const equivalentFileName = path.join(path.dirname(aFileName), '..', 'sample-project', 'a.ts');
+
+		compiler.openDocument(equivalentFileName, 'export const a = "edited through an equivalent path";');
+
+		const sourceFile = compiler.getProgram().getSourceFile(aFileName);
+		expect(sourceFile?.text).toContain('edited through an equivalent path');
+	});
+
 	test('updateDocument re-parses the file only when its content actually changes', () => {
 		const compiler = createAnalysisCompiler(path.join(fixturesDir, 'sample-project', 'tsconfig.json'));
 		const aFileName = fileNameOf('a.ts');
