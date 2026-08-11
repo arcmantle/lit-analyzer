@@ -1,7 +1,7 @@
 {
 	"name": "@arcmantle/lit-language-server",
 	"private": true,
-	"version": "0.0.0",
+	"version": "1.5.0",
 	"description": "Standalone language server that serves lit-html analysis over the Language Server Protocol.",
 	"author": "arcmantle",
 	"license": "MIT",

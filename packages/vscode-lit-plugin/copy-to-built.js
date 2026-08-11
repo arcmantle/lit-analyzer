@@ -33,6 +33,15 @@ async function main() {
 
 	const pluginPackageJson = readJson('./package.json');
 	pluginPackageJson.name = 'lit-analyzer';
+	pluginPackageJson.files = [
+		'bundle.js',
+		'server/**',
+		'syntaxes/**',
+		'docs/assets/**',
+		'node_modules/typescript/**',
+		'LICENSE.md',
+		'README.md',
+	];
 	// ./built is a published artifact, so it cannot carry workspace-only
 	// specifiers such as `catalog:` -- vsce runs `npm list` over it, and npm
 	// does not understand them. Pin to whatever we actually copied above.
