@@ -1,3 +1,5 @@
+import { type SourceFile } from 'typescript';
+
 import { HtmlNodeAttr } from '../../../../types/html-node/html-node-attr-types.js';
 import { HtmlNode } from '../../../../types/html-node/html-node-types.js';
 import { DocumentOffset, DocumentRange } from '../../../../types/range.js';
@@ -7,7 +9,11 @@ import { TextDocument } from '../text-document.js';
 
 export class HtmlDocument extends TextDocument {
 
-	constructor(virtualDocument: VirtualDocument, public rootNodes: HtmlNode[]) {
+	constructor(
+		virtualDocument: VirtualDocument,
+		public rootNodes: HtmlNode[],
+		public sourceFile: SourceFile,
+	) {
 		super(virtualDocument);
 	}
 

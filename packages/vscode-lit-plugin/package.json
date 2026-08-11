@@ -3,7 +3,7 @@
 	"private": true,
 	"displayName": "Lit Analyzer",
 	"description": "Syntax highlighting, type checking and code completion for lit-html",
-	"version": "1.4.3",
+	"version": "1.5.0",
 	"publisher": "arcmantle",
 	"author": "arcmantle",
 	"icon": "docs/assets/lit-plugin@256w.png",
@@ -28,14 +28,14 @@
 	"scripts": {
 		"watch": "tsc -watch -p ./",
 		"bundle": "node esbuild.script.js",
-		"make-built-dir": "rm -rf built && pnpm run bundle && node ./copy-to-built.js",
+		"make-built-dir": "pnpm --filter @arcmantle/web-component-analyzer build && pnpm --filter @arcmantle/lit-analyzer build && rm -rf built && pnpm run bundle && node ./copy-to-built.js",
 		"build": "rm -rf out .tsbuildinfo && pnpm run make-built-dir && tsc --build --pretty",
 		"rebuild": "rm -rf out .tsbuildinfo && pnpm run make-built-dir && tsc --build --pretty",
-		"package": "pnpm run make-built-dir && cd built && vsce package -o ../../../lit-plugin.vsix",
+		"package": "pnpm run make-built-dir && cd built && vsce package -o ../../../lit-analyzer.vsix",
 		"publish": "pnpm run make-built-dir && cd built && vsce publish",
 		"test": "pnpm run build && vitest run",
 		"test:packaged": "pnpm run package && pnpm run unzip-vsix && LIT_PLUGIN_EXTENSION=packaged vitest run",
-		"unzip-vsix": "rm -rf out/packaged-extension && mkdir -p out/packaged-extension && unzip -qq ../../lit-plugin.vsix -d out/packaged-extension"
+		"unzip-vsix": "rm -rf out/packaged-extension && mkdir -p out/packaged-extension && unzip -qq ../../lit-analyzer.vsix -d out/packaged-extension"
 	},
 	"dependencies": {
 		"typescript": "catalog:"
@@ -53,6 +53,7 @@
 	},
 	"activationEvents": [
 		"onCommand:lit-plugin.analyze",
+		"onCommand:lit-plugin.formatLitHtml",
 		"onCommand:lit-plugin.restartLanguageServer",
 		"onLanguage:javascript",
 		"onLanguage:javascriptreact",
@@ -80,6 +81,10 @@
 				"title": "Analyze lit-html templates"
 			},
 			{
+				"command": "lit-plugin.formatLitHtml",
+				"title": "Lit Analyzer: Format Lit HTML"
+			},
+			{
 				"command": "lit-plugin.restartLanguageServer",
 				"title": "Lit Analyzer: Restart Language Server"
 			}
@@ -87,7 +92,7 @@
 		"configuration": [
 			{
 				"id": "lit-plugin",
-				"title": "lit-plugin",
+				"title": "Lit Analyzer",
 				"properties": {
 					"lit-plugin.typescript.tsdk": {
 						"type": "string",
@@ -98,6 +103,26 @@
 						"type": "boolean",
 						"description": "Completely disable this plugin.",
 						"default": false
+					},
+					"lit-plugin.format.groupBindings": {
+						"type": "boolean",
+						"description": "Group property, attribute, boolean, and event bindings when formatting Lit HTML.",
+						"default": true
+					},
+					"lit-plugin.format.newLineBindings": {
+						"type": "boolean",
+						"description": "Put each binding on a new line when formatting Lit HTML.",
+						"default": true
+					},
+					"lit-plugin.format.newLineTemplate": {
+						"type": "boolean",
+						"description": "Put Lit HTML template content on lines between its opening and closing backticks.",
+						"default": true
+					},
+					"lit-plugin.format.alignBindingAssignments": {
+						"type": "boolean",
+						"description": "Align binding assignment signs when formatting Lit HTML.",
+						"default": true
 					},
 					"lit-plugin.strict": {
 						"type": "boolean",

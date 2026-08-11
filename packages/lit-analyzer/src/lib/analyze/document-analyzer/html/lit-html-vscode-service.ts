@@ -3,12 +3,16 @@ import type * as vscodeTypes from 'vscode-html-languageservice';
 import { getLanguageService } from 'vscode-html-languageservice';
 import { TextDocument } from 'vscode-languageserver-textdocument';
 
+import { type LitAnalyzerFormatConfig } from '../../lit-analyzer-config.js';
 import { HtmlDocument } from '../../parse/document/text-document/html-document/html-document.js';
 import { textPartsToRanges } from '../../parse/document/virtual-document/virtual-document.js';
 import { LitClosingTagInfo } from '../../types/lit-closing-tag-info.js';
 import { LitFormatEdit } from '../../types/lit-format-edit.js';
 import { DocumentOffset } from '../../types/range.js';
 import { documentRangeToSFRange, makeDocumentRange } from '../../util/range-util.js';
+import { formatBindingAttributes } from './format-binding-attributes.js';
+import { addTemplateBoundaryNewlines, formatGenericHtml } from './format-generic-html.js';
+import { protectTemplateExpressions, restoreTemplateExpressions } from './format-template-expressions.js';
 
 const htmlService = getLanguageService();
 
@@ -37,7 +41,7 @@ export class LitHtmlVscodeService {
 		};
 	}
 
-	format(document: HtmlDocument, settings: ts.FormatCodeSettings): LitFormatEdit[] {
+	format(document: HtmlDocument, settings: ts.FormatCodeSettings, format?: LitAnalyzerFormatConfig): LitFormatEdit[] {
 		const parts = document.virtualDocument.getPartsAtDocumentRange(
 			makeDocumentRange({
 				start: 0,
@@ -46,30 +50,27 @@ export class LitHtmlVscodeService {
 		);
 
 		const ranges = textPartsToRanges(parts);
-		const originalHtml = parts.map(p => (typeof p === 'string' ? p : `[#${ '#'.repeat(p.getText().length) }]`)).join('');
-		const vscTextDocument = TextDocument.create('untitled://embedded.html', 'html', 1, originalHtml);
+		const html = document.virtualDocument.text;
+		if (format != null) {
+			const protectedExpressions = protectTemplateExpressions(html, parts);
+			const formattedBindings = formatBindingAttributes(document, protectedExpressions.html, settings, format);
+			if (formattedBindings != null || format.newLineTemplate) {
+				const formattedHtml = formattedBindings ?? formatGenericHtml(protectedExpressions.html, settings);
+				const newHtml = format.newLineTemplate
+					? addTemplateBoundaryNewlines(formattedHtml, templateIndentation(document))
+					: formattedHtml;
 
-		const edits = htmlService.format(vscTextDocument, undefined, {
-			tabSize:             settings.tabSize,
-			insertSpaces:        !!settings.convertTabsToSpaces,
-			wrapLineLength:      90,
-			unformatted:         '',
-			contentUnformatted:  'pre,code,textarea',
-			indentInnerHtml:     true,
-			preserveNewLines:    true,
-			maxPreserveNewLines: undefined,
-			indentHandlebars:    false,
-			endWithNewline:      false,
-			extraLiners:         'head, body, /html',
-			wrapAttributes:      'auto',
-		});
+				return [
+					{
+						range:   document.virtualDocument.location,
+						newText: restoreTemplateExpressions(newHtml, protectedExpressions.expressions, settings, format),
+					},
+				];
+			}
+		}
 
-		const hasLeadingNewline = originalHtml.startsWith('\n');
-		const hasTrailingNewline = originalHtml.endsWith('\n');
-
-		const newHtml = `${ hasLeadingNewline ? '\n' : '' }${
-			TextDocument.applyEdits(vscTextDocument, edits)
-		}${ hasTrailingNewline ? '\n' : '' }`;
+		const genericHtml = parts.map(p => (typeof p === 'string' ? p : `[#${ '#'.repeat(p.getText().length) }]`)).join('');
+		const newHtml = formatGenericHtml(genericHtml, settings);
 
 		const splitted = newHtml.split(/\[#+\]/);
 
@@ -80,4 +81,10 @@ export class LitHtmlVscodeService {
 		});
 	}
 
+}
+
+function templateIndentation(document: HtmlDocument): string {
+	const prefix = document.sourceFile.text.slice(0, document.virtualDocument.location.start);
+
+	return prefix.match(/(?:^|\n)([\t ]*)\S[^\n]*$/)?.[1] ?? '';
 }

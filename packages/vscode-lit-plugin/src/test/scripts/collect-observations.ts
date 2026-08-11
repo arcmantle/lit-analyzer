@@ -23,6 +23,9 @@ export interface Observations {
 		tagLabels:      string[];
 		propertyLabels: string[];
 	};
+	formatting: {
+		text: string;
+	};
 	languageServer: {
 		runsByDefault:    boolean;
 		runsAfterRestart: boolean;
@@ -144,6 +147,14 @@ async function observeCompletions(): Promise<Observations['completions']> {
 	const propertyLabels = await completionLabelsContaining('.prop1');
 
 	return { tagLabels, propertyLabels };
+}
+
+async function observeFormatting(): Promise<Observations['formatting']> {
+	const { doc } = await openFixture('format.ts');
+
+	await vscode.commands.executeCommand('lit-plugin.formatLitHtml');
+
+	return { text: doc.getText() };
 }
 
 /**
@@ -277,6 +288,7 @@ export async function run(): Promise<void> {
 		missingElementTypeDiagnostics: await observeMissingElementType(),
 		missingImport:                 await observeMissingImport(),
 		completions:                   await observeCompletions(),
+		formatting:                    await observeFormatting(),
 		languageServer:                await observeLanguageServer(),
 		selectedTypeScriptSdk:         await observeSelectedTypeScriptSdk(),
 		virtualTypeScriptLibrary:      await observeVirtualTypeScriptLibrary(),

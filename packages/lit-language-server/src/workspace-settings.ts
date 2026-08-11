@@ -1,6 +1,8 @@
 import {
 	ALL_RULE_IDS,
 	type LitAnalyzerConfig,
+	type LitAnalyzerConfigOptions,
+	type LitAnalyzerFormatConfig,
 	type LitAnalyzerLogging,
 	type LitAnalyzerRules,
 	type LitAnalyzerRuleSeverity,
@@ -27,6 +29,7 @@ export interface RawWorkspaceSettings {
 	globalAttributes?:         unknown;
 	globalEvents?:             unknown;
 	logging?:                  unknown;
+	format?:                   unknown;
 	customHtmlData?:           unknown;
 	rules?:                    unknown;
 }
@@ -43,13 +46,13 @@ export interface RawWorkspaceSettings {
  * client's inspect-based filtering can't distinguish from an untouched
  * setting.
  */
-export function parseWorkspaceSettings(raw: unknown): Partial<LitAnalyzerConfig> {
+export function parseWorkspaceSettings(raw: unknown): LitAnalyzerConfigOptions {
 	if (raw == null || typeof raw !== 'object')
 		return {};
 
 
 	const settings = raw as RawWorkspaceSettings;
-	const result: Partial<LitAnalyzerConfig> = {};
+	const result: LitAnalyzerConfigOptions = {};
 
 	if (typeof settings.disable === 'boolean')
 		result.disable = settings.disable;
@@ -75,6 +78,10 @@ export function parseWorkspaceSettings(raw: unknown): Partial<LitAnalyzerConfig>
 		result.globalEvents = settings.globalEvents as string[];
 	if (typeof settings.logging === 'string')
 		result.logging = settings.logging as LitAnalyzerLogging;
+
+	const format = parseFormatSettings(settings.format);
+	if (format != null)
+		result.format = format;
 	if (settings.customHtmlData != null)
 		result.customHtmlData = settings.customHtmlData as LitAnalyzerConfig['customHtmlData'];
 
@@ -93,16 +100,31 @@ export function parseWorkspaceSettings(raw: unknown): Partial<LitAnalyzerConfig>
 	return result;
 }
 
+function parseFormatSettings(raw: unknown): Partial<LitAnalyzerFormatConfig> | undefined {
+	if (raw == null || typeof raw !== 'object')
+		return undefined;
+
+	const format: Partial<LitAnalyzerFormatConfig> = {};
+	for (const key of [ 'groupBindings', 'newLineBindings', 'newLineTemplate', 'alignBindingAssignments' ] as const) {
+		const value = (raw as Record<string, unknown>)[key];
+		if (typeof value === 'boolean')
+			format[key] = value;
+	}
+
+	return Object.keys(format).length > 0 ? format : undefined;
+}
+
 /**
  * Merges workspace settings over a fully-resolved config (typically from
  * `resolveConfigForFile`). Settings win for any field they set, but `rules`
  * is merged key by key rather than replaced wholesale -- a rule the
  * settings don't mention keeps whatever the config file said about it.
  */
-export function mergeConfig(base: LitAnalyzerConfig, overrides: Partial<LitAnalyzerConfig>): LitAnalyzerConfig {
+export function mergeConfig(base: LitAnalyzerConfig, overrides: LitAnalyzerConfigOptions): LitAnalyzerConfig {
 	return {
 		...base,
 		...overrides,
-		rules: { ...base.rules, ...overrides.rules },
+		format: { ...base.format, ...overrides.format },
+		rules:  { ...base.rules, ...overrides.rules },
 	};
 }

@@ -12,6 +12,20 @@ const configurationSection = 'lit-plugin';
 export interface LanguageServerHandle {
 	getState(): State;
 	restart(): Promise<void>;
+	format(document: vscode.TextDocument, options: FormattingOptions): Promise<vscode.TextEdit[]>;
+}
+
+export interface FormattingOptions {
+	tabSize:      number;
+	insertSpaces: boolean;
+}
+
+interface LanguageServerTextEdit {
+	range: {
+		start: { line: number; character: number; };
+		end:   { line: number; character: number; };
+	};
+	newText: string;
 }
 
 /**
@@ -101,7 +115,18 @@ export function registerLanguageServer(context: vscode.ExtensionContext, typescr
 
 	return {
 		getState: () => client.state,
-		restart:  () => {
+		format:   async (document, options) => {
+			const edits = await client.sendRequest<LanguageServerTextEdit[] | null>('textDocument/formatting', {
+				textDocument: { uri: document.uri.toString() },
+				options,
+			});
+
+			return (edits ?? []).map(edit => new vscode.TextEdit(
+				new vscode.Range(edit.range.start.line, edit.range.start.character, edit.range.end.line, edit.range.end.character),
+				edit.newText,
+			));
+		},
+		restart: () => {
 			restartPromise ??= initialStart
 				.then(() => client.restart())
 				.finally(() => restartPromise = undefined);

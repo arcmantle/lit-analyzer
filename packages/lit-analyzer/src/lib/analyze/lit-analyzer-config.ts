@@ -118,6 +118,14 @@ export type LitAnalyzerLogging = 'off' | 'error' | 'warn' | 'debug' | 'verbose';
 
 export type LitSecuritySystem = 'off' | 'ClosureSafeTypes';
 
+export interface LitAnalyzerFormatConfig {
+	disable:                 boolean;
+	groupBindings:           boolean;
+	newLineBindings:         boolean;
+	newLineTemplate:         boolean;
+	alignBindingAssignments: boolean;
+}
+
 export interface LitAnalyzerConfig {
 	strict:         boolean;
 	rules:          LitAnalyzerRules;
@@ -126,7 +134,7 @@ export interface LitAnalyzerConfig {
 	disable:                  boolean;
 	logging:                  LitAnalyzerLogging;
 	cwd:                      string;
-	format:                   { disable: boolean; };
+	format:                   LitAnalyzerFormatConfig;
 	dontShowSuggestions:      boolean;
 	dontSuggestConfigChanges: boolean;
 	maxNodeModuleImportDepth: number;
@@ -141,6 +149,10 @@ export interface LitAnalyzerConfig {
 	customHtmlData:   (string | HTMLDataV1)[] | string | HTMLDataV1;
 }
 
+export type LitAnalyzerConfigOptions = Omit<Partial<LitAnalyzerConfig>, 'format'> & {
+	format?: Partial<LitAnalyzerFormatConfig>;
+};
+
 function expectNever(never: never) {
 	return never;
 }
@@ -149,7 +161,7 @@ function expectNever(never: never) {
  * Parses a partial user configuration and returns a full options object with defaults.
  * @param userOptions
  */
-export function makeConfig(userOptions: Partial<LitAnalyzerConfig> = {}): LitAnalyzerConfig {
+export function makeConfig(userOptions: LitAnalyzerConfigOptions = {}): LitAnalyzerConfig {
 	let securitySystem = userOptions.securitySystem || 'off';
 	switch (securitySystem) {
 	case 'off':
@@ -171,7 +183,11 @@ export function makeConfig(userOptions: Partial<LitAnalyzerConfig> = {}): LitAna
 		logging: userOptions.logging || 'off',
 		cwd:     userOptions.cwd || process.cwd(),
 		format:  {
-			disable: userOptions.format?.disable || false, // always disable formating for now
+			disable:                 userOptions.format?.disable || false,
+			groupBindings:           userOptions.format?.groupBindings ?? true,
+			newLineBindings:         userOptions.format?.newLineBindings ?? true,
+			newLineTemplate:         userOptions.format?.newLineTemplate ?? true,
+			alignBindingAssignments: userOptions.format?.alignBindingAssignments ?? true,
 		},
 		dontSuggestConfigChanges: userOptions.dontSuggestConfigChanges || false,
 		dontShowSuggestions:      userOptions.dontShowSuggestions || getDeprecatedOption(userOptions, 'skipSuggestions') || false,
@@ -190,7 +206,7 @@ export function makeConfig(userOptions: Partial<LitAnalyzerConfig> = {}): LitAna
 	};
 }
 
-function getDeprecatedOption<T>(userOptions: Partial<LitAnalyzerConfig>, name: string): T | undefined {
+function getDeprecatedOption<T>(userOptions: LitAnalyzerConfigOptions, name: string): T | undefined {
 	return (userOptions as Record<string, T>)[name];
 }
 
@@ -198,7 +214,7 @@ function getDeprecatedOption<T>(userOptions: Partial<LitAnalyzerConfig>, name: s
 	return userOptions.rules?.[name as never];
 }*/
 
-export function makeRules(userOptions: Partial<LitAnalyzerConfig>): LitAnalyzerRules {
+export function makeRules(userOptions: LitAnalyzerConfigOptions): LitAnalyzerRules {
 	const mappedDeprecatedRules = getDeprecatedMappedRules(userOptions);
 	const defaultRules = getDefaultRules(userOptions);
 	const userRules = getUserRules(userOptions);
@@ -206,11 +222,11 @@ export function makeRules(userOptions: Partial<LitAnalyzerConfig>): LitAnalyzerR
 	return Object.assign({}, defaultRules, mappedDeprecatedRules, userRules);
 }
 
-function getUserRules(userOptions: Partial<LitAnalyzerConfig>): LitAnalyzerRules {
+function getUserRules(userOptions: LitAnalyzerConfigOptions): LitAnalyzerRules {
 	return userOptions.rules || {};
 }
 
-function getDefaultRules(userOptions: Partial<LitAnalyzerConfig>): LitAnalyzerRules {
+function getDefaultRules(userOptions: LitAnalyzerConfigOptions): LitAnalyzerRules {
 	const isStrict = userOptions.strict || false;
 
 	return ALL_RULE_IDS.reduce((acc, ruleId) => {
@@ -221,7 +237,7 @@ function getDefaultRules(userOptions: Partial<LitAnalyzerConfig>): LitAnalyzerRu
 	}, {} as unknown as LitAnalyzerRules);
 }
 
-function getDeprecatedMappedRules(userOptions: Partial<LitAnalyzerConfig>): LitAnalyzerRules {
+function getDeprecatedMappedRules(userOptions: LitAnalyzerConfigOptions): LitAnalyzerRules {
 	const mappedDeprecatedRules: LitAnalyzerRules = {};
 
 	if (getDeprecatedOption(userOptions, 'skipMissingImports') === true)

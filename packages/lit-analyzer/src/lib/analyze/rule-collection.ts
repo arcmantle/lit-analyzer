@@ -3,16 +3,19 @@ import { ComponentDeclaration, ComponentDefinition } from '@arcmantle/web-compon
 import { isRuleEnabled, LitAnalyzerRuleId } from './lit-analyzer-config.js';
 import { LitAnalyzerContext } from './lit-analyzer-context.js';
 import { HtmlDocument } from './parse/document/text-document/html-document/html-document.js';
+import { HtmlNodeAttrAssignment } from './types/html-node/html-node-attr-assignment-types.js';
 import { HtmlNodeAttr } from './types/html-node/html-node-attr-types.js';
 import { HtmlNode, HtmlNodeKind } from './types/html-node/html-node-types.js';
 import { RuleDiagnostic } from './types/rule/rule-diagnostic.js';
-import { RuleModule, RuleModuleImplementation } from './types/rule/rule-module.js';
+import { RuleModule, RuleModuleImplementation, RuleModulePhase } from './types/rule/rule-module.js';
 import { RuleModuleContext } from './types/rule/rule-module-context.js';
 
 export interface ReportedRuleDiagnostic {
 	source:     LitAnalyzerRuleId;
 	diagnostic: RuleDiagnostic;
 }
+
+export type RuleTiming = Map<LitAnalyzerRuleId, number>;
 
 export class RuleCollection {
 
@@ -30,7 +33,9 @@ export class RuleCollection {
 		parameter: Parameters<NonNullable<RuleModuleImplementation[VisitFunctionName]>>[0],
 		report: (diagnostic: ReportedRuleDiagnostic) => void,
 		baseContext: LitAnalyzerContext,
-	): void {
+		timings?: RuleTiming,
+		phase?: RuleModulePhase,
+	): boolean {
 		let shouldBreak = false;
 
 		const { config, htmlStore, program, definitionStore, dependencyStore, documentStore, logger, ts } = baseContext;
@@ -59,19 +64,32 @@ export class RuleCollection {
 		};
 
 		for (const rule of this.rules) {
+			if (baseContext.isCancellationRequested) {
+				shouldBreak = true;
+				break;
+			}
+
+			if ((rule.meta?.phase ?? 'default') !== phase)
+				continue;
+
 			if (isRuleEnabled(context.config, rule.id)) {
 				const func = rule[functionName];
 				if (func != null) {
 					currentRuleId = rule.id;
+					const startTime = timings == null ? undefined : performance.now();
 
 					// eslint-disable-next-line @typescript-eslint/no-explicit-any
 					func(parameter as any, context);
+					if (startTime != null)
+						timings!.set(rule.id, (timings!.get(rule.id) ?? 0) + performance.now() - startTime);
 				}
 			}
 
 			if (shouldBreak)
 				break;
 		}
+
+		return shouldBreak;
 	}
 
 	getDiagnosticsFromDeclaration(declaration: ComponentDeclaration, baseContext: LitAnalyzerContext): ReportedRuleDiagnostic[] {
@@ -101,24 +119,46 @@ export class RuleCollection {
 		return diagnostics;
 	}
 
-	getDiagnosticsFromDocument(htmlDocument: HtmlDocument, baseContext: LitAnalyzerContext): ReportedRuleDiagnostic[] {
+	getDiagnosticsFromDocument(
+		htmlDocument: HtmlDocument,
+		baseContext: LitAnalyzerContext,
+		timings?: RuleTiming,
+	): ReportedRuleDiagnostic[] {
 		const diagnostics: ReportedRuleDiagnostic[] = [];
+		const expensiveAssignments: HtmlNodeAttrAssignment[] = [];
 
 		const iterateNodes = (nodes: HtmlNode[]) => {
 			for (const childNode of nodes) {
+				if (baseContext.isCancellationRequested)
+					return;
+
 				// Don't check SVG yet. We don't yet have all the data for it, and it hasn't been tested fully.
 				if (childNode.kind === HtmlNodeKind.SVG)
 					continue;
 
 
-				this.invokeRules('visitHtmlNode', childNode, d => diagnostics.push(d), baseContext);
+				this.invokeRules('visitHtmlNode', childNode, d => diagnostics.push(d), baseContext, timings);
 
 				const iterateAttrs = (attrs: HtmlNodeAttr[]) => {
 					for (const attr of attrs) {
-						this.invokeRules('visitHtmlAttribute', attr, d => diagnostics.push(d), baseContext);
+						if (baseContext.isCancellationRequested)
+							return;
 
-						if (attr.assignment != null)
-							this.invokeRules('visitHtmlAssignment', attr.assignment, d => diagnostics.push(d), baseContext);
+						this.invokeRules('visitHtmlAttribute', attr, d => diagnostics.push(d), baseContext, timings);
+
+						const assignment = attr.assignment;
+						if (assignment != null) {
+							const shouldSkipExpensiveRules = this.invokeRules(
+								'visitHtmlAssignment',
+								assignment,
+								d => diagnostics.push(d),
+								baseContext,
+								timings,
+								'default',
+							);
+							if (!shouldSkipExpensiveRules)
+								expensiveAssignments.push(assignment);
+						}
 					}
 				};
 
@@ -129,6 +169,13 @@ export class RuleCollection {
 		};
 
 		iterateNodes(htmlDocument.rootNodes);
+		for (const assignment of expensiveAssignments) {
+			if (baseContext.isCancellationRequested)
+				break;
+
+			if (assignment != null)
+				this.invokeRules('visitHtmlAssignment', assignment, d => diagnostics.push(d), baseContext, timings, 'expensive');
+		}
 
 		return diagnostics;
 	}

@@ -8,6 +8,7 @@ import { LitAnalyzerContext } from './lit-analyzer-context.js';
 import { CssDocument } from './parse/document/text-document/css-document/css-document.js';
 import { HtmlDocument } from './parse/document/text-document/html-document/html-document.js';
 import { TextDocument } from './parse/document/text-document/text-document.js';
+import { RuleTiming } from './rule-collection.js';
 import { LitClosingTagInfo } from './types/lit-closing-tag-info.js';
 import { LitCodeFix } from './types/lit-code-fix.js';
 import { LitCompletion } from './types/lit-completion.js';
@@ -78,6 +79,8 @@ export class LitAnalyzer {
 	 * indexing systems are Kythe and the Language Server Index Format.
 	 */
 	*indexFile(file: SourceFile): IterableIterator<LitIndexEntry> {
+		this.context.setContextBase({ file });
+
 		this.context.updateComponents(file);
 		const documents = this.getDocumentsInFile(file);
 		for (const document of documents) {
@@ -251,6 +254,9 @@ export class LitAnalyzer {
 
 		// Get diagnostics for documents in this file
 		const documentRulesStartTime = Date.now();
+		const ruleTimings = this.context.config.logging === 'debug' || this.context.config.logging === 'verbose'
+			? new Map()
+			: undefined;
 		for (const document of documents) {
 			if (this.context.isCancellationRequested)
 				break;
@@ -258,12 +264,20 @@ export class LitAnalyzer {
 			if (document instanceof CssDocument)
 				diagnostics.push(...this.litCssDocumentAnalyzer.getDiagnostics(document, this.context));
 			else if (document instanceof HtmlDocument)
-				diagnostics.push(...this.litHtmlDocumentAnalyzer.getDiagnostics(document, this.context));
+				diagnostics.push(...this.litHtmlDocumentAnalyzer.getDiagnostics(document, this.context, ruleTimings));
 		}
 
 		this.context.log?.(
 			`lit-language-server diagnostic stages for ${ file.fileName }: parse=${ parseElapsedMs }ms, components=${ componentIndexElapsedMs }ms, dependencies=${ dependencyElapsedMs }ms, componentRules=${ componentRulesElapsedMs }ms, templateRules=${ Date.now() - documentRulesStartTime }ms`,
 		);
+		if (ruleTimings != null && ruleTimings.size > 0) {
+			const timings = Array.from(ruleTimings.entries())
+				.sort(([ , left ], [ , right ]) => right - left)
+				.map(([ ruleId, elapsedMs ]) => `${ ruleId }=${ elapsedMs.toFixed(1) }ms`)
+				.join(', ');
+
+			this.context.log?.(`lit-language-server template rule timings for ${ file.fileName }: ${ timings }`);
+		}
 
 		return diagnostics;
 	}
@@ -317,18 +331,19 @@ export class LitAnalyzer {
 		this.context.setContextBase({ file });
 
 		const documents = this.getDocumentsInFile(file);
-
-		return arrayFlat(
+		const edits = arrayFlat(
 			documents.map(document => {
 				if (document instanceof CssDocument)
 					return [];
 				else if (document instanceof HtmlDocument)
-					return this.litHtmlDocumentAnalyzer.getFormatEdits(document, settings);
+					return this.litHtmlDocumentAnalyzer.getFormatEdits(document, settings, this.context.config.format);
 
 
 				return [];
 			}),
 		);
+
+		return nonOverlappingFormatEdits(edits);
 	}
 
 	private getDocumentAndOffsetAtPosition(
@@ -347,4 +362,13 @@ export class LitAnalyzer {
 		return this.context.documentStore.getDocumentsInFile(sourceFile, this.context.config);
 	}
 
+}
+
+function nonOverlappingFormatEdits(edits: LitFormatEdit[]): LitFormatEdit[] {
+	const orderedEdits = [ ...edits ].sort((left, right) =>
+		left.range.start - right.range.start || right.range.end - left.range.end);
+
+	return orderedEdits.filter((edit, index) =>
+		orderedEdits.slice(0, index).every(previous =>
+			edit.range.start >= previous.range.end || edit.range.end <= previous.range.start));
 }

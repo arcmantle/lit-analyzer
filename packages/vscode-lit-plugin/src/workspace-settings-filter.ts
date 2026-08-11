@@ -16,6 +16,13 @@ const NON_RULE_SETTING_KEYS = [
 	'customHtmlData',
 ] as const;
 
+const FORMAT_SETTING_KEYS = [
+	'groupBindings',
+	'newLineBindings',
+	'newLineTemplate',
+	'alignBindingAssignments',
+] as const;
+
 /**
  * What `filterExplicitLitPluginSettings` needs from `vscode.WorkspaceConfiguration` --
  * kept minimal so this logic is unit-testable without a real VS Code host.
@@ -72,6 +79,15 @@ export function filterExplicitLitPluginSettings(config: InspectableConfiguration
 		if (isExplicitlySet(config, key))
 			result[key] = config.get(key);
 	}
+
+	const format: Record<string, unknown> = {};
+	for (const key of FORMAT_SETTING_KEYS) {
+		const formatKey = `format.${ key }`;
+		if (isExplicitlySet(config, formatKey))
+			format[key] = config.get(formatKey);
+	}
+	if (Object.keys(format).length > 0)
+		result.format = format;
 
 	const rules: Record<string, unknown> = {};
 	for (const ruleId of ALL_RULE_IDS) {

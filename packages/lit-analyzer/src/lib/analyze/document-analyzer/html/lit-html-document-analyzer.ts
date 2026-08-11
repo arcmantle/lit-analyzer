@@ -1,7 +1,9 @@
 import { FormatCodeSettings } from 'typescript';
 
+import { LitAnalyzerFormatConfig } from '../../lit-analyzer-config.js';
 import { LitAnalyzerContext } from '../../lit-analyzer-context.js';
 import { HtmlDocument } from '../../parse/document/text-document/html-document/html-document.js';
+import { RuleTiming } from '../../rule-collection.js';
 import { HtmlNodeAttr, isHTMLAttr } from '../../types/html-node/html-node-attr-types.js';
 import { HtmlNode, isHTMLNode } from '../../types/html-node/html-node-types.js';
 import { LitClosingTagInfo } from '../../types/lit-closing-tag-info.js';
@@ -61,8 +63,8 @@ export class LitHtmlDocumentAnalyzer {
 		return completionsAtOffset(document, offset, context);
 	}
 
-	getDiagnostics(document: HtmlDocument, context: LitAnalyzerContext): LitDiagnostic[] {
-		return validateHTMLDocument(document, context);
+	getDiagnostics(document: HtmlDocument, context: LitAnalyzerContext, timings?: RuleTiming): LitDiagnostic[] {
+		return validateHTMLDocument(document, context, timings);
 	}
 
 	getClosingTagAtOffset(document: HtmlDocument, offset: DocumentOffset): LitClosingTagInfo | undefined {
@@ -156,8 +158,8 @@ export class LitHtmlDocumentAnalyzer {
 		);
 	}
 
-	getFormatEdits(document: HtmlDocument, settings: FormatCodeSettings): LitFormatEdit[] {
-		return this.vscodeHtmlService.format(document, settings);
+	getFormatEdits(document: HtmlDocument, settings: FormatCodeSettings, format: LitAnalyzerFormatConfig): LitFormatEdit[] {
+		return this.vscodeHtmlService.format(document, settings, format);
 	}
 
 	*indexFile(document: HtmlDocument, context: LitAnalyzerContext): IterableIterator<LitIndexEntry> {

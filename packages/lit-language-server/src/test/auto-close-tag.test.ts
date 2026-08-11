@@ -75,4 +75,27 @@ describe('lit-language-server serves auto-closing tags over LSP', () => {
 
 		expect(edits).toBeNull();
 	});
+
+	test('formats Lit bindings through document formatting', async () => {
+		harness = await startServer(autoCloseTagProjectDir);
+
+		await harness.openFile(consumerPath);
+		await harness.changeFile(consumerPath, [
+			'declare const html: any;',
+			'',
+			'html`<my-element @change="onChange" attribute="value" .property="property"></my-element>`;',
+			'',
+		].join('\n'));
+
+		const edits = await harness.getFormattingEdits(consumerPath);
+
+		expect(edits).toHaveLength(1);
+		expect(edits![0].newText).toBe([
+			'<my-element',
+			'  .property = "property"',
+			'  attribute = "value"',
+			'  @change   = "onChange"',
+			'></my-element>',
+		].join('\n'));
+	});
 });

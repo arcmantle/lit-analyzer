@@ -19,6 +19,12 @@ describe('parseWorkspaceSettings', () => {
 		expect(parseWorkspaceSettings({ customHtmlData: './data.json' })).toEqual({ customHtmlData: './data.json' });
 	});
 
+	test('reads formatter settings when present', () => {
+		expect(parseWorkspaceSettings({ format: { groupBindings: false, newLineTemplate: false } })).toEqual({
+			format: { groupBindings: false, newLineTemplate: false },
+		});
+	});
+
 	test("drops a per-rule 'default' value, treating it as no override", () => {
 		expect(parseWorkspaceSettings({ rules: { 'no-unknown-tag-name': 'default', 'no-unknown-property': 'error' } })).toEqual({
 			rules: { 'no-unknown-property': 'error' },
@@ -44,5 +50,14 @@ describe('mergeConfig', () => {
 		// A rule the settings don't mention keeps the file config's value,
 		// rather than reverting to `makeConfig`'s own default for it.
 		expect(merged.rules['no-noncallable-event-binding']).toBe('off');
+	});
+
+	test('merges formatter settings key by key instead of replacing the map', () => {
+		const base = makeConfig({ format: { groupBindings: false } });
+		const merged = mergeConfig(base, { format: { alignBindingAssignments: false } });
+		expect(merged.format.groupBindings).toBe(false);
+		expect(merged.format.alignBindingAssignments).toBe(false);
+		expect(merged.format.newLineTemplate).toBe(true);
+		expect(merged.format.newLineBindings).toBe(true);
 	});
 });

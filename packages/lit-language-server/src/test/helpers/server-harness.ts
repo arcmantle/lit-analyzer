@@ -100,6 +100,8 @@ export interface ServerHarness {
 	 * insert, e.g. outside a lit template).
 	 */
 	getOnTypeFormattingEdits(filePath: string, position: Position, ch: string): Promise<TextEdit[] | null>;
+	/** Requests `textDocument/formatting` for a previously opened file. */
+	getFormattingEdits(filePath: string): Promise<TextEdit[] | null>;
 	/**
 	 * Replaces the `lit-plugin` workspace settings the harness answers
 	 * `workspace/configuration` requests with, then notifies the server via
@@ -459,6 +461,15 @@ export async function startServer(rootDir: string, options: StartServerOptions =
 				position,
 				ch,
 				options:      { tabSize: 4, insertSpaces: true },
+			});
+		},
+
+		async getFormattingEdits(filePath: string): Promise<TextEdit[] | null> {
+			const uri = pathToFileURL(filePath).toString();
+
+			return connection.sendRequest('textDocument/formatting', {
+				textDocument: { uri },
+				options:      { tabSize: 2, insertSpaces: true },
 			});
 		},
 

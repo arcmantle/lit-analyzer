@@ -3,9 +3,9 @@ import * as path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { inspect } from 'node:util';
 
-import type { LitAnalyzerConfig, LitDefinition, LitDefinitionTarget, SourceFileRange } from '@arcmantle/lit-analyzer';
+import type { LitAnalyzerConfig, LitAnalyzerConfigOptions, LitDefinition, LitDefinitionTarget, SourceFileRange } from '@arcmantle/lit-analyzer';
 import ts from 'typescript';
-import type { CodeAction, CodeActionParams, CompletionItem, CompletionParams, Connection, DefinitionParams, DocumentOnTypeFormattingParams, Hover, HoverParams, InitializeParams, InitializeResult, LocationLink, PrepareRenameParams, PrepareRenameResult, RenameParams, SignatureHelp, SignatureHelpParams, TextEdit, WorkspaceEdit } from 'vscode-languageserver/node';
+import type { CodeAction, CodeActionParams, CompletionItem, CompletionParams, Connection, DefinitionParams, DocumentFormattingParams, DocumentOnTypeFormattingParams, Hover, HoverParams, InitializeParams, InitializeResult, LocationLink, PrepareRenameParams, PrepareRenameResult, RenameParams, SignatureHelp, SignatureHelpParams, TextEdit, WorkspaceEdit } from 'vscode-languageserver/node';
 import { CodeActionKind, DidChangeWatchedFilesNotification, FileChangeType, TextDocumentSyncKind } from 'vscode-languageserver/node';
 
 import type { AnalysisCompiler } from './analysis-compiler.js';
@@ -206,7 +206,7 @@ export function createServer(connection: Connection): Connection {
 	// noticed until some other trigger (e.g. editing the tsconfig) happens
 	// to rebuild the project they belong to.
 	let supportsFileWatcherRegistration = false;
-	let workspaceSettings: Partial<LitAnalyzerConfig> = {};
+	let workspaceSettings: LitAnalyzerConfigOptions = {};
 	// Bumped on every refresh, so a slower, older request can't overwrite a
 	// newer one that already resolved (e.g. two settings changes in a row).
 	let workspaceSettingsRequestId = 0;
@@ -444,6 +444,7 @@ export function createServer(connection: Connection): Connection {
 				// of computing it for every item up front.
 				completionProvider:               { resolveProvider: true },
 				signatureHelpProvider:            { triggerCharacters: [ '(', ',' ] },
+				documentFormattingProvider:       true,
 				// Auto-closes a tag once its `>` is typed. There's no dedicated
 				// LSP feature for this (unlike tsserver's own
 				// `getJsxClosingTagAtPosition`, which VS Code's built-in
@@ -814,6 +815,42 @@ ${ (error as Error).message }`,
 			connection.console.error(
 				`lit-language-server could not compute an auto-closing tag for ${ params.textDocument.uri }: \
 ${ (error as Error).message }`,
+			);
+
+			return null;
+		}
+	});
+
+	connection.onDocumentFormatting((params: DocumentFormattingParams): TextEdit[] | null => {
+		try {
+			const fileName = fileURLToPath(params.textDocument.uri);
+			const project = registry.getOrCreateProject(fileName);
+			if (project == null)
+				return null;
+
+
+			const sourceFile = project.compiler.getProgram().getSourceFile(fileName);
+			if (sourceFile == null)
+				return null;
+
+
+			const resolvedConfig = resolveConfigForFile(fileName);
+			project.litAnalyzerHandle.setConfig(mergeConfig(resolvedConfig.config, workspaceSettings));
+
+			return project.litAnalyzerHandle.analyzer.getFormatEditsInFile(sourceFile, {
+				tabSize:             params.options.tabSize,
+				convertTabsToSpaces: params.options.insertSpaces,
+			}).map(edit => ({
+				range: {
+					start: sourceFile.getLineAndCharacterOfPosition(edit.range.start),
+					end:   sourceFile.getLineAndCharacterOfPosition(edit.range.end),
+				},
+				newText: edit.newText,
+			}));
+		}
+		catch (error) {
+			connection.console.error(
+				`lit-language-server could not format ${ params.textDocument.uri }: ${ (error as Error).message }`,
 			);
 
 			return null;

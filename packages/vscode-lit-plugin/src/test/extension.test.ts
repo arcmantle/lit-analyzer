@@ -44,6 +44,26 @@ registered on HTMLElementTagNameMap",
 		expect(observations.completions.propertyLabels).toContain('.prop2');
 	});
 
+	test('formats Lit bindings through the direct command', () => {
+		expect(observations.formatting.text).toContain('html`\n<es-input');
+		expect(observations.formatting.text).toContain('id         ="search"');
+		expect(observations.formatting.text).toContain('size       ="small"');
+		expect(observations.formatting.text).toContain('placeholder=${localize(\'info.filterCompanies\')}');
+		expect(observations.formatting.text).toContain('.spellcheck=${spellcheck}');
+		expect(observations.formatting.text).toContain('?readonly  =${readonly}');
+		expect(observations.formatting.text).toContain('</es-input>\n`;');
+		expect(observations.formatting.text).not.toContain('[#');
+		expect(observations.formatting.text.indexOf('id         ="search"')).toBeLessThan(
+			observations.formatting.text.indexOf('placeholder=${localize(\'info.filterCompanies\')}'),
+		);
+		expect(observations.formatting.text.indexOf('placeholder=${localize(\'info.filterCompanies\')}')).toBeLessThan(
+			observations.formatting.text.indexOf('.spellcheck=${spellcheck}'),
+		);
+		expect(observations.formatting.text.indexOf('.spellcheck=${spellcheck}')).toBeLessThan(
+			observations.formatting.text.indexOf('?readonly  =${readonly}'),
+		);
+	});
+
 	test('the language server is running by default', () => {
 		expect(observations.languageServer.runsByDefault).toBe(true);
 	});

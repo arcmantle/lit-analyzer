@@ -30,6 +30,12 @@ describe('filterExplicitLitPluginSettings', () => {
 			rules: { 'no-unknown-tag-name': 'error' },
 		});
 	});
+
+	test('keeps only explicitly set formatter settings', () => {
+		expect(filterExplicitLitPluginSettings(explicitlySetConfig({ 'format.groupBindings': false, 'format.newLineTemplate': false }))).toEqual({
+			format: { groupBindings: false, newLineTemplate: false },
+		});
+	});
 });
 
 describe('isExplicitlySet', () => {

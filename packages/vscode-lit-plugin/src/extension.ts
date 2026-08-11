@@ -11,6 +11,7 @@ export interface ExtensionApi {
 }
 
 const analyzeCommandId = 'lit-plugin.analyze';
+const formatLitHtmlCommandId = 'lit-plugin.formatLitHtml';
 const restartLanguageServerCommandId = 'lit-plugin.restartLanguageServer';
 const bundledTypeScriptLibraryLanguageId = 'lit-analyzer-typescript-library';
 
@@ -82,6 +83,26 @@ export async function activate(context: vscode.ExtensionContext): Promise<Extens
 
 	// Subscribe to the analyze command
 	context.subscriptions.push(vscode.commands.registerCommand(analyzeCommandId, handleAnalyzeCommand));
+	context.subscriptions.push(vscode.commands.registerCommand(formatLitHtmlCommandId, async () => {
+		const editor = vscode.window.activeTextEditor;
+		if (editor == null)
+			return;
+
+
+		const tabSize = editor.options.tabSize;
+		const insertSpaces = editor.options.insertSpaces;
+		const edits = await languageServer.format(editor.document, {
+			tabSize:      typeof tabSize === 'number' ? tabSize : 2,
+			insertSpaces: typeof insertSpaces === 'boolean' ? insertSpaces : true,
+		});
+		if (edits.length === 0)
+			return;
+
+
+		const workspaceEdit = new vscode.WorkspaceEdit();
+		workspaceEdit.set(editor.document.uri, edits);
+		await vscode.workspace.applyEdit(workspaceEdit);
+	}));
 	context.subscriptions.push(vscode.commands.registerCommand(restartLanguageServerCommandId, async () => {
 		try {
 			await languageServer.restart();

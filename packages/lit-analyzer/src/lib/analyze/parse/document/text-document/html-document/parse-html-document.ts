@@ -15,7 +15,7 @@ export function parseHtmlDocument(node: TaggedTemplateExpression): HtmlDocument 
 	const virtualDocument = new VirtualAstHtmlDocument(node);
 	const html = virtualDocument.text;
 	const htmlAst = parseHtml(html);
-	const document = new HtmlDocument(virtualDocument, []);
+	const document = new HtmlDocument(virtualDocument, [], node.getSourceFile());
 
 	const context: ParseHtmlContext = {
 		html,
