@@ -45,22 +45,24 @@ registered on HTMLElementTagNameMap",
 	});
 
 	test('formats Lit bindings through the direct command', () => {
-		expect(observations.formatting.text).toContain('html`\n<es-input');
-		expect(observations.formatting.text).toContain('id         ="search"');
-		expect(observations.formatting.text).toContain('size       ="small"');
-		expect(observations.formatting.text).toContain('placeholder=${localize(\'info.filterCompanies\')}');
-		expect(observations.formatting.text).toContain('.spellcheck=${spellcheck}');
-		expect(observations.formatting.text).toContain('?readonly  =${readonly}');
-		expect(observations.formatting.text).toContain('</es-input>\n`;');
-		expect(observations.formatting.text).not.toContain('[#');
-		expect(observations.formatting.text.indexOf('id         ="search"')).toBeLessThan(
-			observations.formatting.text.indexOf('placeholder=${localize(\'info.filterCompanies\')}'),
+		const text = observations.formatting.text.replace(/\r\n/g, '\n');
+
+		expect(text).toContain('html`\n<es-input');
+		expect(text).toContain('id         ="search"');
+		expect(text).toContain('size       ="small"');
+		expect(text).toContain('placeholder=${localize(\'info.filterCompanies\')}');
+		expect(text).toContain('.spellcheck=${spellcheck}');
+		expect(text).toContain('?readonly  =${readonly}');
+		expect(text).toContain('</es-input>\n`;');
+		expect(text).not.toContain('[#');
+		expect(text.indexOf('id         ="search"')).toBeLessThan(
+			text.indexOf('placeholder=${localize(\'info.filterCompanies\')}'),
 		);
-		expect(observations.formatting.text.indexOf('placeholder=${localize(\'info.filterCompanies\')}')).toBeLessThan(
-			observations.formatting.text.indexOf('.spellcheck=${spellcheck}'),
+		expect(text.indexOf('placeholder=${localize(\'info.filterCompanies\')}')).toBeLessThan(
+			text.indexOf('.spellcheck=${spellcheck}'),
 		);
-		expect(observations.formatting.text.indexOf('.spellcheck=${spellcheck}')).toBeLessThan(
-			observations.formatting.text.indexOf('?readonly  =${readonly}'),
+		expect(text.indexOf('.spellcheck=${spellcheck}')).toBeLessThan(
+			text.indexOf('?readonly  =${readonly}'),
 		);
 	});
 
