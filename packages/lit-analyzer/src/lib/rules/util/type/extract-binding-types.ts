@@ -2,13 +2,17 @@ import { Expression, Type, TypeChecker } from 'typescript';
 
 import { HtmlNodeAttrAssignment, HtmlNodeAttrAssignmentKind } from '../../../analyze/types/html-node/html-node-attr-assignment-types.js';
 import { HtmlNodeAttrKind } from '../../../analyze/types/html-node/html-node-attr-types.js';
-import { RuleModuleContext } from '../../../analyze/types/rule/rule-module-context.js';
+import { BindingTypes, RuleModuleContext } from '../../../analyze/types/rule/rule-module-context.js';
 import { getDirective } from '../directive/get-directive.js';
 
 export function extractBindingTypes(
 	assignment: HtmlNodeAttrAssignment,
 	context: RuleModuleContext,
-): { typeA: Type; typeB: Type; } {
+): BindingTypes {
+	const cachedTypes = context.bindingTypes?.get(assignment);
+	if (cachedTypes != null)
+		return cachedTypes;
+
 	const checker = context.program.getTypeChecker();
 
 	// Infer the type of the RHS
@@ -27,7 +31,10 @@ export function extractBindingTypes(
 	if (directiveType != null)
 		typeB = directiveType;
 
-	return { typeA, typeB };
+	const bindingTypes = { typeA, typeB };
+	context.bindingTypes?.set(assignment, bindingTypes);
+
+	return bindingTypes;
 }
 
 

@@ -8,7 +8,7 @@ import { HtmlNodeAttr } from './types/html-node/html-node-attr-types.js';
 import { HtmlNode, HtmlNodeKind } from './types/html-node/html-node-types.js';
 import { RuleDiagnostic } from './types/rule/rule-diagnostic.js';
 import { RuleModule, RuleModuleImplementation, RuleModulePhase } from './types/rule/rule-module.js';
-import { RuleModuleContext } from './types/rule/rule-module-context.js';
+import { BindingTypes, RuleModuleContext } from './types/rule/rule-module-context.js';
 
 export interface ReportedRuleDiagnostic {
 	source:     LitAnalyzerRuleId;
@@ -35,6 +35,7 @@ export class RuleCollection {
 		baseContext: LitAnalyzerContext,
 		timings?: RuleTiming,
 		phase: RuleModulePhase = 'default',
+		bindingTypes: Map<HtmlNodeAttrAssignment, BindingTypes> = new Map(),
 	): boolean {
 		let shouldBreak = false;
 
@@ -52,6 +53,7 @@ export class RuleCollection {
 			logger,
 			ts,
 			file: baseContext.currentFile,
+			bindingTypes,
 			report(diagnostic: RuleDiagnostic): void {
 				if (currentRuleId != null)
 					report({ diagnostic, source: currentRuleId });
@@ -125,6 +127,7 @@ export class RuleCollection {
 		timings?: RuleTiming,
 	): ReportedRuleDiagnostic[] {
 		const diagnosticBatches: ReportedRuleDiagnostic[][] = [];
+		const bindingTypes: Map<HtmlNodeAttrAssignment, BindingTypes> = new Map();
 		const expensiveAssignments: { assignment: HtmlNodeAttrAssignment; diagnostics: ReportedRuleDiagnostic[]; }[] = [];
 		const addDiagnosticBatch = (): ReportedRuleDiagnostic[] => {
 			const diagnostics: ReportedRuleDiagnostic[] = [];
@@ -144,7 +147,8 @@ export class RuleCollection {
 
 
 				const nodeDiagnostics = addDiagnosticBatch();
-				this.invokeRules('visitHtmlNode', childNode, d => nodeDiagnostics.push(d), baseContext, timings);
+				this.invokeRules('visitHtmlNode',
+					childNode, d => nodeDiagnostics.push(d), baseContext, timings, 'default', bindingTypes);
 
 				const iterateAttrs = (attrs: HtmlNodeAttr[]) => {
 					for (const attr of attrs) {
@@ -152,7 +156,15 @@ export class RuleCollection {
 							return;
 
 						const attributeDiagnostics = addDiagnosticBatch();
-						this.invokeRules('visitHtmlAttribute', attr, d => attributeDiagnostics.push(d), baseContext, timings);
+						this.invokeRules(
+							'visitHtmlAttribute',
+							attr,
+							d => attributeDiagnostics.push(d),
+							baseContext,
+							timings,
+							'default',
+							bindingTypes,
+						);
 
 						const assignment = attr.assignment;
 						if (assignment != null) {
@@ -164,6 +176,7 @@ export class RuleCollection {
 								baseContext,
 								timings,
 								'default',
+								bindingTypes,
 							);
 							if (!shouldSkipExpensiveRules)
 								expensiveAssignments.push({ assignment, diagnostics: assignmentDiagnostics });
@@ -182,7 +195,15 @@ export class RuleCollection {
 			if (baseContext.isCancellationRequested)
 				break;
 
-			this.invokeRules('visitHtmlAssignment', assignment, d => diagnostics.push(d), baseContext, timings, 'expensive');
+			this.invokeRules(
+				'visitHtmlAssignment',
+				assignment,
+				d => diagnostics.push(d),
+				baseContext,
+				timings,
+				'expensive',
+				bindingTypes,
+			);
 		}
 
 		return diagnosticBatches.flat();

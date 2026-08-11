@@ -114,6 +114,34 @@ tsTest('uses any when an assignment has no target', t => {
 	t.is(checker.typeToString(result.typeA), 'any');
 });
 
+tsTest('caches binding types within one validation pass', t => {
+	const { program } = compileFiles({ fileName: 'source.ts', text: '', entry: true });
+	const assignment: HtmlNodeAttrAssignment = {
+		kind:     HtmlNodeAttrAssignmentKind.STRING,
+		value:    'hello',
+		htmlAttr: undefined as never,
+		location: undefined as never,
+	};
+	let targetLookups = 0;
+	const context = {
+		program,
+		htmlStore: {
+			getHtmlAttrTarget: () => {
+				targetLookups += 1;
+
+				return undefined;
+			},
+		},
+		bindingTypes: new Map(),
+	} as unknown as RuleModuleContext;
+
+	const firstResult = extractBindingTypes(assignment, context);
+	const secondResult = extractBindingTypes(assignment, context);
+
+	t.is(targetLookups, 1);
+	t.true(firstResult === secondResult);
+});
+
 tsTest('uses a directive argument type when a directive overrides the assignment', t => {
 	const { program, sourceFile } = compileFiles({
 		fileName: 'source.ts',
