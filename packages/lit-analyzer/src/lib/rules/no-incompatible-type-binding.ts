@@ -18,6 +18,7 @@ const rule: RuleModule = {
 	id:   'no-incompatible-type-binding',
 	meta: {
 		priority: 'low',
+		phase:    'expensive',
 	},
 	visitHtmlAssignment(assignment, context) {
 		const { htmlAttr } = assignment;

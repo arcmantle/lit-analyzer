@@ -7,6 +7,7 @@ import { HtmlNode } from '../html-node/html-node-types.js';
 import { RuleModuleContext } from './rule-module-context.js';
 
 export type RuleModulePriority = 'low' | 'medium' | 'high';
+export type RuleModulePhase = 'default' | 'expensive';
 
 //export type RuleModuleCategory = "HTML" | "CSS" | "Component";
 
@@ -27,6 +28,7 @@ export interface RuleModule extends RuleModuleImplementation {
 
 	meta?: {
 		priority?: RuleModulePriority;
+		phase?:    RuleModulePhase;
 		/*docs?: {
 			description: string;
 			category: RuleModuleCategory;

@@ -34,7 +34,7 @@ export class RuleCollection {
 		report: (diagnostic: ReportedRuleDiagnostic) => void,
 		baseContext: LitAnalyzerContext,
 		timings?: RuleTiming,
-		phase?: RuleModulePhase,
+		phase: RuleModulePhase = 'default',
 	): boolean {
 		let shouldBreak = false;
 
@@ -124,8 +124,14 @@ export class RuleCollection {
 		baseContext: LitAnalyzerContext,
 		timings?: RuleTiming,
 	): ReportedRuleDiagnostic[] {
-		const diagnostics: ReportedRuleDiagnostic[] = [];
-		const expensiveAssignments: HtmlNodeAttrAssignment[] = [];
+		const diagnosticBatches: ReportedRuleDiagnostic[][] = [];
+		const expensiveAssignments: { assignment: HtmlNodeAttrAssignment; diagnostics: ReportedRuleDiagnostic[]; }[] = [];
+		const addDiagnosticBatch = (): ReportedRuleDiagnostic[] => {
+			const diagnostics: ReportedRuleDiagnostic[] = [];
+			diagnosticBatches.push(diagnostics);
+
+			return diagnostics;
+		};
 
 		const iterateNodes = (nodes: HtmlNode[]) => {
 			for (const childNode of nodes) {
@@ -137,27 +143,30 @@ export class RuleCollection {
 					continue;
 
 
-				this.invokeRules('visitHtmlNode', childNode, d => diagnostics.push(d), baseContext, timings);
+				const nodeDiagnostics = addDiagnosticBatch();
+				this.invokeRules('visitHtmlNode', childNode, d => nodeDiagnostics.push(d), baseContext, timings);
 
 				const iterateAttrs = (attrs: HtmlNodeAttr[]) => {
 					for (const attr of attrs) {
 						if (baseContext.isCancellationRequested)
 							return;
 
-						this.invokeRules('visitHtmlAttribute', attr, d => diagnostics.push(d), baseContext, timings);
+						const attributeDiagnostics = addDiagnosticBatch();
+						this.invokeRules('visitHtmlAttribute', attr, d => attributeDiagnostics.push(d), baseContext, timings);
 
 						const assignment = attr.assignment;
 						if (assignment != null) {
+							const assignmentDiagnostics = addDiagnosticBatch();
 							const shouldSkipExpensiveRules = this.invokeRules(
 								'visitHtmlAssignment',
 								assignment,
-								d => diagnostics.push(d),
+								d => assignmentDiagnostics.push(d),
 								baseContext,
 								timings,
 								'default',
 							);
 							if (!shouldSkipExpensiveRules)
-								expensiveAssignments.push(assignment);
+								expensiveAssignments.push({ assignment, diagnostics: assignmentDiagnostics });
 						}
 					}
 				};
@@ -169,15 +178,14 @@ export class RuleCollection {
 		};
 
 		iterateNodes(htmlDocument.rootNodes);
-		for (const assignment of expensiveAssignments) {
+		for (const { assignment, diagnostics } of expensiveAssignments) {
 			if (baseContext.isCancellationRequested)
 				break;
 
-			if (assignment != null)
-				this.invokeRules('visitHtmlAssignment', assignment, d => diagnostics.push(d), baseContext, timings, 'expensive');
+			this.invokeRules('visitHtmlAssignment', assignment, d => diagnostics.push(d), baseContext, timings, 'expensive');
 		}
 
-		return diagnostics;
+		return diagnosticBatches.flat();
 	}
 
 }
