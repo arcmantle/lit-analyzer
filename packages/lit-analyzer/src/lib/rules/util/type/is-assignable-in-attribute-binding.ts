@@ -9,7 +9,6 @@ import { isAssignableBindingUnderSecuritySystem } from './is-assignable-binding-
 import { isAssignableToType } from './is-assignable-to-type.js';
 import { isUnionType, typeToDisplayString } from './type-utils.js';
 
-
 export function isAssignableInAttributeBinding(
 	htmlAttr: HtmlNodeAttr,
 	{ typeA, typeB }: { typeA: Type; typeB: Type; },
@@ -82,6 +81,9 @@ export function isAssignableToTypeWithStringCoercion(
 	typeB: Type,
 	checker: TypeChecker,
 ): boolean {
+	if (isObviouslyAssignableWithStringCoercion(typeA, typeB))
+		return true;
+
 	// A union is assignable only when every member is assignable after coercion.
 	if (isUnionType(typeB))
 		return typeB.types.every(member => isAssignableToTypeWithStringCoercion(typeA, member, checker));
@@ -124,6 +126,36 @@ export function isAssignableToTypeWithStringCoercion(
 
 
 	return checker.isTypeAssignableTo(typeB, typeA);
+}
+
+function isObviouslyAssignableWithStringCoercion(target: Type, source: Type): boolean {
+	if (isUnionType(source))
+		return source.types.every(member => isObviouslyAssignableWithStringCoercion(target, member));
+
+	const targetAcceptsString = hasBroadPrimitiveTarget(target, TypeFlags.String);
+	const targetAcceptsNumber = hasBroadPrimitiveTarget(target, TypeFlags.Number);
+	const targetAcceptsBoolean = hasBroadPrimitiveTarget(target, TypeFlags.Boolean);
+
+	if (source.isStringLiteral()) {
+		return targetAcceptsString
+			|| (!Number.isNaN(Number(source.value)) && targetAcceptsNumber)
+			|| (source.value.length === 0 && targetAcceptsBoolean);
+	}
+
+	if ((source.flags & TypeFlags.BooleanLike) !== 0)
+		return targetAcceptsString;
+
+	if ((source.flags & TypeFlags.NumberLike) !== 0)
+		return targetAcceptsString || targetAcceptsNumber;
+
+	return false;
+}
+
+function hasBroadPrimitiveTarget(type: Type, flag: TypeFlags): boolean {
+	if (isUnionType(type))
+		return type.types.some(member => hasBroadPrimitiveTarget(member, flag));
+
+	return (type.flags & flag) !== 0;
 }
 
 /**

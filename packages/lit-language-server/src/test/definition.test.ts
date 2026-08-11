@@ -102,6 +102,7 @@ describe('lit-language-server serves go-to-definition over LSP', () => {
 			[ 'aria-label="Native', 'ariaLabel' ],
 			[ 'disabled class=', 'disabled' ],
 			[ 'class="Native', 'className' ],
+			[ 'title="Unknown', 'title' ],
 		] as const) {
 			const links = await componentHarness.getDefinition(consumerPath, positionOf(consumerText, marker, 1));
 

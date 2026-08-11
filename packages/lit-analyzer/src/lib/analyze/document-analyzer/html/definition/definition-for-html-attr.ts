@@ -18,13 +18,11 @@ export function definitionForHtmlAttr(
 ): LitDefinition | undefined {
 	const { htmlStore, program, ts } = context;
 	const target = htmlStore.getHtmlAttrTarget(htmlAttr);
-	if (target == null)
-		return undefined;
 
-	if ((isHtmlMember(target) || isHtmlEvent(target)) && target.declaration != null)
+	if (target != null && (isHtmlMember(target) || isHtmlEvent(target)) && target.declaration != null)
 		return definitionForNode(htmlAttr, target.declaration.node, target.name, ts);
 
-	if (isHtmlMember(target) && target.builtIn) {
+	if (target == null || isHtmlMember(target)) {
 		const propertySymbol = findBuiltInHtmlProperty(htmlAttr, program.getTypeChecker(), context.currentFile, ts);
 		const node = propertySymbol?.valueDeclaration ?? propertySymbol?.declarations?.[0];
 
@@ -47,15 +45,27 @@ function findBuiltInHtmlProperty(
 
 	const tagSymbol = checker.getPropertyOfType(checker.getDeclaredTypeOfSymbol(tagNameMap), htmlAttr.htmlNode.tagName);
 	const tagDeclaration = tagSymbol?.valueDeclaration ?? tagSymbol?.declarations?.[0];
-	if (tagSymbol == null || tagDeclaration == null)
+	const tagType = tagSymbol == null || tagDeclaration == null
+		? getHtmlElementType(checker, currentFile, ts)
+		: checker.getTypeOfSymbolAtLocation(tagSymbol, tagDeclaration);
+	if (tagType == null)
 		return undefined;
 
 	const propertyName = HTML_ATTRIBUTE_PROPERTY_ALIASES[htmlAttr.name.toLowerCase()] ?? htmlAttr.name;
 	const normalizedPropertyName = normalizeHtmlMemberName(propertyName);
-	const tagType = checker.getTypeOfSymbolAtLocation(tagSymbol, tagDeclaration);
 
 	return checker.getPropertiesOfType(tagType)
 		.find(symbol => normalizeHtmlMemberName(symbol.getName()) === normalizedPropertyName);
+}
+
+function getHtmlElementType(
+	checker: TypeChecker,
+	currentFile: Node,
+	ts: LitAnalyzerContext['ts'],
+) {
+	const htmlElement = checker.resolveName('HTMLElement', currentFile, ts.SymbolFlags.Interface, false);
+
+	return htmlElement == null ? undefined : checker.getDeclaredTypeOfSymbol(htmlElement);
 }
 
 function normalizeHtmlMemberName(name: string): string {

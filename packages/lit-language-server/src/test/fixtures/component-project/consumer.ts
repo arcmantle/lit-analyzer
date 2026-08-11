@@ -8,3 +8,4 @@ import './component';
 html`<my-element .foo="${ 'bar' }"></my-element>`;
 html`<div title="Native element" aria-label="Native element"></div>`;
 html`<input disabled class="Native element">`;
+html`<s-color-container title="Unknown custom element"></s-color-container>`;

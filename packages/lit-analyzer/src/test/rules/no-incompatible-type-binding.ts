@@ -189,6 +189,11 @@ tsTest('Attribute binding: Number type expression is assignable to string', t =>
 	hasNoDiagnostics(t, diagnostics);
 });
 
+tsTest('Attribute binding: a boolean type expression is assignable to string', t => {
+	const { diagnostics } = getDiagnostics('html`<input placeholder="${{} as boolean}" />`');
+	hasNoDiagnostics(t, diagnostics);
+});
+
 tsTest('Attribute binding: String literal (0 length) is assignable to number', t => {
 	const { diagnostics } = getDiagnostics('html`<input maxlength="" />`');
 	hasNoDiagnostics(t, diagnostics);

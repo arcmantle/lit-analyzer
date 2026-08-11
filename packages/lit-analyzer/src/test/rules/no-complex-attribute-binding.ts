@@ -29,6 +29,41 @@ tsTest('Primitives are not assignable to complex type using an attribute binding
 	hasDiagnostic(t, diagnostics, 'no-complex-attribute-binding');
 });
 
+tsTest('Strings are assignable to branded string types using an attribute binding', t => {
+	const { diagnostics } = getDiagnostics([
+		{
+			fileName: 'my-element.ts',
+			text:     `
+				type Term = string & Record<never, never>;
+				type LabelText<Context = any> = Term | ((context: Context) => Term);
+				class MyElement extends HTMLElement {
+					@property() labelText?: LabelText;
+				}
+				customElements.define("my-element", MyElement);
+			`,
+		},
+		'const label: string = "label"; html`<my-element labelText="${label}"></my-element>`',
+	]);
+	hasNoDiagnostics(t, diagnostics);
+});
+
+tsTest('Numbers are not assignable to branded string types using an attribute binding', t => {
+	const { diagnostics } = getDiagnostics([
+		{
+			fileName: 'my-element.ts',
+			text:     `
+				type Term = string & Record<never, never>;
+				class MyElement extends HTMLElement {
+					@property() labelText?: Term;
+				}
+				customElements.define("my-element", MyElement);
+			`,
+		},
+		'html`<my-element labelText="${123}"></my-element>`',
+	]);
+	hasDiagnostic(t, diagnostics, 'no-complex-attribute-binding');
+});
+
 tsTest('Complex types are assignable using property binding', t => {
 	const { diagnostics } = getDiagnostics([
 		makeElement({ properties: [ 'complex = {foo: string}' ] }),

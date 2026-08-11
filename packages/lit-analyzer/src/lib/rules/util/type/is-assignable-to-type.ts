@@ -3,6 +3,8 @@ import { Type, TypeChecker, TypeFlags } from 'typescript';
 import { RuleModuleContext } from '../../../analyze/types/rule/rule-module-context.js';
 import { isUnionType } from './type-utils.js';
 
+const typeScriptAssignabilityCache: WeakMap<Type, WeakMap<Type, boolean>> = new WeakMap();
+const javaScriptAssignabilityCache: WeakMap<Type, WeakMap<Type, boolean>> = new WeakMap();
 
 export function isAssignableToType(
 	{ typeA, typeB }: { typeA: Type; typeB: Type; },
@@ -12,10 +14,21 @@ export function isAssignableToType(
 	if (hasFreeTypeParameter(typeA))
 		return true;
 
-	if (context.file.fileName.endsWith('.js'))
-		return isAssignableInJavaScriptFile(typeA, typeB, checker);
+	const cache = context.file.fileName.endsWith('.js')
+		? javaScriptAssignabilityCache
+		: typeScriptAssignabilityCache;
+	const cachedBySource = cache.get(typeA);
+	if (cachedBySource?.has(typeB))
+		return cachedBySource.get(typeB)!;
 
-	return checker.isTypeAssignableTo(typeB, typeA);
+	const result = context.file.fileName.endsWith('.js')
+		? isAssignableInJavaScriptFile(typeA, typeB, checker)
+		: checker.isTypeAssignableTo(typeB, typeA);
+	const nextCachedBySource = cachedBySource ?? new WeakMap<Type, boolean>();
+	nextCachedBySource.set(typeB, result);
+	cache.set(typeA, nextCachedBySource);
+
+	return result;
 }
 
 function isAssignableInJavaScriptFile(
