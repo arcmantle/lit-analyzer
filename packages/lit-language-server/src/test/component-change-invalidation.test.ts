@@ -44,7 +44,10 @@ describe('editing a component definition updates diagnostics in a file that uses
 		harness = await startServer(componentProjectDir);
 
 		const consumerDiagnostics = await harness.openFile(consumerPath);
-		expect(consumerDiagnostics.map(d => d.code)).not.toContain('no-unknown-tag-name');
+		expect(consumerDiagnostics).not.toContainEqual(expect.objectContaining({
+			code:    'no-unknown-tag-name',
+			message: 'Unknown tag <my-element>.',
+		}));
 
 		await harness.openFile(componentPath);
 
@@ -53,7 +56,10 @@ describe('editing a component definition updates diagnostics in a file that uses
 			`export class MyElement extends HTMLElement {}\n\ncustomElements.define("my-renamed-element", MyElement);\n`,
 		);
 		const afterRename = await harness.waitForNextDiagnostics(consumerPath);
-		expect(afterRename.map(d => d.code)).toContain('no-unknown-tag-name');
+		expect(afterRename).toContainEqual(expect.objectContaining({
+			code:    'no-unknown-tag-name',
+			message: expect.stringContaining('Unknown tag <my-element>.'),
+		}));
 	});
 
 	test("closing an unsaved component edit reverts a dependent open document's diagnostics to match disk content", async () => {

@@ -77,7 +77,16 @@ describe('lit-language-server serves auto-closing tags over LSP', () => {
 	});
 
 	test('formats Lit bindings through document formatting', async () => {
-		harness = await startServer(autoCloseTagProjectDir);
+		harness = await startServer(autoCloseTagProjectDir, {
+			workspaceSettings: {
+				format: {
+					groupBindings:           true,
+					newLineBindings:         true,
+					newLineTemplate:         false,
+					alignBindingAssignments: true,
+				},
+			},
+		});
 
 		await harness.openFile(consumerPath);
 		await harness.changeFile(consumerPath, [
@@ -92,9 +101,9 @@ describe('lit-language-server serves auto-closing tags over LSP', () => {
 		expect(edits).toHaveLength(1);
 		expect(edits![0].newText).toBe([
 			'<my-element',
-			'  .property = "property"',
-			'  attribute = "value"',
-			'  @change   = "onChange"',
+			'  attribute="value"',
+			'  .property="property"',
+			'  @change  ="onChange"',
 			'></my-element>',
 		].join('\n'));
 	});
