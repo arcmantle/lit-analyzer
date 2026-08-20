@@ -1,16 +1,27 @@
+import { getUnionType } from '@arcmantle/web-component-analyzer';
 import htmlDataJson from '@vscode/web-custom-data/data/browsers.html-data.json' with { type: 'json' };
 import { HTMLDataV1 } from 'vscode-html-languageservice';
-import { getUnionType } from '@arcmantle/web-component-analyzer';
 
 import { HtmlAttr, HtmlDataCollection } from '../parse/parse-html-data/html-tag.js';
 import { parseVscodeHtmlData } from '../parse/parse-html-data/parse-vscode-html-data.js';
 import { EXTRA_HTML5_EVENTS, hasTypeForAttrName, html5TagAttrType, isPrimitiveArrayAttr } from './extra-html-data.js';
+
+const GLOBAL_ATTRIBUTE_FALLBACKS = [
+	{
+		name:        'writingsuggestions',
+		description: 'Controls whether browser-provided writing suggestions are available for the element.',
+	},
+];
 
 export function getBuiltInHtmlCollection(): HtmlDataCollection {
 	const vscodeHtmlData = htmlDataJson as HTMLDataV1;
 
 	const version = vscodeHtmlData.version;
 	const globalAttributes = [ ...(vscodeHtmlData.globalAttributes ?? []) ];
+	for (const attribute of GLOBAL_ATTRIBUTE_FALLBACKS) {
+		if (!globalAttributes.some(existingAttribute => existingAttribute.name === attribute.name))
+			globalAttributes.push(attribute);
+	}
 
 	// Modify valueSets
 	const valueSets = (vscodeHtmlData.valueSets || []).map(valueSet => {

@@ -3,6 +3,7 @@
 		"target": "es2019",
 		"module": "node16",
 		"moduleResolution": "node16",
+		"preserveSymlinks": true,
 		"paths": {
 			"mapped-element-library": [
 				"./library/dist/component.d.ts"
@@ -11,6 +12,7 @@
 		"strict": true
 	},
 	"files": [
-		"consumer.ts"
+		"consumer.ts",
+		"workspace-consumer.ts"
 	]
 }

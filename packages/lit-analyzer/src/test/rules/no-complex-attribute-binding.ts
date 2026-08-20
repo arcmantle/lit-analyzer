@@ -8,6 +8,14 @@ tsTest('Complex types are not assignable using an attribute binding', t => {
 	hasDiagnostic(t, diagnostics, 'no-complex-attribute-binding');
 });
 
+tsTest('Branded string types are assignable using an attribute binding', t => {
+	const { diagnostics } = getDiagnostics([
+		'type Guid = string & Record<never, never>;',
+		'declare const guid: Guid; html`<input placeholder="${guid}" />`',
+	]);
+	hasNoDiagnostics(t, diagnostics);
+});
+
 tsTest('Free type parameters are assignable using an attribute binding', t => {
 	const { diagnostics } = getDiagnostics(
 		'function render<T>(value: T) { return html`<input placeholder="${value}" />`; }',

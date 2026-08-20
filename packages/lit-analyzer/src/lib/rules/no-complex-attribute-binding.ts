@@ -36,7 +36,7 @@ const rule: RuleModule = {
 			return;
 
 		// Only primitive types should be allowed as "typeB"
-		if (!isPrimitiveType(typeB)) {
+		if (!isPrimitiveValueType(typeB)) {
 			if (isAssignableBindingUnderSecuritySystem(htmlAttr, { typeA, typeB }, context) !== undefined) {
 				// This is binding via a security sanitization system, let it do
 				// this check. Apparently complex values are OK to assign here.
@@ -99,6 +99,11 @@ function isAssignableToBrandedPrimitiveTarget(target: Type, source: Type, checke
 	const primitiveTarget = target.types.find(isPrimitiveType);
 
 	return primitiveTarget != null && checker.isTypeAssignableTo(source, primitiveTarget);
+}
+
+function isPrimitiveValueType(type: Type): boolean {
+	return isPrimitiveType(type)
+		|| (type.isIntersection() && type.types.some(member => isPrimitiveType(member)));
 }
 
 export default rule;

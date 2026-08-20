@@ -1,3 +1,4 @@
+import { realpathSync } from 'node:fs';
 import { basename, dirname } from 'node:path';
 import { pathToFileURL } from 'node:url';
 
@@ -36,13 +37,22 @@ function translateDefinitionTarget(
 		originSelectionRange,
 		targetUri: isTypeScriptDefaultLibrary(targetSourceFile, program)
 			? `lit-analyzer-lib:/${ basename(targetSourceFile.fileName) }`
-			: pathToFileURL(targetSourceFile.fileName).toString(),
+			: targetUri(targetSourceFile.fileName),
 		// The plugin's `DefinitionInfo` only carries one `textSpan`, not a
 		// separate "whole declaration" span and "selection" span, so both LSP
 		// ranges point at the same span here.
 		targetRange,
 		targetSelectionRange: targetRange,
 	};
+}
+
+function targetUri(fileName: string): string {
+	try {
+		return pathToFileURL(realpathSync(fileName)).toString();
+	}
+	catch {
+		return pathToFileURL(fileName).toString();
+	}
 }
 
 function isTypeScriptDefaultLibrary(sourceFile: ts.SourceFile, program?: ts.Program): boolean {

@@ -184,6 +184,14 @@ tsTest('Attribute binding: String literal expression is assignable to string', t
 	hasNoDiagnostics(t, diagnostics);
 });
 
+tsTest('Attribute binding: Branded string is assignable to a string literal union', t => {
+	const { diagnostics } = getDiagnostics(
+		'type BrandedString = string & Record<never, never>; declare const value: BrandedString; '
+		+ 'html`<input autocorrect="${value}" />`',
+	);
+	hasNoDiagnostics(t, diagnostics);
+});
+
 tsTest('Attribute binding: Number type expression is assignable to string', t => {
 	const { diagnostics } = getDiagnostics('html`<input placeholder="${123}" />`');
 	hasNoDiagnostics(t, diagnostics);

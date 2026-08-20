@@ -121,6 +121,9 @@ export function isAssignableToTypeWithStringCoercion(
 			|| checker.isTypeAssignableTo(checker.getStringType(), typeA);
 	}
 
+	if (isBroadStringType(typeB) && isStringLiteralType(typeA))
+		return true;
+
 	if ((typeB.flags & TypeFlags.Object) !== 0 && isObjectCoercible(typeB, checker))
 		return checker.isTypeAssignableTo(checker.getStringLiteralType('[object Object]'), typeA);
 
@@ -156,6 +159,20 @@ function hasBroadPrimitiveTarget(type: Type, flag: TypeFlags): boolean {
 		return type.types.some(member => hasBroadPrimitiveTarget(member, flag));
 
 	return (type.flags & flag) !== 0;
+}
+
+function isBroadStringType(type: Type): boolean {
+	if (type.isIntersection())
+		return type.types.some(isBroadStringType);
+
+	return (type.flags & TypeFlags.String) !== 0;
+}
+
+function isStringLiteralType(type: Type): boolean {
+	if (isUnionType(type))
+		return type.types.every(isStringLiteralType);
+
+	return type.isStringLiteral();
 }
 
 /**

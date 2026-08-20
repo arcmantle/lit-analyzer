@@ -44,7 +44,8 @@
 		"cli.js"
 	],
 	"dependencies": {
-		"@vscode/web-custom-data": "^0.4.2",
+		"@arcmantle/web-component-analyzer": "workspace:*",
+		"@vscode/web-custom-data": "^0.6.3",
 		"chalk": "^2.4.2",
 		"didyoumean2": "7.0.4",
 		"fast-glob": "^3.2.11",
@@ -52,8 +53,7 @@
 		"vscode-css-languageservice": "6.3.7",
 		"vscode-html-languageservice": "5.5.1",
 		"vscode-languageserver-textdocument": "^1.0.12",
-		"vscode-languageserver-types": "^3.17.5",
-		"@arcmantle/web-component-analyzer": "workspace:*"
+		"vscode-languageserver-types": "^3.17.5"
 	},
 	"devDependencies": {
 		"@types/node": "^24.0.0",

@@ -1,0 +1,4 @@
+{
+	"name": "workspace-element-library",
+	"types": "./src/component.ts"
+}

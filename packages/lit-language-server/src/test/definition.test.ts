@@ -21,13 +21,19 @@ const libraryDefinitionProjectDir
 const libraryDefinitionConsumerPath = path.join(libraryDefinitionProjectDir, 'consumer.ts');
 const libraryDefinitionSourcePath = path.join(libraryDefinitionProjectDir, 'library', 'src', 'component.ts');
 const libraryDefinitionOutputPath = path.join(libraryDefinitionProjectDir, 'library', 'dist');
+const workspaceDependencyConsumerPath = path.join(libraryDefinitionProjectDir, 'workspace-consumer.ts');
+const workspaceDependencyPath = path.join(libraryDefinitionProjectDir, 'node_modules', 'workspace-element-library');
 
 let componentHarness: ServerHarness;
 let libraryHarness: ServerHarness;
 let definitionHarness: ServerHarness;
+let workspaceDependencyHarness: ServerHarness;
 
 beforeAll(async () => {
 	fs.rmSync(libraryDefinitionOutputPath, { recursive: true, force: true });
+	fs.rmSync(workspaceDependencyPath, { recursive: true, force: true });
+	fs.mkdirSync(path.dirname(workspaceDependencyPath), { recursive: true });
+	fs.symlinkSync(path.join(libraryDefinitionProjectDir, 'library'), workspaceDependencyPath, 'dir');
 	const program = ts.createProgram([ libraryDefinitionSourcePath ], {
 		declaration:         true,
 		declarationMap:      true,
@@ -56,6 +62,10 @@ beforeAll(async () => {
 			await definitionHarness.openFile(definitionComponentPath);
 			await definitionHarness.openFile(definitionConsumerPath);
 		})(),
+		(async () => {
+			workspaceDependencyHarness = await startServer(libraryDefinitionProjectDir);
+			await workspaceDependencyHarness.openFile(workspaceDependencyConsumerPath);
+		})(),
 	]);
 }, 30_000);
 
@@ -63,7 +73,9 @@ afterAll(() => {
 	componentHarness?.dispose();
 	libraryHarness?.dispose();
 	definitionHarness?.dispose();
+	workspaceDependencyHarness?.dispose();
 	fs.rmSync(libraryDefinitionOutputPath, { recursive: true, force: true });
+	fs.rmSync(path.dirname(workspaceDependencyPath), { recursive: true, force: true });
 });
 
 /**
@@ -127,6 +139,17 @@ describe('lit-language-server serves go-to-definition over LSP', () => {
 		expect(links).toHaveLength(1);
 		const [ link ] = links!;
 		expect(fileURLToPath(link.targetUri)).toBe(path.join(libraryDefinitionProjectDir, 'library', 'src', 'component.ts'));
+	});
+
+	test('definition from a symlinked workspace custom element targets its source', async () => {
+		const consumerText = fs.readFileSync(workspaceDependencyConsumerPath, 'utf8');
+		const position = positionOf(consumerText, '<library-element', 1);
+
+		const links = await workspaceDependencyHarness.getDefinition(workspaceDependencyConsumerPath, position);
+
+		expect(links).not.toBeNull();
+		expect(links).toHaveLength(1);
+		expect(fileURLToPath(links![0].targetUri)).toBe(libraryDefinitionSourcePath);
 	});
 
 	test('no definition at a position with nothing to define', async () => {

@@ -1,5 +1,6 @@
 import { getDiagnostics } from '../helpers/analyze.js';
 import { hasDiagnostic, hasNoDiagnostics } from '../helpers/assert.js';
+import { makeElement } from '../helpers/generate-test-file.js';
 import { tsTest } from '../helpers/ts-test.js';
 
 tsTest("Don't report unknown attributes when 'no-unknown-attribute' is turned off", t => {
@@ -14,6 +15,15 @@ tsTest('Report unknown attributes on known element', t => {
 
 tsTest("Don't report unknown attributes", t => {
 	const { diagnostics } = getDiagnostics('html`<input required />`', { rules: { 'no-unknown-attribute': true } });
+	hasNoDiagnostics(t, diagnostics);
+});
+
+tsTest('Standard global attributes are available on custom elements', t => {
+	const { diagnostics } = getDiagnostics([
+		makeElement({}),
+		'html`<my-element inert autocorrect="on" enterkeyhint="done" popover="auto" '
+		+ 'virtualkeyboardpolicy="true" writingsuggestions="true"></my-element>`',
+	], { rules: { 'no-unknown-attribute': true } });
 	hasNoDiagnostics(t, diagnostics);
 });
 

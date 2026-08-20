@@ -1,5 +1,5 @@
-import { Type, TypeChecker } from 'typescript';
 import { getUnionType } from '@arcmantle/web-component-analyzer';
+import { Type, TypeChecker } from 'typescript';
 
 const HTML_5_ATTR_TYPES: { [key: string]: string | string[] | [string[]]; } = {
 	onafterprint:            'string',
@@ -44,6 +44,7 @@ const HTML_5_ATTR_TYPES: { [key: string]: string | string[] | [string[]]; } = {
 	accesskey:               'string',
 	translate:               [ 'yes', 'no', '' ],
 	autocapitalize:          [ 'off', 'none', 'on', 'sentences', 'words', 'characters' ],
+	writingsuggestions:      [ 'true', 'false' ],
 	class:                   'string',
 	contextmenu:             'string',
 	dropzone:                [ 'copy', 'move', 'link' ],
